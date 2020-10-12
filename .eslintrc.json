@@ -1,0 +1,61 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true,
+    "jest": true
+  },
+  "extends": [
+    "react-app",
+    "plugin:react/recommended",
+    "airbnb-typescript",
+    "airbnb/hooks",
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier",
+    "prettier/standard",
+    "prettier/react",
+    "prettier/@typescript-eslint",
+    "plugin:prettier/recommended",
+    "plugin:jest/recommended"
+  ],
+  "globals": {
+    "Atomics": "readonly",
+    "SharedArrayBuffer": "readonly"
+  },
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": 2018,
+    "sourceType": "module",
+    "project": "./tsconfig.json"
+  },
+  "plugins": [
+    "react",
+    "react-hooks",
+    "@typescript-eslint",
+    "jest"
+  ],
+  "root": true,
+  "rules": {
+    "arrow-spacing": "warn",
+    "indent": [ "error", 2, { "SwitchCase": 1 } ],
+    "linebreak-style": "off",
+    "no-console": [ "error", { "allow": [ "warn", "error" ] } ],
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": "error",
+    "semi": "off",
+    "@typescript-eslint/semi": "error",
+    "quotes": [ "error", "double" ],
+    "prettier/prettier": [ "error", { "endOfLine": "auto" } ],
+    "react/prefer-stateless-function": "error",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
+  },
+  "settings": {
+    "eslint.workingDirectories": [
+      { "mode": "auto" }
+    ]
+  }
+}
