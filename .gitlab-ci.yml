@@ -15,6 +15,9 @@ install_dependencies:
       - node_modules/
   script:
     - npm ci
+  only:
+    changes:
+      - package-lock.json
 
 build:
   stage: build
@@ -32,6 +35,11 @@ build:
 
 test:
   stage: test
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+    policy: pull
   script:
     - CI=true npm test
   dependencies: []
