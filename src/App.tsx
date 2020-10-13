@@ -1,26 +1,34 @@
-import React from "react";
-import logo from "./logo.svg";
-import "./App.css";
+import React, { useState } from "react";
+import Home from "./screens/home/Home";
+import Game from "./screens/game/Game";
+import Tutorial1 from "./screens/tutorial/Tutorial1";
+import About from "./screens/about/About";
+import Credits from "./screens/credits/Credits";
 
 const App: React.FC = () => {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+  const [route, setRoute] = useState<Route>("home");
+
+  let currentScreen: React.ReactNode;
+  switch (route) {
+    default: // fall-through
+    case "home":
+      currentScreen = <Home setRoute={setRoute} />;
+      break;
+    case "game":
+      currentScreen = <Game setRoute={setRoute} />;
+      break;
+    case "tutorial1":
+      currentScreen = <Tutorial1 setRoute={setRoute} />;
+      break;
+    case "about":
+      currentScreen = <About setRoute={setRoute} />;
+      break;
+    case "credits":
+      currentScreen = <Credits setRoute={setRoute} />;
+      break;
+  }
+
+  return <div>{currentScreen}</div>;
 };
 
 export default App;

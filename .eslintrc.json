@@ -44,7 +44,7 @@
     "linebreak-style": "off",
     "no-console": [ "error", { "allow": [ "warn", "error" ] } ],
     "no-unused-vars": "off",
-    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-unused-vars": "off",
     "semi": "off",
     "@typescript-eslint/semi": "error",
     "quotes": [ "error", "double" ],
