@@ -15,9 +15,6 @@ install_dependencies:
       - node_modules/
   script:
     - npm ci
-  only:
-    changes:
-      - package-lock.json
 
 build:
   stage: build
