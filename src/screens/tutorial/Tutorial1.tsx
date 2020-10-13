@@ -9,9 +9,13 @@ const Tutorial1: React.FC<Tutorial1Props> = ({ setRoute }: Tutorial1Props) => {
       <button type="button" onClick={() => setRoute("home")}>
         Back
       </button>
-      {page < 6? <button type="button" onClick={() => setPage(page + 1)}>
-        Next
-      </button> : ""}
+      {page < 6 ? (
+        <button type="button" onClick={() => setPage(page + 1)}>
+          Next
+        </button>
+      ) : (
+        ""
+      )}
     </div>
   );
 };
