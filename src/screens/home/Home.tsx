@@ -62,11 +62,9 @@ const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
           </div>
         </Container>
         <Container className={styles.container}>
-          <p>
-            <div>
-              <img width="700" height="750" src={logo} alt="this is a logo" />
-            </div>
-          </p>
+          <div>
+            <img width="700" height="750" src={logo} alt="this is a logo" />
+          </div>
           <br />
           <br />
           <br />
