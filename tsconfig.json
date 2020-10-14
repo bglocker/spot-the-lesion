@@ -22,7 +22,11 @@
     "noImplicitThis": true,
     "strictNullChecks": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": true
+    "noUnusedParameters": true,
+    "typeRoots": [
+      "./types",
+      "./node_modules/@types"
+    ]
   },
   "include": [
     "src"
