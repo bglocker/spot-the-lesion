@@ -43,6 +43,7 @@ const properties = {
   duration: 1000000,
   transitionDuration: 500,
   arrows: false,
+  indicators: true,
 };
 
 const myStyle = makeStyles({
@@ -97,6 +98,20 @@ const myStyle = makeStyles({
     marginLeft: "4.5vw",
     marginBottom: "5vh",
   },
+  playButton: {
+    background: "#07575B",
+    borderRadius: 25,
+    borderColor: "black",
+    borderWidth: 8,
+    borderStyle: "solid",
+    color: "white",
+    height: 200,
+    width: 500,
+    fontSize: 40,
+    fontFamily: "segoe UI",
+    fontWeight: "bold",
+    alignItems: "center",
+  },
   centerImages: {
     display: "flex",
     flexDirection: "row",
@@ -105,53 +120,61 @@ const myStyle = makeStyles({
   },
 });
 
-const Slideshow = () => {
+const Tutorial1: React.FC<Tutorial1Props> = ({ setRoute }: Tutorial1Props) => {
   const style = myStyle();
-  return (
-    // eslint-disable-next-line react/jsx-props-no-spreading
-    <Slide {...properties}>
-      {slideNo.map((number) => (
-        <div className={`${style.white} each-slide ${style.center}`} key={number}>
-          <div className={`${style.center} ${style.smallDiv}`}>
-            <p className={`${style.center} ${style.paragraph}`}>{slideText[number]}</p>
-          </div>
-          {slide1Images[number] === "" && slide2Images[number] === "" ? (
-            ""
-          ) : (
-            <div className={style.centerImages}>
-              {slide1Images[number] === "" ? (
-                ""
+  const Slideshow = () => {
+    return (
+      // eslint-disable-next-line react/jsx-props-no-spreading
+      <Slide {...properties}>
+        {slideNo.map((number) => (
+          <div className={`${style.white} each-slide ${style.center}`} key={number}>
+            <div className={`${style.center} ${style.smallDiv}`}>
+              <p className={`${style.center} ${style.paragraph}`}>{slideText[number]}</p>
+            </div>
+            {slide1Images[number] === "" && slide2Images[number] === "" ? (
+              ""
+            ) : (
+              <div className={style.centerImages}>
+                {slide1Images[number] === "" ? (
+                  ""
+                ) : (
+                  // eslint-disable-next-line jsx-a11y/iframe-has-title
+                  <img
+                    className={style.iframe}
+                    src={slide1Images[number]}
+                    alt="https://drive.google.com/file/d/1bTG-dxY0hCeP6ZFujxPDZQY83vj1iqR9/preview"
+                  />
+                )}
+                {slide2Images[number] === "" ? (
+                  ""
+                ) : (
+                  // eslint-disable-next-line jsx-a11y/iframe-has-title
+                  <img
+                    className={style.iframe}
+                    src={slide2Images[number]}
+                    alt="https://drive.google.com/file/d/1bTG-dxY0hCeP6ZFujxPDZQY83vj1iqR9/preview"
+                  />
+                )}
+              </div>
+            )}
+            <div>
+              {number === 7 ? (
+                <Button className={style.playButton} onClick={() => setRoute("game")}>
+                  Play
+                </Button>
               ) : (
-                // eslint-disable-next-line jsx-a11y/iframe-has-title
-                <img
-                  className={style.iframe}
-                  src={slide1Images[number]}
-                  alt="https://drive.google.com/file/d/1bTG-dxY0hCeP6ZFujxPDZQY83vj1iqR9/preview"
-                />
-              )}
-              {slide2Images[number] === "" ? (
                 ""
-              ) : (
-                // eslint-disable-next-line jsx-a11y/iframe-has-title
-                <img
-                  className={style.iframe}
-                  src={slide2Images[number]}
-                  alt="https://drive.google.com/file/d/1bTG-dxY0hCeP6ZFujxPDZQY83vj1iqR9/preview"
-                />
               )}
             </div>
-          )}
-        </div>
-      ))}
-    </Slide>
-  );
-};
-
-const Tutorial1: React.FC<Tutorial1Props> = ({ setRoute }: Tutorial1Props) => {
+          </div>
+        ))}
+      </Slide>
+    );
+  };
   return (
     <div>
       {Slideshow()}
-      <Button className={myStyle().button} onClick={() => setRoute("home")}>
+      <Button className={style.button} onClick={() => setRoute("home")}>
         Back
       </Button>
     </div>
