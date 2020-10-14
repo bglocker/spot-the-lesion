@@ -2,11 +2,6 @@ import React, { useRef, useState } from "react";
 import { Button } from "@material-ui/core";
 
 const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
-  let hinted = false;
-  let clicked = false;
-  let correct = 0;
-  let ourCorrect = 0;
-  let total = 0;
   let timeOuts: NodeJS.Timeout[] = [];
   let countdown: NodeJS.Timeout;
   let timeRemaining = 10;
@@ -16,14 +11,17 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [countdownColor, setCountdownColor] = useState("#373737");
   const [timeRemainingDisplayValue, setTimeRemainingDisplayValue] = useState("10");
+  const [correct, setCorrect] = useState(0);
   const [displayCorrect, setDisplayCorrect] = useState(0);
+  const [ourCorrect, setOurCorrect] = useState(0);
   const [displayOurCorrect, setDisplayOurCorrect] = useState(0);
+  const [total, setTotal] = useState(0);
   const [displayTotal, setDisplayTotal] = useState(0);
   const [started, setStarted] = useState(false);
   const [truth, setTruth] = useState([]);
   const [predicted, setPredicted] = useState([]);
-
-  // todo: add seed for random
+  const [clicked, setClicked] = useState(false);
+  const [hinted, setHinted] = useState(false);
 
   const randomFileNumber = (): number => {
     const max = 4817;
@@ -116,7 +114,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     timeOuts.forEach((element) => {
       clearTimeout(element);
     });
-
     timeOuts = [];
   };
 
@@ -134,7 +131,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
-    clicked = true;
+    setClicked(true);
 
     drawTruth();
     stopTimer();
@@ -149,7 +146,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       truth[1] <= position.y &&
       position.y <= truth[3]
     ) {
-      correct += 1;
+      setCorrect(correct + 1);
       canvasContext.strokeStyle = "green";
     } else {
       canvasContext.strokeStyle = "red";
@@ -179,7 +176,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
-    hinted = true;
+    setHinted(true);
 
     const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
     const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
@@ -196,9 +193,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     resetState();
     updateScores();
 
-    clicked = false;
+    setClicked(false);
     timeRemaining = 10;
-    hinted = false;
+    setHinted(false);
     const id = randomFileNumber();
     const img = new Image();
 
@@ -210,7 +207,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         setPredicted(data.predicted);
 
         if (bbIntersectionOverUnion(truth, predicted) > 0.5) {
-          ourCorrect += 1;
+          setOurCorrect(ourCorrect + 1);
         }
       });
 
@@ -251,7 +248,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       timeRemaining -= 0.1;
     }, 100);
 
-    total += 1;
+    setTotal(total + 1);
   };
 
   const start = async () => {
