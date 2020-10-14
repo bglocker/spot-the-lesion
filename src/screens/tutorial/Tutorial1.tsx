@@ -39,33 +39,10 @@ const slideText = [
 
 const slideNo = [0, 1, 2, 3, 4, 5, 6, 7];
 
-const arrow = (degrees: number) => {
-  return (
-    <img
-      style={{ transform: `rotate(${degrees}deg)`, width: "3vw", margin: "1vw" }}
-      src="https://drive.google.com/uc?export=view&id=1bTG-dxY0hCeP6ZFujxPDZQY83vj1iqR9"
-      alt="https://drive.google.com/file/d/1bTG-dxY0hCeP6ZFujxPDZQY83vj1iqR9/preview"
-    />
-  );
-};
-
-const nextArrow = () => {
-  return arrow(0);
-};
-
-const prevArrow = () => {
-  return arrow(180);
-};
-
 const properties = {
   duration: 1000000,
   transitionDuration: 500,
-  indicators: true,
-  arrows: true,
-  height: "90vh",
-  infinite: false,
-  nextArrow: nextArrow(),
-  prevArrow: prevArrow(),
+  arrows: false,
 };
 
 const myStyle = makeStyles({
@@ -98,6 +75,8 @@ const myStyle = makeStyles({
     borderColor: "black",
     borderWidth: "5px",
     borderStyle: "solid",
+    marginLeft: "4.75vw",
+    marginRight: "4.75vw",
   },
   smallDiv: {
     height: "5vh",
