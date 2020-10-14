@@ -1,102 +1,109 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { Button, ButtonGroup, Container, Grid } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
-import { Button, Container } from "@material-ui/core";
-import logo from "./logo.png";
+import logo from "./logo.gif";
 import scan from "./ct-scan.png";
 import brain from "./brain.png";
 
 const useStyles = makeStyles({
-  root: {
-    background: "#0063B2FF",
-    borderRadius: 50,
+  button: {
+    background: "#07575B",
+    borderRadius: 25,
+    borderColor: "black",
+    borderWidth: 10,
     color: "white",
-    height: 100,
-    width: 1000,
-    fontSize: 36,
     fontFamily: "segoe UI",
     fontWeight: "bold",
+    marginTop: "2vh",
   },
   container: {
-    height: "100vh",
+    width: "100vw",
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
   },
-  containerLeftImage: {
-    height: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "left",
-    position: "absolute",
-    left: "200px",
-    top: "100px",
-    transform: "rotate(330deg)",
+  logo: {
+    marginTop: "1vh",
+    width: "auto",
+    height: "500px",
   },
-  containerRightImage: {
-    height: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    position: "absolute",
-    right: "10px",
-    top: "285px",
-    transform: "rotate(45deg)",
+  visible: {
+    width: "300px",
+    height: "auto",
+    display: "block",
+  },
+  invisible: {
+    display: "none",
   },
 });
 
 const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
   const styles = useStyles();
+  const minWidth = 2017;
+  const [fullWidth, setFullWidth] = useState(window.innerWidth > minWidth);
+
+  useEffect(() => {
+    window.addEventListener(
+      "resize",
+      () => {
+        const newFullWidth: boolean = window.innerWidth > minWidth;
+        setFullWidth(newFullWidth);
+      },
+      false
+    );
+  }, [fullWidth]);
+
   return (
-    <div
-      style={{
-        backgroundColor: "#9CC3D5FF",
-      }}
-    >
-      <Container className={styles.container}>
-        <Container className={styles.containerLeftImage}>
-          <div>
-            <img width="500" height="500" src={scan} alt="this is a logo" />
-          </div>
-        </Container>
-        <Container className={styles.container}>
-          <div>
-            <img width="700" height="750" src={logo} alt="this is a logo" />
-          </div>
-          <br />
-          <br />
-          <br />
-          <Button className={styles.root} onClick={() => setRoute("game")}>
+    <Container className={styles.container}>
+      <img className={styles.logo} src={logo} alt="Spot the Lesion Logo" />
+      <Grid container direction="row" justify="space-evenly" alignItems="center">
+        <img
+          className={fullWidth ? styles.visible : styles.invisible}
+          src={scan}
+          alt="Scanner.png"
+        />
+        <ButtonGroup orientation="vertical">
+          <Button
+            variant="contained"
+            size="large"
+            className={styles.button}
+            onClick={() => setRoute("game")}
+          >
             Play
           </Button>
-          <br />
-          <div>
-            <Button className={styles.root} onClick={() => setRoute("tutorial1")}>
-              How to Play
-            </Button>
-          </div>
-          <br />
-          <div>
-            <Button className={styles.root} onClick={() => setRoute("about")}>
-              About CT Scans
-            </Button>
-          </div>
-          <br />
-          <div>
-            <Button className={styles.root} onClick={() => setRoute("credits")}>
-              Credits
-            </Button>
-          </div>
-        </Container>
-        <Container className={styles.containerRightImage}>
-          <div>
-            <img width="500" height="500" src={brain} alt="this is a logo" />
-          </div>
-        </Container>
-      </Container>
-    </div>
+          <Button
+            variant="contained"
+            size="large"
+            className={styles.button}
+            onClick={() => setRoute("tutorial1")}
+          >
+            How to Play
+          </Button>
+          <Button
+            variant="contained"
+            size="large"
+            className={styles.button}
+            onClick={() => setRoute("about")}
+          >
+            About CT Scans
+          </Button>
+          <Button
+            variant="contained"
+            size="large"
+            className={styles.button}
+            onClick={() => setRoute("credits")}
+          >
+            Credits
+          </Button>
+        </ButtonGroup>
+        <img
+          className={fullWidth ? styles.visible : styles.invisible}
+          src={brain}
+          alt="Brain.png"
+        />
+      </Grid>
+    </Container>
   );
 };
 
