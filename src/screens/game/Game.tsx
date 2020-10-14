@@ -4,8 +4,6 @@ import { Button } from "@material-ui/core";
 const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   let hinted = false;
   let clicked = false;
-  let truth: number[];
-  let predicted: number[];
   let correct = 0;
   let ourCorrect = 0;
   let total = 0;
@@ -22,6 +20,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [displayOurCorrect, setDisplayOurCorrect] = useState(0);
   const [displayTotal, setDisplayTotal] = useState(0);
   const [started, setStarted] = useState(false);
+  const [truth, setTruth] = useState([]);
+  const [predicted, setPredicted] = useState([]);
 
   // todo: add seed for random
 
@@ -120,7 +120,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     timeOuts = [];
   };
 
-  const onCanvasClick = (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+  const onCanvasClick = async (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
     if (!canvasRef.current) {
       return;
     }
@@ -198,11 +198,23 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     clicked = false;
     timeRemaining = 10;
-
     hinted = false;
     const id = randomFileNumber();
     const img = new Image();
 
+    // Retrieve annotations
+    await fetch(`${process.env.PUBLIC_URL}/content/annotation/${id}.json`)
+      .then((res) => res.json())
+      .then((data) => {
+        setTruth(data.truth);
+        setPredicted(data.predicted);
+
+        if (bbIntersectionOverUnion(truth, predicted) > 0.5) {
+          ourCorrect += 1;
+        }
+      });
+
+    // Build the image
     img.src = `${process.env.PUBLIC_URL}/content/images/${id}.png`;
     img.onload = () => {
       if (!canvasRef.current) {
@@ -217,17 +229,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       canvasContext.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
       canvasContext.drawImage(img, 0, 0, canvasRef.current.width, canvasRef.current.height);
     };
-
-    await fetch(`${process.env.PUBLIC_URL}/content/annotation/${id}.json`)
-      .then((res) => res.json())
-      .then((data) => {
-        truth = data.truth;
-        predicted = data.predicted;
-
-        if (bbIntersectionOverUnion(truth, predicted) > 0.5) {
-          ourCorrect += 1;
-        }
-      });
 
     timeOuts.push(setTimeout(() => drawHint(), 5000));
     timeOuts.push(setTimeout(() => drawTruth(), 10000));
@@ -253,13 +254,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     total += 1;
   };
 
-  const start = () => {
+  const start = async () => {
     if (started) {
       return;
     }
 
     setStarted(true);
-    loadRandomImage();
+    await loadRandomImage();
   };
 
   return (
@@ -275,8 +276,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
             </div>
             <div id="main">
               <canvas
-                onClick={(event) => onCanvasClick(event)}
                 ref={canvasRef}
+                onClick={(event) => onCanvasClick(event)}
                 id="canvas"
                 width="512px"
                 height="512px"
