@@ -5,7 +5,7 @@ import logo from "./logo.png";
 import scan from "./ct-scan.png";
 import brain from "./brain.png";
 
-const useStyles = makeStyles({
+const useStyles = makeStyles((style) => ({
   logoStyle: {
     alignItems: "center",
     marginTop: "5vh",
@@ -22,6 +22,7 @@ const useStyles = makeStyles({
     fontFamily: "segoe UI",
     fontWeight: "bold",
     marginTop: "2vh",
+    margin: style.spacing(1),
   },
   container: {
     height: "100vh",
@@ -52,7 +53,7 @@ const useStyles = makeStyles({
     marginTop: "25vh",
     transform: "rotate(45deg)",
   },
-});
+}));
 
 const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
   const styles = useStyles();
