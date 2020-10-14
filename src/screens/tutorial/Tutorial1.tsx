@@ -89,6 +89,7 @@ const myStyle = makeStyles({
 const Slideshow = () => {
   const style = myStyle();
   return (
+    // eslint-disable-next-line react/jsx-props-no-spreading
     <Slide {...properties}>
       {slideNo.map((number) => (
         <div className={`${style.white} each-slide ${style.center}`} key={number}>
@@ -102,11 +103,13 @@ const Slideshow = () => {
               {slide1Images[number] === "" ? (
                 ""
               ) : (
+                // eslint-disable-next-line jsx-a11y/iframe-has-title
                 <iframe className={style.iframe} src={slide1Images[number]} />
               )}
               {slide2Images[number] === "" ? (
                 ""
               ) : (
+                // eslint-disable-next-line jsx-a11y/iframe-has-title
                 <iframe className={style.iframe} src={slide2Images[number]} />
               )}
             </div>
