@@ -2,7 +2,7 @@ import React from "react";
 import { Slide } from "react-slideshow-image";
 import "react-slideshow-image/dist/styles.css";
 import { makeStyles } from "@material-ui/styles";
-import { Button } from "@material-ui/core";
+import { Button, ButtonGroup } from "@material-ui/core";
 
 const slide1Images = [
   "",
@@ -39,11 +39,21 @@ const slideText = [
 
 const slideNo = [0, 1, 2, 3, 4, 5, 6, 7];
 
+const ArrowLeft = () => {
+  return <Button>Previous</Button>;
+};
+
+const ArrowRight = () => {
+  return <Button>Next</Button>;
+};
+
 const properties = {
   duration: 1000000,
   transitionDuration: 500,
-  arrows: false,
-  indicators: true,
+  arrows: true,
+  indicators: false,
+  nextArrow: ArrowRight(),
+  prevArrow: ArrowLeft(),
 };
 
 const myStyle = makeStyles({
@@ -94,9 +104,9 @@ const myStyle = makeStyles({
     fontSize: 40,
     fontFamily: "segoe UI",
     fontWeight: "bold",
-    marginTop: "2vh",
+    marginTop: "1vh",
     marginLeft: "4.5vw",
-    marginBottom: "5vh",
+    marginBottom: "2.8vh",
   },
   playButton: {
     background: "#07575B",
@@ -111,6 +121,9 @@ const myStyle = makeStyles({
     fontFamily: "segoe UI",
     fontWeight: "bold",
     alignItems: "center",
+  },
+  moveButtonGroup: {
+    marginLeft: "20vw",
   },
   centerImages: {
     display: "flex",
@@ -136,9 +149,8 @@ const Tutorial1: React.FC<Tutorial1Props> = ({ setRoute }: Tutorial1Props) => {
             ) : (
               <div className={style.centerImages}>
                 {slide1Images[number] === "" ? (
-                  ""
+                  "" // eslint-disable-next-line jsx-a11y/iframe-has-title
                 ) : (
-                  // eslint-disable-next-line jsx-a11y/iframe-has-title
                   <img
                     className={style.iframe}
                     src={slide1Images[number]}
@@ -146,9 +158,8 @@ const Tutorial1: React.FC<Tutorial1Props> = ({ setRoute }: Tutorial1Props) => {
                   />
                 )}
                 {slide2Images[number] === "" ? (
-                  ""
+                  "" // eslint-disable-next-line jsx-a11y/iframe-has-title
                 ) : (
-                  // eslint-disable-next-line jsx-a11y/iframe-has-title
                   <img
                     className={style.iframe}
                     src={slide2Images[number]}
@@ -177,6 +188,10 @@ const Tutorial1: React.FC<Tutorial1Props> = ({ setRoute }: Tutorial1Props) => {
       <Button className={style.button} onClick={() => setRoute("home")}>
         Back
       </Button>
+      <ButtonGroup className={style.moveButtonGroup}>
+        <Button className={style.playButton}>{"<"}</Button>
+        <Button className={style.playButton}>{">"}</Button>
+      </ButtonGroup>
     </div>
   );
 };
