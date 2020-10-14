@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Button } from "@material-ui/core";
 
 const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
@@ -15,8 +15,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const seen = new Set<number>();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  let canvas: HTMLCanvasElement | null;
-  let context: CanvasRenderingContext2D | null;
 
   const [countdownColor, setCountdownColor] = useState("#373737");
   const [timeRemainingDisplayValue, setTimeRemainingDisplayValue] = useState("10");
@@ -24,13 +22,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [displayOurCorrect, setDisplayOurCorrect] = useState(0);
   const [displayTotal, setDisplayTotal] = useState(0);
   const [started, setStarted] = useState(false);
-
-  useEffect(() => {
-    canvas = canvasRef.current;
-    if (canvas) {
-      context = canvas.getContext("2d");
-    }
-  }, []);
 
   // todo: add seed for random
 
@@ -67,45 +58,49 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   const drawTruth = () => {
-    if (context == null) {
+    if (!canvasRef.current) {
+      return;
+    }
+    const canvasContext = canvasRef.current.getContext("2d");
+
+    if (!canvasContext) {
       return;
     }
 
-    // Ground Truth
-    context.beginPath();
-    context.strokeStyle = "yellow";
-    context.lineWidth = 3;
-    context.rect(truth[0], truth[1], truth[2] - truth[0], truth[3] - truth[1]);
-    context.stroke();
+    canvasContext.beginPath();
+    canvasContext.strokeStyle = "yellow";
+    canvasContext.lineWidth = 3;
+    canvasContext.rect(truth[0], truth[1], truth[2] - truth[0], truth[3] - truth[1]);
+    canvasContext.stroke();
 
-    context.beginPath();
+    canvasContext.beginPath();
 
     if (bbIntersectionOverUnion(truth, predicted) > 0.5) {
-      context.strokeStyle = "green";
+      canvasContext.strokeStyle = "green";
     } else {
-      context.strokeStyle = "red";
+      canvasContext.strokeStyle = "red";
     }
 
-    context.lineWidth = 3;
-    context.rect(
+    canvasContext.lineWidth = 3;
+    canvasContext.rect(
       predicted[0],
       predicted[1],
       predicted[2] - predicted[0],
       predicted[3] - predicted[1]
     );
-    context.stroke();
+    canvasContext.stroke();
 
     updateScores();
   };
 
   const getMousePosition = (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
-    if (canvas == null) {
+    if (canvasRef.current == null) {
       return { x: 0, y: 0 };
     }
 
-    const rect = canvas.getBoundingClientRect(); // abs. size of element
-    const scaleX = canvas.width / rect.width; // relationship bitmap vs. element for X
-    const scaleY = canvas.height / rect.height; // relationship bitmap vs. element for Y
+    const rect = canvasRef.current.getBoundingClientRect(); // abs. size of element
+    const scaleX = canvasRef.current.width / rect.width; // relationship bitmap vs. element for X
+    const scaleY = canvasRef.current.height / rect.height; // relationship bitmap vs. element for Y
 
     return {
       x: (event.clientX - rect.left) * scaleX, // scale mouse coordinates after they have
@@ -126,6 +121,15 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   const onCanvasClick = (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+    if (!canvasRef.current) {
+      return;
+    }
+    const canvasContext = canvasRef.current.getContext("2d");
+
+    if (!canvasContext) {
+      return;
+    }
+
     if (timeRemaining <= 0 || clicked) {
       return;
     }
@@ -135,12 +139,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     drawTruth();
     stopTimer();
 
-    if (context == null) {
-      return;
-    }
-
-    // Cross for the mouse click
-    context.beginPath();
+    canvasContext.beginPath();
 
     const position = getMousePosition(event);
 
@@ -151,22 +150,31 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       position.y <= truth[3]
     ) {
       correct += 1;
-      context.strokeStyle = "green";
+      canvasContext.strokeStyle = "green";
     } else {
-      context.strokeStyle = "red";
+      canvasContext.strokeStyle = "red";
     }
 
-    context.moveTo(position.x - 5, position.y - 5);
-    context.lineTo(position.x + 5, position.y + 5);
-    context.moveTo(position.x + 5, position.y - 5);
-    context.lineTo(position.x - 5, position.y + 5);
-    context.stroke();
+    canvasContext.moveTo(position.x - 5, position.y - 5);
+    canvasContext.lineTo(position.x + 5, position.y + 5);
+    canvasContext.moveTo(position.x + 5, position.y - 5);
+    canvasContext.lineTo(position.x - 5, position.y + 5);
+    canvasContext.stroke();
 
     updateScores();
     resetState();
   };
 
   const drawHint = () => {
+    if (!canvasRef.current) {
+      return;
+    }
+    const canvasContext = canvasRef.current.getContext("2d");
+
+    if (!canvasContext) {
+      return;
+    }
+
     if (hinted) {
       return;
     }
@@ -176,18 +184,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
     const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
 
-    if (context == null) {
-      return;
-    }
-
-    context.beginPath();
-    context.strokeStyle = "red";
-    context.lineWidth = 2;
-    context.arc(x, y, 100, 0, 2 * Math.PI);
-    context.stroke();
+    canvasContext.beginPath();
+    canvasContext.strokeStyle = "red";
+    canvasContext.lineWidth = 2;
+    canvasContext.arc(x, y, 100, 0, 2 * Math.PI);
+    canvasContext.stroke();
   };
 
-  const loadRandomImage = () => {
+  const loadRandomImage = async () => {
     stopTimer();
     resetState();
     updateScores();
@@ -201,15 +205,20 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     img.src = `${process.env.PUBLIC_URL}/content/images/${id}.png`;
     img.onload = () => {
-      if (context == null || canvas == null) {
+      if (!canvasRef.current) {
+        return;
+      }
+      const canvasContext = canvasRef.current.getContext("2d");
+
+      if (!canvasContext) {
         return;
       }
 
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      context.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvasContext.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      canvasContext.drawImage(img, 0, 0, canvasRef.current.width, canvasRef.current.height);
     };
 
-    fetch(`${process.env.PUBLIC_URL}/content/annotation/${id}.json`)
+    await fetch(`${process.env.PUBLIC_URL}/content/annotation/${id}.json`)
       .then((res) => res.json())
       .then((data) => {
         truth = data.truth;
