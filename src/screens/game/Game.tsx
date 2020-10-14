@@ -199,6 +199,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const id = randomFileNumber();
     const img = new Image();
 
+    img.src = `${process.env.PUBLIC_URL}/content/images/${id}.png`;
     img.onload = () => {
       if (context == null || canvas == null) {
         return;
@@ -207,9 +208,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.drawImage(img, 0, 0, canvas.width, canvas.height);
     };
-    img.setAttribute("src", `src/screens/game/content/images/${id}.png`);
 
-    fetch(`content/annotation/${id}.json`)
+    fetch(`${process.env.PUBLIC_URL}/content/annotation/${id}.json`)
       .then((res) => res.json())
       .then((data) => {
         truth = data.truth;
@@ -261,24 +261,21 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       <div className="page-wrap">
         <div style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
           <div className="item" id="item-2">
-            {!started ? (
-              <div id="initial">
-                <Button onClick={() => start()}>Start</Button>
+            <div id="initial">
+              <Button onClick={() => start()}>Start</Button>
+            </div>
+            <div id="main">
+              <canvas
+                onClick={(event) => onCanvasClick(event)}
+                ref={canvasRef}
+                id="canvas"
+                width="512px"
+                height="512px"
+              />
+              <div style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                <Button onClick={() => loadRandomImage()}>Next</Button>
               </div>
-            ) : (
-              <div id="main">
-                <canvas
-                  onClick={(event) => onCanvasClick(event)}
-                  ref={canvasRef}
-                  id="canvas"
-                  width="512px"
-                  height="512px"
-                />
-                <div style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                  <Button onClick={() => loadRandomImage()}>Next</Button>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
 
           <div className="item sidebar" id="item-3">
