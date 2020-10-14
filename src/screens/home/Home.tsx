@@ -13,7 +13,7 @@ const useStyles = makeStyles((style) => ({
     justifyContent: "center",
   },
   root: {
-    background: "#0063b2",
+    background: "#07575B",
     borderRadius: 50,
     color: "white",
     height: 100,
@@ -31,28 +31,6 @@ const useStyles = makeStyles((style) => ({
     justifyContent: "center",
     alignItems: "center",
   },
-  containerLeftImage: {
-    height: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "left",
-    marginRight: "45vw",
-    position: "fixed",
-    marginTop: "5vh",
-    transform: "rotate(330deg)",
-  },
-  containerRightImage: {
-    height: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    marginLeft: "45vw",
-    position: "fixed",
-    marginTop: "25vh",
-    transform: "rotate(45deg)",
-  },
 }));
 
 const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
@@ -60,7 +38,7 @@ const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
   return (
     <div
       style={{
-        backgroundColor: "#9CC3D5FF",
+        backgroundColor: "#66A5AD",
       }}
     >
       <div className={styles.logoStyle}>
