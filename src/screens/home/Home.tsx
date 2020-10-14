@@ -34,7 +34,7 @@ const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
         <div className={windowFitsWidth ? styles.visible : styles.invisible}>
           <img width="500" height="500" src={scan} alt="this is a logo" />
         </div>
-        <ButtonGroup className={styles.buttonGroup} orientation="vertical">
+        <ButtonGroup orientation="vertical">
           <Button className={styles.button} onClick={() => setRoute("game")}>
             Play
           </Button>

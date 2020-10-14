@@ -2,7 +2,7 @@ import React from "react";
 import { Slide } from "react-slideshow-image";
 import "react-slideshow-image/dist/styles.css";
 import { makeStyles } from "@material-ui/styles";
-import { Button, ButtonGroup } from "@material-ui/core";
+import { Button } from "@material-ui/core";
 
 const slide1Images = [
   "",
@@ -38,23 +38,6 @@ const slideText = [
 ];
 
 const slideNo = [0, 1, 2, 3, 4, 5, 6, 7];
-
-const ArrowLeft = () => {
-  return <Button>Previous</Button>;
-};
-
-const ArrowRight = () => {
-  return <Button>Next</Button>;
-};
-
-const properties = {
-  duration: 1000000,
-  transitionDuration: 500,
-  arrows: true,
-  indicators: false,
-  nextArrow: ArrowRight(),
-  prevArrow: ArrowLeft(),
-};
 
 const myStyle = makeStyles({
   iframe: {
@@ -108,22 +91,23 @@ const myStyle = makeStyles({
     marginLeft: "4.5vw",
     marginBottom: "2.8vh",
   },
-  playButton: {
-    background: "#07575B",
-    borderRadius: 25,
-    borderColor: "black",
-    borderWidth: 8,
-    borderStyle: "solid",
-    color: "white",
-    height: 200,
-    width: 500,
-    fontSize: 40,
-    fontFamily: "segoe UI",
-    fontWeight: "bold",
+  centeredButton: {
     alignItems: "center",
   },
   moveButtonGroup: {
     marginLeft: "20vw",
+  },
+  arrowLeftButton: {
+    position: "absolute",
+    marginBottom: "5vh",
+    marginLeft: "38vw",
+    marginTop: "105vh",
+  },
+  arrowRightButton: {
+    position: "absolute",
+    marginBottom: "5vh",
+    marginLeft: "50vw",
+    marginTop: "105vh",
   },
   centerImages: {
     display: "flex",
@@ -135,6 +119,38 @@ const myStyle = makeStyles({
 
 const Tutorial1: React.FC<Tutorial1Props> = ({ setRoute }: Tutorial1Props) => {
   const style = myStyle();
+
+  const ArrowLeft = () => {
+    return (
+      <Button
+        className={`${style.button}
+                    ${style.arrowLeftButton}`}
+      >
+        {"<"}
+      </Button>
+    );
+  };
+
+  const ArrowRight = () => {
+    return (
+      <Button
+        className={`${style.button}
+                    ${style.arrowRightButton}`}
+      >
+        {">"}
+      </Button>
+    );
+  };
+
+  const properties = {
+    duration: 1000000,
+    transitionDuration: 500,
+    arrows: true,
+    indicators: true,
+    nextArrow: ArrowRight(),
+    prevArrow: ArrowLeft(),
+  };
+
   const Slideshow = () => {
     return (
       // eslint-disable-next-line react/jsx-props-no-spreading
@@ -170,7 +186,11 @@ const Tutorial1: React.FC<Tutorial1Props> = ({ setRoute }: Tutorial1Props) => {
             )}
             <div>
               {number === 7 ? (
-                <Button className={style.playButton} onClick={() => setRoute("game")}>
+                <Button
+                  className={`${style.button}
+                              ${style.centeredButton}`}
+                  onClick={() => setRoute("game")}
+                >
                   Play
                 </Button>
               ) : (
@@ -188,10 +208,6 @@ const Tutorial1: React.FC<Tutorial1Props> = ({ setRoute }: Tutorial1Props) => {
       <Button className={style.button} onClick={() => setRoute("home")}>
         Back
       </Button>
-      <ButtonGroup className={style.moveButtonGroup}>
-        <Button className={style.playButton}>{"<"}</Button>
-        <Button className={style.playButton}>{">"}</Button>
-      </ButtonGroup>
     </div>
   );
 };

@@ -7,9 +7,6 @@ const useStyles = makeStyles({
     display: "flex",
     justifyContent: "center",
   },
-  buttonGroup: {
-    // paddingBottom: "30vh",
-  },
   button: {
     background: "#07575B",
     borderRadius: 25,
