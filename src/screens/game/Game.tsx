@@ -24,7 +24,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [hinted, setHinted] = useState(false);
 
   const randomFileNumber = (): number => {
-    const max = 4817;
+    const max = 4723;
     const value = Math.round(Math.random() * max);
 
     if (seen.has(value)) {
