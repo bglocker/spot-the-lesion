@@ -2,38 +2,22 @@ import React, { useRef, useState } from "react";
 import { Button } from "@material-ui/core";
 
 const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
-  let timeOuts: NodeJS.Timeout[] = [];
-  let countdown: NodeJS.Timeout;
   let timeRemaining = 10;
-  const seen = new Set<number>();
+  const seenFiles = new Set<number>();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const [timeouts, setTimeouts] = useState<number[]>([]);
+  const [countdown, setCountdown] = useState(0);
   const [countdownColor, setCountdownColor] = useState("#373737");
   const [timeRemainingDisplayValue, setTimeRemainingDisplayValue] = useState("10");
   const [correct, setCorrect] = useState(0);
-  const [displayCorrect, setDisplayCorrect] = useState(0);
   const [ourCorrect, setOurCorrect] = useState(0);
-  const [displayOurCorrect, setDisplayOurCorrect] = useState(0);
   const [total, setTotal] = useState(0);
-  const [displayTotal, setDisplayTotal] = useState(0);
-  const [started, setStarted] = useState(false);
-  const [truth, setTruth] = useState([]);
-  const [predicted, setPredicted] = useState([]);
+  const [truth, setTruth] = useState<number[]>([]);
+  const [predicted, setPredicted] = useState<number[]>([]);
   const [clicked, setClicked] = useState(false);
   const [hinted, setHinted] = useState(false);
-
-  const randomFileNumber = (): number => {
-    const max = 4723;
-    const value = Math.round(Math.random() * max);
-
-    if (seen.has(value)) {
-      return randomFileNumber();
-    }
-
-    seen.add(value);
-    return value;
-  };
 
   const bbIntersectionOverUnion = (boxA: number[], boxB: number[]): number => {
     const xA = Math.max(boxA[0], boxB[0]);
@@ -49,126 +33,53 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     return interArea / (boxAArea + boxBArea - interArea);
   };
 
-  const updateScores = () => {
-    setDisplayCorrect(correct);
-    setDisplayOurCorrect(ourCorrect);
-    setDisplayTotal(total);
+  const clearTimeouts = () => {
+    timeouts.forEach((element) => {
+      clearTimeout(element);
+    });
+    setTimeouts([]);
   };
 
   const drawTruth = () => {
-    if (!canvasRef.current) {
-      return;
-    }
-    const canvasContext = canvasRef.current.getContext("2d");
-
-    if (!canvasContext) {
+    if (canvasRef.current == null) {
       return;
     }
 
-    canvasContext.beginPath();
-    canvasContext.strokeStyle = "yellow";
-    canvasContext.lineWidth = 3;
-    canvasContext.rect(truth[0], truth[1], truth[2] - truth[0], truth[3] - truth[1]);
-    canvasContext.stroke();
+    const context = canvasRef.current.getContext("2d");
+    if (context == null) {
+      return;
+    }
 
-    canvasContext.beginPath();
+    context.beginPath();
+    context.strokeStyle = "yellow";
+    context.lineWidth = 3;
+    context.rect(truth[0], truth[1], truth[2] - truth[0], truth[3] - truth[1]);
+    context.stroke();
 
     if (bbIntersectionOverUnion(truth, predicted) > 0.5) {
-      canvasContext.strokeStyle = "green";
+      context.strokeStyle = "green";
     } else {
-      canvasContext.strokeStyle = "red";
+      context.strokeStyle = "red";
     }
 
-    canvasContext.lineWidth = 3;
-    canvasContext.rect(
+    context.lineWidth = 3;
+    context.beginPath();
+    context.rect(
       predicted[0],
       predicted[1],
       predicted[2] - predicted[0],
       predicted[3] - predicted[1]
     );
-    canvasContext.stroke();
-
-    updateScores();
-  };
-
-  const getMousePosition = (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
-    if (canvasRef.current == null) {
-      return { x: 0, y: 0 };
-    }
-
-    const rect = canvasRef.current.getBoundingClientRect(); // abs. size of element
-    const scaleX = canvasRef.current.width / rect.width; // relationship bitmap vs. element for X
-    const scaleY = canvasRef.current.height / rect.height; // relationship bitmap vs. element for Y
-
-    return {
-      x: (event.clientX - rect.left) * scaleX, // scale mouse coordinates after they have
-      y: (event.clientY - rect.top) * scaleY, // been adjusted to be relative to element
-    };
-  };
-
-  const stopTimer = () => {
-    clearInterval(countdown);
-  };
-
-  const resetState = () => {
-    timeOuts.forEach((element) => {
-      clearTimeout(element);
-    });
-    timeOuts = [];
-  };
-
-  const onCanvasClick = async (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
-    if (!canvasRef.current) {
-      return;
-    }
-    const canvasContext = canvasRef.current.getContext("2d");
-
-    if (!canvasContext) {
-      return;
-    }
-
-    if (timeRemaining <= 0 || clicked) {
-      return;
-    }
-
-    setClicked(true);
-
-    drawTruth();
-    stopTimer();
-
-    canvasContext.beginPath();
-
-    const position = getMousePosition(event);
-
-    if (
-      truth[0] <= position.x &&
-      position.x <= truth[2] &&
-      truth[1] <= position.y &&
-      position.y <= truth[3]
-    ) {
-      setCorrect(correct + 1);
-      canvasContext.strokeStyle = "green";
-    } else {
-      canvasContext.strokeStyle = "red";
-    }
-
-    canvasContext.moveTo(position.x - 5, position.y - 5);
-    canvasContext.lineTo(position.x + 5, position.y + 5);
-    canvasContext.moveTo(position.x + 5, position.y - 5);
-    canvasContext.lineTo(position.x - 5, position.y + 5);
-    canvasContext.stroke();
-
-    updateScores();
-    resetState();
+    context.stroke();
   };
 
   const drawHint = () => {
-    if (!canvasRef.current) {
+    if (canvasRef.current == null) {
       return;
     }
-    const canvasContext = canvasRef.current.getContext("2d");
 
-    if (!canvasContext) {
+    const context = canvasRef.current.getContext("2d");
+    if (context == null) {
       return;
     }
 
@@ -181,23 +92,97 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
     const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
 
-    canvasContext.beginPath();
-    canvasContext.strokeStyle = "red";
-    canvasContext.lineWidth = 2;
-    canvasContext.arc(x, y, 100, 0, 2 * Math.PI);
-    canvasContext.stroke();
+    context.beginPath();
+    context.strokeStyle = "red";
+    context.lineWidth = 2;
+    context.arc(x, y, 100, 0, 2 * Math.PI);
+    context.stroke();
   };
 
-  const loadRandomImage = async () => {
+  const stopTimer = () => {
+    clearInterval(countdown);
+  };
+
+  const getMousePosition = (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+    const canvas = canvasRef.current;
+    if (canvas == null) {
+      return { x: 0, y: 0 };
+    }
+
+    const rect = canvas.getBoundingClientRect(); // abs. size of element
+    const scaleX = canvas.width / rect.width; // relationship bitmap vs. element for X
+    const scaleY = canvas.height / rect.height; // relationship bitmap vs. element for Y
+
+    return {
+      x: (event.clientX - rect.left) * scaleX, // scale mouse coordinates after they have
+      y: (event.clientY - rect.top) * scaleY, // been adjusted to be relative to element
+    };
+  };
+
+  const onCanvasClick = async (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+    if (canvasRef.current == null) {
+      return;
+    }
+
+    const context = canvasRef.current.getContext("2d");
+    if (context == null) {
+      return;
+    }
+
+    if (timeRemaining <= 0 || clicked) {
+      return;
+    }
+
+    setClicked(true);
+
+    drawTruth();
     stopTimer();
-    resetState();
-    updateScores();
+
+    const position = getMousePosition(event);
+
+    if (
+      truth[0] <= position.x &&
+      position.x <= truth[2] &&
+      truth[1] <= position.y &&
+      position.y <= truth[3]
+    ) {
+      setCorrect((prevState) => prevState + 1);
+      context.strokeStyle = "green";
+    } else {
+      context.strokeStyle = "red";
+    }
+
+    context.beginPath();
+    context.moveTo(position.x - 5, position.y - 5);
+    context.lineTo(position.x + 5, position.y + 5);
+    context.moveTo(position.x + 5, position.y - 5);
+    context.lineTo(position.x - 5, position.y + 5);
+    context.stroke();
+
+    clearTimeouts();
+  };
+
+  const getNewFileNumber = (): number => {
+    const max = 4723;
+    const newFileNumber = Math.round(Math.random() * max);
+
+    if (seenFiles.has(newFileNumber)) {
+      return getNewFileNumber();
+    }
+
+    seenFiles.add(newFileNumber);
+
+    return newFileNumber;
+  };
+
+  const loadNewImage = async () => {
+    stopTimer();
+    clearTimeouts();
 
     setClicked(false);
     timeRemaining = 10;
     setHinted(false);
-    const id = randomFileNumber();
-    const img = new Image();
+    const id = getNewFileNumber();
 
     // Retrieve annotations
     await fetch(`${process.env.PUBLIC_URL}/content/annotation/${id}.json`)
@@ -212,95 +197,87 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       });
 
     // Build the image
+    const img = new Image();
     img.src = `${process.env.PUBLIC_URL}/content/images/${id}.png`;
     img.onload = () => {
-      if (!canvasRef.current) {
+      const canvas = canvasRef.current;
+      if (canvas == null) {
         return;
       }
-      const canvasContext = canvasRef.current.getContext("2d");
 
+      const canvasContext = canvas.getContext("2d");
       if (!canvasContext) {
         return;
       }
 
-      canvasContext.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      canvasContext.drawImage(img, 0, 0, canvasRef.current.width, canvasRef.current.height);
+      canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+      canvasContext.drawImage(img, 0, 0, canvas.width, canvas.height);
     };
 
-    timeOuts.push(setTimeout(() => drawHint(), 5000));
-    timeOuts.push(setTimeout(() => drawTruth(), 10000));
+    const hintTimeout = window.setTimeout(drawHint, 5000);
+    const truthTimeout = window.setTimeout(drawTruth, 10000);
+    setTimeouts((prevState) => [...prevState, hintTimeout, truthTimeout]);
 
-    countdown = setInterval(() => {
-      if (timeRemaining <= 0) {
-        clearInterval(countdown);
-      } else {
-        setTimeRemainingDisplayValue((Math.round(timeRemaining * 10) / 10).toFixed(1));
-
-        if (timeRemaining > 5) {
-          setCountdownColor("#373737");
-        } else if (timeRemaining > 2) {
-          setCountdownColor("orange");
+    setCountdown(
+      window.setInterval(() => {
+        if (timeRemaining <= 0) {
+          clearInterval(countdown);
         } else {
-          setCountdownColor("red");
+          setTimeRemainingDisplayValue(timeRemaining.toFixed(1));
+
+          if (timeRemaining > 5) {
+            setCountdownColor("#373737");
+          } else if (timeRemaining > 2) {
+            setCountdownColor("orange");
+          } else {
+            setCountdownColor("red");
+          }
         }
-      }
 
-      timeRemaining -= 0.1;
-    }, 100);
+        timeRemaining -= 0.1;
+      }, 100)
+    );
 
-    setTotal(total + 1);
+    setTotal((prevState) => prevState + 1);
   };
 
-  const start = async () => {
-    if (started) {
-      return;
-    }
+  const onStartClick = async () => {
+    await loadNewImage();
+  };
 
-    setStarted(true);
-    await loadRandomImage();
+  const onNextClick = async () => {
+    await loadNewImage();
   };
 
   return (
     <div>
       <p>Game</p>
+
       <Button onClick={() => setRoute("home")}>Back</Button>
 
-      <div className="page-wrap">
-        <div style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-          <div className="item" id="item-2">
-            <div id="initial">
-              <Button onClick={() => start()}>Start</Button>
-            </div>
-            <div id="main">
-              <canvas
-                ref={canvasRef}
-                onClick={(event) => onCanvasClick(event)}
-                id="canvas"
-                width="512px"
-                height="512px"
-              />
-              <div style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <Button onClick={() => loadRandomImage()}>Next</Button>
-              </div>
-            </div>
-          </div>
+      <div style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
+        <div>
+          <Button onClick={onStartClick}>Start</Button>
+        </div>
 
-          <div className="item sidebar" id="item-3">
-            <h3 id="countdown" style={{ color: countdownColor }}>
-              Time remaining: {timeRemainingDisplayValue}s
-            </h3>
+        <div style={{ borderStyle: "solid" }}>
+          <canvas ref={canvasRef} onClick={onCanvasClick} width="512px" height="512px" />
 
-            <h3>Results</h3>
-            <h4>
-              <div id="correct">Correct (you): {displayCorrect}</div>
-            </h4>
-            <h4>
-              <div id="ourCorrect">Correct (AI): {displayOurCorrect}</div>
-            </h4>
-            <h4>
-              <div id="total">Total Scans: {displayTotal}</div>
-            </h4>
+          <div>
+            <Button onClick={onNextClick}>Next</Button>
           </div>
+        </div>
+
+        <div>
+          <h3 style={{ color: countdownColor }}>Time remaining: {timeRemainingDisplayValue}s</h3>
+
+          <h3>Results</h3>
+
+          <h4>Correct (you): {correct}</h4>
+
+          <h4>Correct (AI): {ourCorrect}</h4>
+
+          <h4>Total Scans: {total}</h4>
         </div>
       </div>
     </div>
