@@ -2,6 +2,7 @@ import React from "react";
 import { Slide } from "react-slideshow-image";
 import "react-slideshow-image/dist/styles.css";
 import { makeStyles } from "@material-ui/styles";
+import { Button } from "@material-ui/core";
 
 const slide1Images = [
   "",
@@ -90,7 +91,7 @@ const myStyle = makeStyles({
     height: "10vh",
   },
   white: {
-    margin: "3vh",
+    marginTop: "5vh",
     backgroundColor: "white",
     height: "80vh",
     borderRadius: 25,
@@ -102,16 +103,20 @@ const myStyle = makeStyles({
     height: "5vh",
   },
   button: {
-    background: "black",
-    borderRadius: 50,
+    background: "#07575B",
+    borderRadius: 25,
+    borderColor: "black",
+    borderWidth: 8,
+    borderStyle: "solid",
     color: "white",
-    height: "5vh",
-    width: "10vw",
+    height: 200,
+    width: 500,
+    fontSize: 40,
     fontFamily: "segoe UI",
     fontWeight: "bold",
-    position: "absolute",
-    bottom: "1vh",
-    left: "1vw",
+    marginTop: "2vh",
+    marginLeft: "4.5vw",
+    marginBottom: "5vh",
   },
   centerImages: {
     display: "flex",
@@ -167,9 +172,9 @@ const Tutorial1: React.FC<Tutorial1Props> = ({ setRoute }: Tutorial1Props) => {
   return (
     <div>
       {Slideshow()}
-      <button className={myStyle().button} type="button" onClick={() => setRoute("home")}>
+      <Button className={myStyle().button} onClick={() => setRoute("home")}>
         Back
-      </button>
+      </Button>
     </div>
   );
 };
