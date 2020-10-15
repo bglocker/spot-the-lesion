@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Slide, SlideProps } from "@material-ui/core";
+import { Button, Slide, SlideProps } from "@material-ui/core";
 import TutorialCard from "./card/TutorialCard";
 
 // const slide1Images = [
@@ -242,11 +242,15 @@ const Tutorial: React.FC<TutorialProps> = ({ setBackButton }: TutorialProps) => 
   setBackButton(true);
 
   return (
-    <Slide in={slideIn} direction={slideDirection}>
-      <div>
-        <TutorialCard textContent={textContent} />
-      </div>
-    </Slide>
+    <div>
+      <Slide in={slideIn} direction={slideDirection}>
+        <div>
+          <TutorialCard textContent={textContent} />
+        </div>
+      </Slide>
+      <Button onClick={() => onArrowClick("left")}>Left</Button>
+      <Button onClick={() => onArrowClick("right")}>Right</Button>
+    </div>
   );
 };
 
