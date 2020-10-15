@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Button, Slide, SlideProps } from "@material-ui/core";
-import { ArrowBackIos, ArrowForwardIos } from "@material-ui/icons";
+import { Button, Slide, SlideProps, Grid } from "@material-ui/core";
+import { ArrowBack, ArrowForward } from "@material-ui/icons";
 import { makeStyles } from "@material-ui/styles";
 import TutorialCard from "./card/TutorialCard";
 
@@ -23,6 +23,7 @@ const slideImages = [
 
 const myStyle = makeStyles({
   white: {
+    marginTop: "2vh",
     backgroundColor: "white",
     height: "80vh",
     borderRadius: 25,
@@ -43,8 +44,14 @@ const myStyle = makeStyles({
     position: "fixed",
   },
   centeredButton: {
-    marginLeft: "5vw",
-    alignItems: "center",
+    background: "#07575B",
+    borderRadius: "calc((2vw + 2vh)/2)",
+    color: "white",
+    height: "10vh",
+    width: "30vw",
+    fontSize: "calc((2vw + 2vh)/2)",
+    fontFamily: "segoe UI",
+    marginTop: "15vh",
   },
   moveButtonGroup: {
     marginLeft: "20vw",
@@ -264,35 +271,33 @@ const Tutorial: React.FC<TutorialProps> = ({ setRoute, setBackButton }: Tutorial
     <div>
       <Slide in={slideIn} direction={slideDirection}>
         <div className={styles.white}>
-          <TutorialCard textContent={textContent} imageLink={imageContent} />
-          {index === 7 ? (
-            <Button
-              className={`${styles.button}
-                          ${styles.centeredButton}`}
-              onClick={() => setRoute("game")}
-            >
-              Play
-            </Button>
-          ) : (
-            ""
-          )}
+          <Grid container direction="column" justify="space-around" alignItems="center">
+            <TutorialCard textContent={textContent} imageLink={imageContent} />
+            {index === 7 ? (
+              <Button className={`${styles.centeredButton}`} onClick={() => setRoute("game")}>
+                Play
+              </Button>
+            ) : (
+              ""
+            )}
+          </Grid>
         </div>
       </Slide>
       <Button onClick={() => onArrowClick("left")}>
-        <ArrowBackIos
+        <ArrowBack
           className={`${styles.button}
                       ${styles.arrowLeftButton}`}
         >
           Prev
-        </ArrowBackIos>
+        </ArrowBack>
       </Button>
       <Button onClick={() => onArrowClick("right")}>
-        <ArrowForwardIos
+        <ArrowForward
           className={`${styles.button}
                       ${styles.arrowRightButton}`}
         >
           Next
-        </ArrowForwardIos>
+        </ArrowForward>
       </Button>
     </div>
   );
