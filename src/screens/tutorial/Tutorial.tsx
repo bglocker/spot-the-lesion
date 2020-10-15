@@ -3,21 +3,23 @@ import { Button, Slide, SlideProps, Grid, ButtonGroup } from "@material-ui/core"
 import { ArrowBack, ArrowForward } from "@material-ui/icons";
 import { makeStyles } from "@material-ui/styles";
 import TutorialCard from "./card/TutorialCard";
+import doctor from "./images/doctor.png";
+import start_screen from "./images/start screen.png";
+import help from "./images/help.png";
+import wrong_click from "./images/wrong click.png";
+import right_click from "./images/right click.png";
+import wrong_ai from "./images/wrong ai.png";
+import right_ai from "./images/right ai.png";
+import actual_lesion from "./images/actual lesion.png";
 
 const slideImages = [
-  ["", ""],
-  ["https://drive.google.com/uc?export=view&id=109Icr7RZnYFO5WjkjeXWsy3bD1S3iE7x", ""],
-  ["https://drive.google.com/uc?export=view&id=109Icr7RZnYFO5WjkjeXWsy3bD1S3iE7x", ""],
-  ["https://drive.google.com/uc?export=view&id=1zUiZsLTjVAyPTrmppFVojLedWsZsRUjK", ""],
-  [
-    "https://drive.google.com/uc?export=view&id=1Z6mNsPSHeDxUeOfF1qgAhGHlsaM-X00_",
-    "https://drive.google.com/uc?export=view&id=1brdT9MTCpdG9Pn-i5GQFZe7quld4gIBw",
-  ],
-  [
-    "https://drive.google.com/uc?export=view&id=1j04ZbODp1vkfTjCHddkWlZjoI4rZsNsn",
-    "https://drive.google.com/uc?export=view&id=15FtUQagj-e6sQsX22bFjrLkosfHCPCMm",
-  ],
-  ["https://drive.google.com/uc?export=view&id=126hJMQ-Q34rrEgsnzAQaGwTCsMAG6yAE", ""],
+  [doctor, ""],
+  [start_screen, ""],
+  [start_screen, ""],
+  [help, ""],
+  [wrong_click, right_click],
+  [wrong_ai, right_ai],
+  [actual_lesion, ""],
   ["", ""],
 ];
 
