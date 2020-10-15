@@ -2,16 +2,16 @@ import React, { useEffect, useState } from "react";
 import { Button, Slide, SlideProps } from "@material-ui/core";
 import TutorialCard from "./card/TutorialCard";
 
-// const slide1Images = [
-//   "",
-//   "https://drive.google.com/uc?export=view&id=109Icr7RZnYFO5WjkjeXWsy3bD1S3iE7x",
-//   "https://drive.google.com/uc?export=view&id=109Icr7RZnYFO5WjkjeXWsy3bD1S3iE7x",
-//   "https://drive.google.com/uc?export=view&id=1zUiZsLTjVAyPTrmppFVojLedWsZsRUjK",
-//   "https://drive.google.com/uc?export=view&id=1Z6mNsPSHeDxUeOfF1qgAhGHlsaM-X00_",
-//   "https://drive.google.com/uc?export=view&id=1j04ZbODp1vkfTjCHddkWlZjoI4rZsNsn",
-//   "https://drive.google.com/uc?export=view&id=126hJMQ-Q34rrEgsnzAQaGwTCsMAG6yAE",
-//   "",
-// ];
+const slide1Images = [
+  "",
+  "https://drive.google.com/uc?export=view&id=109Icr7RZnYFO5WjkjeXWsy3bD1S3iE7x",
+  "https://drive.google.com/uc?export=view&id=109Icr7RZnYFO5WjkjeXWsy3bD1S3iE7x",
+  "https://drive.google.com/uc?export=view&id=1zUiZsLTjVAyPTrmppFVojLedWsZsRUjK",
+  "https://drive.google.com/uc?export=view&id=1Z6mNsPSHeDxUeOfF1qgAhGHlsaM-X00_",
+  "https://drive.google.com/uc?export=view&id=1j04ZbODp1vkfTjCHddkWlZjoI4rZsNsn",
+  "https://drive.google.com/uc?export=view&id=126hJMQ-Q34rrEgsnzAQaGwTCsMAG6yAE",
+  "",
+];
 //
 // const slide2Images = [
 //   "",
@@ -202,6 +202,7 @@ const Tutorial: React.FC<TutorialProps> = ({ setBackButton }: TutorialProps) => 
 
   const [index, setIndex] = useState(0);
   const textContent = SLIDE_TEXT[index];
+  const imageContent = slide1Images[index];
   const numSlides = SLIDE_TEXT.length;
 
   const [slideIn, setSlideIn] = useState(true);
@@ -245,7 +246,7 @@ const Tutorial: React.FC<TutorialProps> = ({ setBackButton }: TutorialProps) => 
     <div>
       <Slide in={slideIn} direction={slideDirection}>
         <div>
-          <TutorialCard textContent={textContent} />
+          <TutorialCard textContent={textContent} imageLink={imageContent} />
         </div>
       </Slide>
       <Button onClick={() => onArrowClick("left")}>Left</Button>
