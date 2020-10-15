@@ -1,14 +1,9 @@
 import React from "react";
 
-const About: React.FC<AboutProps> = ({ setRoute }: AboutProps) => {
-  return (
-    <div>
-      <p>About</p>
-      <button type="button" onClick={() => setRoute("home")}>
-        Back
-      </button>
-    </div>
-  );
+const About: React.FC<AboutProps> = ({ setBackButton }: AboutProps) => {
+  setBackButton(true);
+
+  return null;
 };
 
 export default About;

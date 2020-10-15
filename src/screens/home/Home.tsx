@@ -43,7 +43,7 @@ const useStyles = makeStyles((theme) =>
   })
 );
 
-const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
+const Home: React.FC<HomeProps> = ({ setRoute, setBackButton }: HomeProps) => {
   const styles = useStyles();
   const minWidth = 1360;
   const [fullWidth, setFullWidth] = useState(window.innerWidth > minWidth);
@@ -58,6 +58,8 @@ const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
       false
     );
   }, [fullWidth]);
+
+  setBackButton(false);
 
   return (
     <Container className={styles.container}>

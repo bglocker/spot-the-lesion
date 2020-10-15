@@ -117,7 +117,7 @@ const myStyle = makeStyles({
   },
 });
 
-const Tutorial1: React.FC<Tutorial1Props> = ({ setRoute }: Tutorial1Props) => {
+const Tutorial1: React.FC<Tutorial1Props> = ({ setRoute, setBackButton }: Tutorial1Props) => {
   const style = myStyle();
 
   const ArrowLeft = () => {
@@ -202,14 +202,10 @@ const Tutorial1: React.FC<Tutorial1Props> = ({ setRoute }: Tutorial1Props) => {
       </Slide>
     );
   };
-  return (
-    <div>
-      {Slideshow()}
-      <Button className={style.button} onClick={() => setRoute("home")}>
-        Back
-      </Button>
-    </div>
-  );
+
+  setBackButton(true);
+
+  return <div>{Slideshow()}</div>;
 };
 
 export default Tutorial1;
