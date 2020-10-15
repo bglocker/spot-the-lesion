@@ -33,6 +33,42 @@ const myStyle = makeStyles({
     marginLeft: "4.75vw",
     marginRight: "4.75vw",
   },
+  button: {
+    background: "#07575B",
+    borderRadius: 25,
+    borderColor: "black",
+    borderWidth: "calc((2vw + 2vh)/10)",
+    borderStyle: "solid",
+    color: "white",
+    height: "5vh",
+    width: "10vw",
+    fontSize: "calc((2vw + 2vh)/2)",
+    fontFamily: "segoe UI",
+    fontWeight: "bold", // marginLeft: "4.5vw",
+    position: "fixed",
+  },
+  centeredButton: {
+    alignItems: "center",
+  },
+  moveButtonGroup: {
+    marginLeft: "20vw",
+  },
+  arrowLeftButton: {
+    position: "fixed",
+    left: "30%",
+    top: "94.6%",
+  },
+  arrowRightButton: {
+    position: "fixed",
+    right: "30%",
+    top: "94.6%",
+  },
+  centerImages: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });
 //
 // const slide2Images = [
@@ -86,43 +122,7 @@ const myStyle = makeStyles({
 //   smallDiv: {
 //     height: "5vh",
 //   },
-//   button: {
-//     background: "#07575B",
-//     borderRadius: 25,
-//     borderColor: "black",
-//     borderWidth: "calc((2vw + 2vh)/10)",
-//     borderStyle: "solid",
-//     color: "white",
-//     height: "5vh",
-//     width: "10vw",
-//     fontSize: "calc((2vw + 2vh)/2)",
-//     fontFamily: "segoe UI",
-//     fontWeight: "bold",
-//     // marginLeft: "4.5vw",
-//     position: "fixed",
-//   },
-//   centeredButton: {
-//     alignItems: "center",
-//   },
-//   moveButtonGroup: {
-//     marginLeft: "20vw",
-//   },
-//   arrowLeftButton: {
-//     position: "fixed",
-//     left: "30%",
-//     top: "93%",
-//   },
-//   arrowRightButton: {
-//     position: "fixed",
-//     right: "30%",
-//     top: "93%",
-//   },
-//   centerImages: {
-//     display: "flex",
-//     flexDirection: "row",
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
+
 // });
 
 const Tutorial: React.FC<TutorialProps> = ({ setBackButton }: TutorialProps) => {
@@ -218,7 +218,7 @@ const Tutorial: React.FC<TutorialProps> = ({ setBackButton }: TutorialProps) => 
     "After 5 seconds, a hint will appear - the red circle indicates the part of the image which you should look at.",
     "If your click was correct, then you’ll see a green cross (x) on the spot you selected, otherwise a red cross (x) will appear.",
     "You’ll also see the AI’s prediction on the lesion, marked in red if the AI was wrong, or in green if the AI was correct.",
-    "Finally, you will see the correct aswer marked in yellow.",
+    "Finally, you will see the correct answer marked in yellow.",
     "That's it! Now, can you spot more lesions than the AI?",
   ];
 
@@ -271,10 +271,18 @@ const Tutorial: React.FC<TutorialProps> = ({ setBackButton }: TutorialProps) => 
           <TutorialCard textContent={textContent} imageLink={imageContent} />
         </div>
       </Slide>
-      <Button onClick={() => onArrowClick("left")}>
+      <Button
+        className={`${styles.button}
+                    ${styles.arrowLeftButton}`}
+        onClick={() => onArrowClick("left")}
+      >
         <ArrowBackIos>Prev</ArrowBackIos>
       </Button>
-      <Button onClick={() => onArrowClick("right")}>
+      <Button
+        className={`${styles.button}
+                    ${styles.arrowRightButton}`}
+        onClick={() => onArrowClick("right")}
+      >
         <ArrowForwardIos>Next</ArrowForwardIos>
       </Button>
     </div>
