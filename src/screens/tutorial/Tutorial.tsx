@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, Slide, SlideProps, Grid } from "@material-ui/core";
+import { Button, Slide, SlideProps, Grid, ButtonGroup } from "@material-ui/core";
 import { ArrowBack, ArrowForward } from "@material-ui/icons";
 import { makeStyles } from "@material-ui/styles";
 import TutorialCard from "./card/TutorialCard";
@@ -32,16 +32,15 @@ const myStyle = makeStyles({
     borderStyle: "solid",
     marginLeft: "4.75vw",
     marginRight: "4.75vw",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  button: {
+  groupButton: {
+    marginTop: "2vh",
     background: "#07575B",
-    borderRadius: "calc((2vw + 2vh)/2)",
     color: "white",
-    height: "5vh",
-    width: "10vw",
     fontSize: "calc((2vw + 2vh)/2)",
     fontWeight: "bold",
-    position: "fixed",
   },
   centeredButton: {
     background: "#07575B",
@@ -53,18 +52,9 @@ const myStyle = makeStyles({
     fontFamily: "segoe UI",
     marginTop: "15vh",
   },
+
   moveButtonGroup: {
     marginLeft: "20vw",
-  },
-  arrowLeftButton: {
-    position: "fixed",
-    left: "30%",
-    top: "94.6%",
-  },
-  arrowRightButton: {
-    position: "fixed",
-    right: "30%",
-    top: "94.6%",
   },
   centerImages: {
     display: "flex",
@@ -73,145 +63,9 @@ const myStyle = makeStyles({
     alignItems: "center",
   },
 });
-//
-// const slide2Images = [
-//   "",
-//   "",
-//   "",
-//   "",
-//   "https://drive.google.com/uc?export=view&id=1brdT9MTCpdG9Pn-i5GQFZe7quld4gIBw",
-//   "https://drive.google.com/uc?export=view&id=15FtUQagj-e6sQsX22bFjrLkosfHCPCMm",
-//   "",
-//   "",
-// ];
-//
-
-//
-// const slideNo = [0, 1, 2, 3, 4, 5, 6, 7];
-//
-// const myStyle = makeStyles({
-//   iframe: {
-//     maxHeight: "60vh",
-//     maxWidth: "35vw",
-//     marginBottom: "3vh",
-//     marginLeft: "1vw",
-//     marginRight: "1vw",
-//     align: "center",
-//   },
-//   center: {
-//     height: "90vh",
-//     display: "flex",
-//     flexDirection: "column",
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
-//   paragraph: {
-//     width: "80vw",
-//     fontSize: "calc((4vw + 4vh)/2)",
-//     textAlign: "center",
-//     height: "10vh",
-//   },
-//   white: {
-//     marginTop: "5vh",
-//     backgroundColor: "white",
-//     height: "80vh",
-//     borderRadius: 25,
-//     borderColor: "black",
-//     borderWidth: "5px",
-//     borderStyle: "solid",
-//     marginLeft: "4.75vw",
-//     marginRight: "4.75vw",
-//   },
-//   smallDiv: {
-//     height: "5vh",
-//   },
-
-// });
 
 const Tutorial: React.FC<TutorialProps> = ({ setRoute, setBackButton }: TutorialProps) => {
   const styles = myStyle();
-  //
-  // const ArrowLeft = () => {
-  //   return (
-  //     <Button
-  //       className={`${style.button}
-  //                   ${style.arrowLeftButton}`}
-  //     >
-  //       {"<"}
-  //     </Button>
-  //   );
-  // };
-  // const ArrowRight = () => {
-  //   return (
-  //     <Button
-  //       className={`${style.button}
-  //                   ${style.arrowRightButton}`}
-  //     >
-  //       {">"}
-  //     </Button>
-  //   );
-  // };
-  //
-  // const properties = {
-  //   duration: 1000000,
-  //   transitionDuration: 500,
-  //   arrows: true,
-  //   indicators: true,
-  //   nextArrow: ArrowRight(),
-  //   prevArrow: ArrowLeft(),
-  // };
-  //
-  // const Slideshow = () => {
-  //   return (
-  //     // eslint-disable-next-line react/jsx-props-no-spreading
-  //     <Slide {...properties}>
-  //       {slideNo.map((number) => (
-  //         <div className={`${style.white} each-slide ${style.center}`} key={number}>
-  //           <div className={`${style.center} ${style.smallDiv}`}>
-  //             <p className={`${style.center} ${style.paragraph}`}>{slideText[number]}</p>
-  //           </div>
-  //           {slide1Images[number] === "" && slide2Images[number] === "" ? (
-  //             ""
-  //           ) : (
-  //             <div className={style.centerImages}>
-  //               {slide1Images[number] === "" ? (
-  //                 "" // eslint-disable-next-line jsx-a11y/iframe-has-title
-  //               ) : (
-  //                 <img
-  //                   className={style.iframe}
-  //                   src={slide1Images[number]}
-  //                   alt="https://drive.google.com/file/d/1bTG-dxY0hCeP6ZFujxPDZQY83vj1iqR9/preview"
-  //                 />
-  //               )}
-  //               {slide2Images[number] === "" ? (
-  //                 "" // eslint-disable-next-line jsx-a11y/iframe-has-title
-  //               ) : (
-  //                 <img
-  //                   className={style.iframe}
-  //                   src={slide2Images[number]}
-  //                   alt="https://drive.google.com/file/d/1bTG-dxY0hCeP6ZFujxPDZQY83vj1iqR9/preview"
-  //                 />
-  //               )}
-  //             </div>
-  //           )}
-  //           <div>
-  //             {number === 7 ? (
-  //               <Button
-  //                 className={`${style.button}
-  //                             ${style.centeredButton}`}
-  //                 onClick={() => setRoute("game")}
-  //               >
-  //                 Play
-  //               </Button>
-  //             ) : (
-  //               ""
-  //             )}
-  //           </div>
-  //         </div>
-  //       ))}
-  //     </Slide>
-  //   );
-  // };
 
   // The slide text
   const SLIDE_TEXT = [
@@ -269,36 +123,30 @@ const Tutorial: React.FC<TutorialProps> = ({ setRoute, setBackButton }: Tutorial
 
   return (
     <div>
-      <Slide in={slideIn} direction={slideDirection}>
-        <div className={styles.white}>
-          <Grid container direction="column" justify="space-around" alignItems="center">
-            <TutorialCard textContent={textContent} imageLink={imageContent} />
-            {index === 7 ? (
-              <Button className={`${styles.centeredButton}`} onClick={() => setRoute("game")}>
-                Play
-              </Button>
-            ) : (
-              ""
-            )}
-          </Grid>
-        </div>
-      </Slide>
-      <Button onClick={() => onArrowClick("left")}>
-        <ArrowBack
-          className={`${styles.button}
-                      ${styles.arrowLeftButton}`}
-        >
-          Prev
-        </ArrowBack>
-      </Button>
-      <Button onClick={() => onArrowClick("right")}>
-        <ArrowForward
-          className={`${styles.button}
-                      ${styles.arrowRightButton}`}
-        >
-          Next
-        </ArrowForward>
-      </Button>
+      <Grid container direction="column" alignItems="center" justify="center">
+        <Slide in={slideIn} direction={slideDirection}>
+          <div className={styles.white}>
+            <Grid container direction="column" justify="space-around" alignItems="center">
+              <TutorialCard textContent={textContent} imageLink={imageContent} />
+              {index === 7 ? (
+                <Button className={`${styles.centeredButton}`} onClick={() => setRoute("game")}>
+                  Play
+                </Button>
+              ) : (
+                ""
+              )}
+            </Grid>
+          </div>
+        </Slide>
+        <ButtonGroup size="large" className={styles.groupButton}>
+          <Button onClick={() => onArrowClick("left")}>
+            <ArrowBack>Prev</ArrowBack>
+          </Button>
+          <Button onClick={() => onArrowClick("right")}>
+            <ArrowForward>Next</ArrowForward>
+          </Button>
+        </ButtonGroup>
+      </Grid>
     </div>
   );
 };
