@@ -23,7 +23,6 @@ const slideImages = [
 
 const myStyle = makeStyles({
   white: {
-    marginTop: "5vh",
     backgroundColor: "white",
     height: "80vh",
     borderRadius: 25,
@@ -35,19 +34,16 @@ const myStyle = makeStyles({
   },
   button: {
     background: "#07575B",
-    borderRadius: 25,
-    borderColor: "black",
-    borderWidth: "calc((2vw + 2vh)/10)",
-    borderStyle: "solid",
+    borderRadius: "calc((2vw + 2vh)/2)",
     color: "white",
     height: "5vh",
     width: "10vw",
     fontSize: "calc((2vw + 2vh)/2)",
-    fontFamily: "segoe UI",
-    fontWeight: "bold", // marginLeft: "4.5vw",
+    fontWeight: "bold",
     position: "fixed",
   },
   centeredButton: {
+    marginLeft: "5vw",
     alignItems: "center",
   },
   moveButtonGroup: {
@@ -125,7 +121,7 @@ const myStyle = makeStyles({
 
 // });
 
-const Tutorial: React.FC<TutorialProps> = ({ setBackButton }: TutorialProps) => {
+const Tutorial: React.FC<TutorialProps> = ({ setRoute, setBackButton }: TutorialProps) => {
   const styles = myStyle();
   //
   // const ArrowLeft = () => {
@@ -269,21 +265,34 @@ const Tutorial: React.FC<TutorialProps> = ({ setBackButton }: TutorialProps) => 
       <Slide in={slideIn} direction={slideDirection}>
         <div className={styles.white}>
           <TutorialCard textContent={textContent} imageLink={imageContent} />
+          {index === 7 ? (
+            <Button
+              className={`${styles.button}
+                          ${styles.centeredButton}`}
+              onClick={() => setRoute("game")}
+            >
+              Play
+            </Button>
+          ) : (
+            ""
+          )}
         </div>
       </Slide>
-      <Button
-        className={`${styles.button}
-                    ${styles.arrowLeftButton}`}
-        onClick={() => onArrowClick("left")}
-      >
-        <ArrowBackIos>Prev</ArrowBackIos>
+      <Button onClick={() => onArrowClick("left")}>
+        <ArrowBackIos
+          className={`${styles.button}
+                      ${styles.arrowLeftButton}`}
+        >
+          Prev
+        </ArrowBackIos>
       </Button>
-      <Button
-        className={`${styles.button}
-                    ${styles.arrowRightButton}`}
-        onClick={() => onArrowClick("right")}
-      >
-        <ArrowForwardIos>Next</ArrowForwardIos>
+      <Button onClick={() => onArrowClick("right")}>
+        <ArrowForwardIos
+          className={`${styles.button}
+                      ${styles.arrowRightButton}`}
+        >
+          Next
+        </ArrowForwardIos>
       </Button>
     </div>
   );
