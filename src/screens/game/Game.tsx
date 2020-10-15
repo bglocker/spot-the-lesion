@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@material-ui/core";
 import useInterval from "../../components/useInterval";
 
-const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
+const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
   const seenFiles = new Set<number>();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -250,12 +250,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     await loadNewImage();
   };
 
+  setBackButton(true);
+
   return (
     <div>
-      <p>Game</p>
-
-      <Button onClick={() => setRoute("home")}>Back</Button>
-
       <div style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
         <div>
           <Button onClick={onStartClick}>Start</Button>
