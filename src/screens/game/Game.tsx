@@ -1,44 +1,57 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@material-ui/core";
+import useInterval from "../../components/useInterval";
 
 const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
-  let timeRemaining = 10;
   const seenFiles = new Set<number>();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const [timeouts, setTimeouts] = useState<number[]>([]);
-  const [countdown, setCountdown] = useState(0);
+  const [running, setRunning] = useState(false);
+  const [clicked, setClicked] = useState(false);
+  const [hinted, setHinted] = useState(false);
+
+  const [timeRemaining, setTimeRemaining] = useState(10);
   const [countdownColor, setCountdownColor] = useState("#373737");
-  const [timeRemainingDisplayValue, setTimeRemainingDisplayValue] = useState("10");
+
   const [correct, setCorrect] = useState(0);
   const [ourCorrect, setOurCorrect] = useState(0);
   const [total, setTotal] = useState(0);
+
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
-  const [clicked, setClicked] = useState(false);
-  const [hinted, setHinted] = useState(false);
 
   type DrawType = ((canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => void) | null;
   const [draw, setDraw] = useState<DrawType>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (canvas == null) {
+    if (canvas === null) {
       return;
     }
 
     const context = canvas.getContext("2d");
-    if (context == null) {
+    if (context === null) {
       return;
     }
 
-    if (draw == null) {
+    if (draw === null) {
       return;
     }
 
     draw(canvas, context);
   }, [draw]);
+
+  useInterval(
+    () => {
+      setTimeRemaining((prevState) => prevState - 0.1);
+    },
+    running ? 100 : null
+  );
+
+  const stopTimer = () => {
+    setRunning(false);
+  };
 
   const bbIntersectionOverUnion = (boxA: number[], boxB: number[]): number => {
     const xA = Math.max(boxA[0], boxB[0]);
@@ -51,60 +64,44 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1);
     const boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1);
 
-    return interArea / (boxAArea + boxBArea - interArea);
+    const unionArea = boxAArea + boxBArea - interArea;
+
+    return interArea / unionArea;
   };
 
-  const clearTimeouts = () => {
-    timeouts.forEach((element) => clearTimeout(element));
-    setTimeouts([]);
-  };
+  const drawTruth = (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+    context.beginPath();
+    context.strokeStyle = "yellow";
+    context.lineWidth = 3;
+    context.rect(truth[0], truth[1], truth[2] - truth[0], truth[3] - truth[1]);
+    context.stroke();
 
-  const drawTruth = () =>
-    setDraw(() => (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-      context.beginPath();
-      context.strokeStyle = "yellow";
-      context.lineWidth = 3;
-      context.rect(truth[0], truth[1], truth[2] - truth[0], truth[3] - truth[1]);
-      context.stroke();
-
-      if (bbIntersectionOverUnion(truth, predicted) > 0.5) {
-        context.strokeStyle = "green";
-      } else {
-        context.strokeStyle = "red";
-      }
-
-      context.lineWidth = 3;
-      context.beginPath();
-      context.rect(
-        predicted[0],
-        predicted[1],
-        predicted[2] - predicted[0],
-        predicted[3] - predicted[1]
-      );
-      context.stroke();
-    });
-
-  const drawHint = () => {
-    if (hinted) {
-      return;
+    if (bbIntersectionOverUnion(truth, predicted) > 0.5) {
+      context.strokeStyle = "green";
+    } else {
+      context.strokeStyle = "red";
     }
 
-    setHinted(true);
+    context.lineWidth = 3;
+    context.beginPath();
+    context.rect(
+      predicted[0],
+      predicted[1],
+      predicted[2] - predicted[0],
+      predicted[3] - predicted[1]
+    );
+    context.stroke();
+  };
 
+  const drawHint = (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
     const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
     const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
 
-    setDraw(() => (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-      context.beginPath();
-      context.strokeStyle = "red";
-      context.lineWidth = 2;
-      context.arc(x, y, 100, 0, 2 * Math.PI);
-      context.stroke();
-    });
-  };
-
-  const stopTimer = () => {
-    clearInterval(countdown);
+    context.beginPath();
+    context.strokeStyle = "red";
+    context.lineWidth = 2;
+    context.arc(x, y, 100, 0, 2 * Math.PI);
+    context.stroke();
   };
 
   const getMousePosition = (playerX: number, playerY: number, canvas: HTMLCanvasElement) => {
@@ -118,6 +115,55 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     };
   };
 
+  const drawPlayer = (
+    canvas: HTMLCanvasElement,
+    context: CanvasRenderingContext2D,
+    mouseX: number,
+    mouseY: number
+  ) => {
+    const { x, y } = getMousePosition(mouseX, mouseY, canvas);
+
+    if (truth[0] <= x && truth[1] <= x && y <= truth[2] && y <= truth[3]) {
+      setCorrect((prevState) => prevState + 1);
+      context.strokeStyle = "green";
+    } else {
+      context.strokeStyle = "red";
+    }
+
+    context.beginPath();
+    context.moveTo(x - 5, y - 5);
+    context.lineTo(x + 5, y + 5);
+    context.moveTo(x + 5, y - 5);
+    context.lineTo(x - 5, y + 5);
+    context.stroke();
+  };
+
+  useEffect(() => {
+    if (timeRemaining <= 0) {
+      stopTimer();
+
+      setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) =>
+        drawTruth(canvas, context)
+      );
+    } else if (timeRemaining <= 2) {
+      setCountdownColor("red");
+    } else if (timeRemaining <= 5) {
+      setCountdownColor("orange");
+
+      if (hinted) {
+        return;
+      }
+
+      setHinted(true);
+
+      setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) =>
+        drawHint(canvas, context)
+      );
+    } else {
+      setCountdownColor("#373737");
+    }
+  }, [timeRemaining]);
+
   const onCanvasClick = async (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
     if (timeRemaining <= 0 || clicked) {
       return;
@@ -125,30 +171,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     setClicked(true);
 
-    drawTruth();
     stopTimer();
 
-    const [playerX, playerY] = [event.clientX, event.clientY];
+    const [mouseX, mouseY] = [event.clientX, event.clientY];
 
     setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-      const { x, y } = getMousePosition(playerX, playerY, canvas);
-
-      if (truth[0] <= x && y <= truth[2] && truth[1] <= x && y <= truth[3]) {
-        setCorrect((prevState) => prevState + 1);
-        context.strokeStyle = "green";
-      } else {
-        context.strokeStyle = "red";
-      }
-
-      context.beginPath();
-      context.moveTo(x - 5, y - 5);
-      context.lineTo(x + 5, y + 5);
-      context.moveTo(x + 5, y - 5);
-      context.lineTo(x - 5, y + 5);
-      context.stroke();
+      drawTruth(canvas, context);
+      drawPlayer(canvas, context, mouseX, mouseY);
     });
-
-    clearTimeouts();
   };
 
   const getNewFileNumber = (): number => {
@@ -166,17 +196,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const loadNewImage = async () => {
     stopTimer();
-    clearTimeouts();
 
-    setClicked(false);
-    timeRemaining = 10;
-    setHinted(false);
-    const id = getNewFileNumber();
+    const fileNumber = getNewFileNumber();
 
     // Retrieve annotations
-    await fetch(`${process.env.PUBLIC_URL}/content/annotation/${id}.json`)
+    await fetch(`${process.env.PUBLIC_URL}/content/annotation/${fileNumber}.json`)
       .then((res) => res.json())
-      .then((data) => {
+      .then((data: { truth: number[]; predicted: number[] }) => {
         setTruth(data.truth);
         setPredicted(data.predicted);
 
@@ -187,38 +213,19 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     // Build the image
     const img = new Image();
-    img.src = `${process.env.PUBLIC_URL}/content/images/${id}.png`;
-    img.onload = () =>
+    img.src = `${process.env.PUBLIC_URL}/content/images/${fileNumber}.png`;
+    img.onload = () => {
       setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.drawImage(img, 0, 0, canvas.width, canvas.height);
       });
 
-    const hintTimeout = window.setTimeout(drawHint, 5000);
-    const truthTimeout = window.setTimeout(drawTruth, 10000);
-    setTimeouts((prevState) => [...prevState, hintTimeout, truthTimeout]);
-
-    setCountdown(
-      window.setInterval(() => {
-        if (timeRemaining <= 0) {
-          clearInterval(countdown);
-        } else {
-          setTimeRemainingDisplayValue(timeRemaining.toFixed(1));
-
-          if (timeRemaining > 5) {
-            setCountdownColor("#373737");
-          } else if (timeRemaining > 2) {
-            setCountdownColor("orange");
-          } else {
-            setCountdownColor("red");
-          }
-        }
-
-        timeRemaining -= 0.1;
-      }, 100)
-    );
-
-    setTotal((prevState) => prevState + 1);
+      setClicked(false);
+      setHinted(false);
+      setTimeRemaining(10);
+      setRunning(true);
+      setTotal((prevState) => prevState + 1);
+    };
   };
 
   const onStartClick = async () => {
@@ -249,7 +256,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </div>
 
         <div>
-          <h3 style={{ color: countdownColor }}>Time remaining: {timeRemainingDisplayValue}s</h3>
+          <h3 style={{ color: countdownColor }}>Time remaining: {timeRemaining.toFixed(1)}s</h3>
 
           <h3>Results</h3>
 
