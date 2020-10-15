@@ -81,6 +81,7 @@ const Tutorial: React.FC<TutorialProps> = ({ setRoute, setBackButton }: Tutorial
     "That's it! Now, can you spot more lesions than the AI?",
   ];
 
+  const [buttonColor, setButtonColor] = useState("white");
   const [index, setIndex] = useState(0);
   const textContent = SLIDE_TEXT[index];
   const imageContent = slideImages[index];
@@ -131,7 +132,13 @@ const Tutorial: React.FC<TutorialProps> = ({ setRoute, setBackButton }: Tutorial
             <Grid container direction="column" justify="space-around" alignItems="center">
               <TutorialCard textContent={textContent} imageLink={imageContent} />
               {index === 7 ? (
-                <Button className={`${styles.centeredButton}`} onClick={() => setRoute("game")}>
+                <Button
+                  className={`${styles.centeredButton}`}
+                  style={{ color: buttonColor }}
+                  onClick={() => setRoute("game")}
+                  onMouseEnter={() => setButtonColor("#07575B")}
+                  onMouseLeave={() => setButtonColor("white")}
+                >
                   Play
                 </Button>
               ) : (
