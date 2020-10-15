@@ -40,7 +40,12 @@ const Credits: React.FC<CreditsProps> = ({ setBackButton }: CreditsProps) => {
         .
       </Typography>
       <Typography className={`${styles.textContent} ${styles.centerContent}`}>
-        Developed by Martin Zlocha, Qi Dou and Ben Glocker.
+        CT Scan AI developed by Martin Zlocha, Qi Dou and Ben Glocker.
+      </Typography>
+      <Typography className={`${styles.textContent} ${styles.centerContent}`}>
+        This site was made with React for 3rd year Software Engineering Group Project by:
+        Andrei-Matei Roman, Andrei-Ovidiu Badea, Calin-Andrei Alexandru, Calin Biberea, Cosmin-Ionut
+        Baies, Tiberiu-Andrei Georgescu
       </Typography>
       <Typography className={`${styles.textContent} ${styles.centerContent}`}>
         (c) 2019 Data obtained from the{" "}
