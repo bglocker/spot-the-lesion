@@ -7,6 +7,7 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const [started, setStarted] = useState(false);
   const [running, setRunning] = useState(false);
   const [clicked, setClicked] = useState(false);
   const [hinted, setHinted] = useState(false);
@@ -242,11 +243,11 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     };
   };
 
-  const onStartClick = async () => {
-    await loadNewImage();
-  };
+  const onStartNextClick = async () => {
+    if (!started) {
+      setStarted(true);
+    }
 
-  const onNextClick = async () => {
     await loadNewImage();
   };
 
@@ -255,16 +256,10 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
   return (
     <div>
       <div style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-        <div>
-          <Button onClick={onStartClick}>Start</Button>
-        </div>
-
         <div style={{ borderStyle: "solid" }}>
           <canvas ref={canvasRef} onClick={onCanvasClick} width="512px" height="512px" />
 
-          <div>
-            <Button onClick={onNextClick}>Next</Button>
-          </div>
+          <Button onClick={onStartNextClick}>{started ? "Next" : "Start"}</Button>
         </div>
 
         <div>
