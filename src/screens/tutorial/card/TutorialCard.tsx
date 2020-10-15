@@ -17,7 +17,12 @@ const useStyles = makeStyles(() => ({
     maxHeight: "30vh%",
   },
   textContent: {
+    margin: "1vh",
+    width: "100%",
     fontSize: "calc((3vw + 3vh)/2)",
+    textAlign: "center",
+    display: "flex",
+    justifyContent: "center",
   },
 }));
 

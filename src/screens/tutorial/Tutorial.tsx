@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Button, Slide, SlideProps } from "@material-ui/core";
+import { ArrowBackIos, ArrowForwardIos } from "@material-ui/icons";
+import { makeStyles } from "@material-ui/styles";
 import TutorialCard from "./card/TutorialCard";
 
 const slide1Images = [
@@ -12,6 +14,20 @@ const slide1Images = [
   "https://drive.google.com/uc?export=view&id=126hJMQ-Q34rrEgsnzAQaGwTCsMAG6yAE",
   "",
 ];
+
+const myStyle = makeStyles({
+  white: {
+    marginTop: "5vh",
+    backgroundColor: "white",
+    height: "80vh",
+    borderRadius: 25,
+    borderColor: "black",
+    borderWidth: "5px",
+    borderStyle: "solid",
+    marginLeft: "4.75vw",
+    marginRight: "4.75vw",
+  },
+});
 //
 // const slide2Images = [
 //   "",
@@ -104,7 +120,7 @@ const slide1Images = [
 // });
 
 const Tutorial: React.FC<TutorialProps> = ({ setBackButton }: TutorialProps) => {
-  // const style = myStyle();
+  const styles = myStyle();
   //
   // const ArrowLeft = () => {
   //   return (
@@ -245,12 +261,16 @@ const Tutorial: React.FC<TutorialProps> = ({ setBackButton }: TutorialProps) => 
   return (
     <div>
       <Slide in={slideIn} direction={slideDirection}>
-        <div>
+        <div className={styles.white}>
           <TutorialCard textContent={textContent} imageLink={imageContent} />
         </div>
       </Slide>
-      <Button onClick={() => onArrowClick("left")}>Left</Button>
-      <Button onClick={() => onArrowClick("right")}>Right</Button>
+      <Button onClick={() => onArrowClick("left")}>
+        <ArrowBackIos>Prev</ArrowBackIos>
+      </Button>
+      <Button onClick={() => onArrowClick("right")}>
+        <ArrowForwardIos>Next</ArrowForwardIos>
+      </Button>
     </div>
   );
 };
