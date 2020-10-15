@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Button, ButtonGroup, Container, Grid } from "@material-ui/core";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
-import logo from "./logo.gif";
-import scan from "./ct-scan.png";
-import brain from "./brain.png";
+import logo from "./images/logo.gif";
+import scan from "./images/ct-scan.png";
+import brain from "./images/brain.png";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
