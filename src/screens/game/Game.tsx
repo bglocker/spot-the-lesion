@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Button } from "@material-ui/core";
+import { Button, Card, LinearProgress } from "@material-ui/core";
 import useInterval from "../../components/useInterval";
 
 const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
@@ -12,9 +12,10 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
   const [clicked, setClicked] = useState(false);
   const [hinted, setHinted] = useState(false);
 
-  const [timeRemaining, setTimeRemaining] = useState(10);
+  const totalTime = 10;
+  const [timeRemaining, setTimeRemaining] = useState(totalTime);
   const [timeRemainingText, setTimeRemainingText] = useState("10.0");
-  const [countdownColor, setCountdownColor] = useState("#373737");
+  const [countdownColor, setCountdownColor] = useState("green");
 
   const [playerPoints, setPlayerPoints] = useState(0);
   const [aiPoints, setAiPoints] = useState(0);
@@ -262,8 +263,13 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
           <Button onClick={onStartNextClick}>{started ? "Next" : "Start"}</Button>
         </div>
 
-        <div>
+        <Card>
           <h3 style={{ color: countdownColor }}>Time remaining: {timeRemainingText}s</h3>
+          <LinearProgress
+            variant="determinate"
+            value={timeRemaining * 10}
+            classes={{ barColorPrimary: countdownColor }}
+          />
 
           <h3>Results</h3>
 
@@ -272,7 +278,7 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
           <h4>Correct (AI): {aiPointsText}</h4>
 
           <h4>Total Scans: {total}</h4>
-        </div>
+        </Card>
       </div>
     </div>
   );
