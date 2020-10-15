@@ -260,7 +260,7 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
   };
 
   const getNewFileNumber = (): number => {
-    const max = 4723;
+    const max = 100;
     const newFileNumber = Math.round(Math.random() * max);
 
     if (seenFiles.has(newFileNumber)) {
