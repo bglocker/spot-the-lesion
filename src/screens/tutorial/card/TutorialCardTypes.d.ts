@@ -1,0 +1,3 @@
+interface TutorialCardProps {
+  textContent: string;
+}
