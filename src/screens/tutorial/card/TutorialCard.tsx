@@ -7,20 +7,19 @@ const useStyles = makeStyles(() => ({
     flexGrow: 1,
   },
   image: {
-    width: 128,
-    height: 128,
-  },
-  img: {
-    margin: "auto",
-    display: "block",
-    maxWidth: "30vw",
-    maxHeight: "30vh%",
+    margin: "3%",
+    maxWidth: "50%",
+    maxHeight: "40%",
   },
   textContent: {
-    margin: "1vh",
-    width: "100%",
-    fontSize: "calc((3vw + 3vh)/2)",
+    margin: "5%",
+    fontSize: "calc((3vh + 3vw)/2)",
     textAlign: "center",
+  },
+  maxWidth: {
+    width: "100%",
+  },
+  centerContent: {
     display: "flex",
     justifyContent: "center",
   },
@@ -33,11 +32,33 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
   const styles = useStyles();
   return (
     <Grid container spacing={1}>
-      <Typography className={styles.textContent}>{textContent}</Typography>
-      <img src={imageLink} alt={imageLink} />
-      <Grid container item xs={12} spacing={3} />
-      <Grid container item xs={12} spacing={3} />
-      <Grid container item xs={12} spacing={3} />
+      <Grid container item xs={12} spacing={3}>
+        <Typography className={`${styles.textContent} ${styles.maxWidth} ${styles.centerContent}`}>
+          {textContent}
+        </Typography>
+      </Grid>
+      {imageLink[0] !== "" ? (
+        <Grid container item xs={12} spacing={3}>
+          <div className={`${styles.maxWidth} ${styles.centerContent}`}>
+            <img
+              className={`${styles.image} ${styles.centerContent}`}
+              src={imageLink[0]}
+              alt={imageLink[0]}
+            />
+            {imageLink[1] !== "" ? (
+              <img
+                className={`${styles.image} ${styles.centerContent}`}
+                src={imageLink[1]}
+                alt={imageLink[1]}
+              />
+            ) : (
+              ""
+            )}
+          </div>
+        </Grid>
+      ) : (
+        ""
+      )}
     </Grid>
   );
 };

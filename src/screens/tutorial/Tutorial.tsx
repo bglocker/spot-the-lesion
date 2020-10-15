@@ -4,15 +4,21 @@ import { ArrowBackIos, ArrowForwardIos } from "@material-ui/icons";
 import { makeStyles } from "@material-ui/styles";
 import TutorialCard from "./card/TutorialCard";
 
-const slide1Images = [
-  "",
-  "https://drive.google.com/uc?export=view&id=109Icr7RZnYFO5WjkjeXWsy3bD1S3iE7x",
-  "https://drive.google.com/uc?export=view&id=109Icr7RZnYFO5WjkjeXWsy3bD1S3iE7x",
-  "https://drive.google.com/uc?export=view&id=1zUiZsLTjVAyPTrmppFVojLedWsZsRUjK",
-  "https://drive.google.com/uc?export=view&id=1Z6mNsPSHeDxUeOfF1qgAhGHlsaM-X00_",
-  "https://drive.google.com/uc?export=view&id=1j04ZbODp1vkfTjCHddkWlZjoI4rZsNsn",
-  "https://drive.google.com/uc?export=view&id=126hJMQ-Q34rrEgsnzAQaGwTCsMAG6yAE",
-  "",
+const slideImages = [
+  ["", ""],
+  ["https://drive.google.com/uc?export=view&id=109Icr7RZnYFO5WjkjeXWsy3bD1S3iE7x", ""],
+  ["https://drive.google.com/uc?export=view&id=109Icr7RZnYFO5WjkjeXWsy3bD1S3iE7x", ""],
+  ["https://drive.google.com/uc?export=view&id=1zUiZsLTjVAyPTrmppFVojLedWsZsRUjK", ""],
+  [
+    "https://drive.google.com/uc?export=view&id=1Z6mNsPSHeDxUeOfF1qgAhGHlsaM-X00_",
+    "https://drive.google.com/uc?export=view&id=1brdT9MTCpdG9Pn-i5GQFZe7quld4gIBw",
+  ],
+  [
+    "https://drive.google.com/uc?export=view&id=1j04ZbODp1vkfTjCHddkWlZjoI4rZsNsn",
+    "https://drive.google.com/uc?export=view&id=15FtUQagj-e6sQsX22bFjrLkosfHCPCMm",
+  ],
+  ["https://drive.google.com/uc?export=view&id=126hJMQ-Q34rrEgsnzAQaGwTCsMAG6yAE", ""],
+  ["", ""],
 ];
 
 const myStyle = makeStyles({
@@ -218,7 +224,7 @@ const Tutorial: React.FC<TutorialProps> = ({ setBackButton }: TutorialProps) => 
 
   const [index, setIndex] = useState(0);
   const textContent = SLIDE_TEXT[index];
-  const imageContent = slide1Images[index];
+  const imageContent = slideImages[index];
   const numSlides = SLIDE_TEXT.length;
 
   const [slideIn, setSlideIn] = useState(true);
