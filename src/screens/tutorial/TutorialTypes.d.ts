@@ -1,3 +1,4 @@
-interface Tutorial1Props {
+interface TutorialProps {
   setRoute: (Route) => void;
+  setBackButton: (boolean) => void;
 }
