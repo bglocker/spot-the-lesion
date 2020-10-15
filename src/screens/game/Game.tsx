@@ -132,7 +132,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   ) => {
     const { x, y } = getMousePosition(mouseX, mouseY, canvas);
 
-    if (truth[0] <= x && truth[1] <= x && y <= truth[2] && y <= truth[3]) {
+    if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
       setPlayerPoints((prevState) => prevState + 1);
       context.strokeStyle = "green";
     } else {
