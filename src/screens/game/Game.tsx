@@ -1,12 +1,75 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Button, Card, LinearProgress } from "@material-ui/core";
+import {
+  Button,
+  Card,
+  CircularProgress,
+  LinearProgress,
+  Typography,
+  makeStyles,
+} from "@material-ui/core";
 import useInterval from "../../components/useInterval";
 
+const useStyles = makeStyles({
+  container: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+    height: "93vh",
+  },
+  canvasContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+  },
+  cardCanvas: {
+    height: 512,
+    padding: 8,
+  },
+  loadingButtonContainer: {
+    position: "relative",
+    marginTop: 16,
+  },
+  startNextButton: {
+    backgroundColor: "#07575B",
+    color: "white",
+  },
+  circularProgress: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    marginTop: -12,
+    marginLeft: -12,
+  },
+  scoresContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    padding: 8,
+  },
+  countdown: {
+    marginBottom: 8,
+  },
+  linearProgress: {
+    width: "100%",
+  },
+  results: {
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  scoreTypography: {
+    fontWeight: "bold",
+  },
+});
+
 const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
+  const classes = useStyles();
+
   const seenFiles = new Set<number>();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const [loading, setLoading] = useState(false);
   const [started, setStarted] = useState(false);
   const [running, setRunning] = useState(false);
   const [clicked, setClicked] = useState(false);
@@ -211,7 +274,8 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
 
   const loadNewImage = async () => {
     stopTimer();
-    setTimeRemaining(10);
+    setTimeRemaining(totalTime);
+    setLoading(true);
 
     const fileNumber = getNewFileNumber();
 
@@ -240,6 +304,7 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
       setHinted(false);
       setTimeRemainingText(timeRemaining.toFixed(1));
       setRunning(true);
+      setLoading(false);
       setTotal((prevState) => prevState + 1);
     };
   };
@@ -255,31 +320,55 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
   setBackButton(true);
 
   return (
-    <div>
-      <div style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-        <div style={{ borderStyle: "solid" }}>
+    <div className={classes.container}>
+      <div className={classes.canvasContainer}>
+        <Card className={classes.cardCanvas}>
           <canvas ref={canvasRef} onClick={onCanvasClick} width="512px" height="512px" />
-
-          <Button onClick={onStartNextClick}>{started ? "Next" : "Start"}</Button>
-        </div>
-
-        <Card>
-          <h3 style={{ color: countdownColor }}>Time remaining: {timeRemainingText}s</h3>
-          <LinearProgress
-            variant="determinate"
-            value={timeRemaining * 10}
-            classes={{ barColorPrimary: countdownColor }}
-          />
-
-          <h3>Results</h3>
-
-          <h4>Correct (you): {playerPoints}</h4>
-
-          <h4>Correct (AI): {aiPointsText}</h4>
-
-          <h4>Total Scans: {total}</h4>
         </Card>
+
+        <div className={classes.loadingButtonContainer}>
+          <Button
+            className={classes.startNextButton}
+            variant="contained"
+            size="large"
+            disabled={running || loading}
+            onClick={onStartNextClick}
+          >
+            {started ? "Next" : "Start"}
+          </Button>
+
+          {loading && <CircularProgress className={classes.circularProgress} size={24} />}
+        </div>
       </div>
+
+      <Card className={classes.scoresContainer}>
+        <Typography variant="h4" className={classes.countdown} style={{ color: countdownColor }}>
+          Time remaining: {timeRemainingText}s
+        </Typography>
+
+        <LinearProgress
+          variant="determinate"
+          value={timeRemaining * 10}
+          className={classes.linearProgress}
+          classes={{ barColorPrimary: countdownColor }}
+        />
+
+        <Typography variant="h4" className={classes.results}>
+          Results
+        </Typography>
+
+        <Typography variant="subtitle1" className={classes.scoreTypography}>
+          Correct (you): {playerPoints}
+        </Typography>
+
+        <Typography variant="subtitle1" className={classes.scoreTypography}>
+          Correct (AI): {aiPointsText}
+        </Typography>
+
+        <Typography variant="subtitle1" className={classes.scoreTypography}>
+          Total Scans: {total}
+        </Typography>
+      </Card>
     </div>
   );
 };
