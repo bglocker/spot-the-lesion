@@ -33,13 +33,23 @@ const Credits: React.FC<CreditsProps> = ({ setBackButton }: CreditsProps) => {
   return (
     <div className={styles.white}>
       <Typography className={`${styles.textContent} ${styles.centerContent}`}>
-        This demo is based on our MICCAI 2019 paper.
+        This demo is based on our{" "}
+        <a target="blank" href="https://arxiv.org/abs/1906.02283">
+          MICCAI 2019 paper
+        </a>
+        .
       </Typography>
       <Typography className={`${styles.textContent} ${styles.centerContent}`}>
         Developed by Martin Zlocha, Qi Dou and Ben Glocker.
       </Typography>
       <Typography className={`${styles.textContent} ${styles.centerContent}`}>
-        (c) 2019 Data obtained from the NIH Clinical Center
+        (c) 2019 Data obtained from the{" "}
+        <a
+          target="blank"
+          href="https://www.nih.gov/news-events/news-releases/nih-clinical-center-releases-dataset-32000-ct-images"
+        >
+          NIH Clinical Center
+        </a>
       </Typography>
     </div>
   );
