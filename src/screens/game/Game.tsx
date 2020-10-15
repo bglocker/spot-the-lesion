@@ -176,7 +176,7 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
   }, [aiPoints, drawHint, drawTruth, hinted, timeRemaining]);
 
   const onCanvasClick = async (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
-    if (timeRemaining <= 0 || clicked) {
+    if (timeRemaining <= 0 || clicked || !running) {
       return;
     }
 
