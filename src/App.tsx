@@ -4,7 +4,7 @@ import { createStyles, makeStyles } from "@material-ui/core/styles";
 import BackButtonIcon from "@material-ui/icons/KeyboardBackspace";
 import Home from "./screens/home/Home";
 import Game from "./screens/game/Game";
-import Tutorial1 from "./screens/tutorial/Tutorial1";
+import Tutorial from "./screens/tutorial/Tutorial";
 import About from "./screens/about/About";
 import Credits from "./screens/credits/Credits";
 
@@ -35,7 +35,7 @@ const App: React.FC = () => {
       currentScreen = <Game setRoute={setRoute} setBackButton={setBackButton} />;
       break;
     case "tutorial1":
-      currentScreen = <Tutorial1 setRoute={setRoute} setBackButton={setBackButton} />;
+      currentScreen = <Tutorial setRoute={setRoute} setBackButton={setBackButton} />;
       break;
     case "about":
       currentScreen = <About setRoute={setRoute} setBackButton={setBackButton} />;

@@ -79,17 +79,16 @@ const myStyle = makeStyles({
     background: "#07575B",
     borderRadius: 25,
     borderColor: "black",
-    borderWidth: 8,
+    borderWidth: "calc((2vw + 2vh)/10)",
     borderStyle: "solid",
     color: "white",
-    height: 200,
-    width: 500,
-    fontSize: 40,
+    height: "5vh",
+    width: "10vw",
+    fontSize: "calc((2vw + 2vh)/2)",
     fontFamily: "segoe UI",
     fontWeight: "bold",
-    marginTop: "1vh",
-    marginLeft: "4.5vw",
-    marginBottom: "2.8vh",
+    // marginLeft: "4.5vw",
+    position: "fixed",
   },
   centeredButton: {
     alignItems: "center",
@@ -98,16 +97,14 @@ const myStyle = makeStyles({
     marginLeft: "20vw",
   },
   arrowLeftButton: {
-    position: "absolute",
-    marginBottom: "5vh",
-    marginLeft: "38vw",
-    marginTop: "105vh",
+    position: "fixed",
+    left: "30%",
+    top: "93%",
   },
   arrowRightButton: {
-    position: "absolute",
-    marginBottom: "5vh",
-    marginLeft: "50vw",
-    marginTop: "105vh",
+    position: "fixed",
+    right: "30%",
+    top: "93%",
   },
   centerImages: {
     display: "flex",
@@ -117,7 +114,7 @@ const myStyle = makeStyles({
   },
 });
 
-const Tutorial1: React.FC<Tutorial1Props> = ({ setRoute, setBackButton }: Tutorial1Props) => {
+const Tutorial: React.FC<Tutorial1Props> = ({ setRoute, setBackButton }: Tutorial1Props) => {
   const style = myStyle();
 
   const ArrowLeft = () => {
@@ -208,4 +205,4 @@ const Tutorial1: React.FC<Tutorial1Props> = ({ setRoute, setBackButton }: Tutori
   return <div>{Slideshow()}</div>;
 };
 
-export default Tutorial1;
+export default Tutorial;
