@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@material-ui/core";
 import useInterval from "../../components/useInterval";
 
@@ -12,10 +12,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [hinted, setHinted] = useState(false);
 
   const [timeRemaining, setTimeRemaining] = useState(10);
+  const [timeRemainingText, setTimeRemainingText] = useState("10.0");
   const [countdownColor, setCountdownColor] = useState("#373737");
 
-  const [correct, setCorrect] = useState(0);
-  const [ourCorrect, setOurCorrect] = useState(0);
+  const [playerPoints, setPlayerPoints] = useState(0);
+  const [aiPoints, setAiPoints] = useState(0);
+  const [aiPointsText, setAiPointsText] = useState(0);
   const [total, setTotal] = useState(0);
 
   const [truth, setTruth] = useState<number[]>([]);
@@ -45,6 +47,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   useInterval(
     () => {
       setTimeRemaining((prevState) => prevState - 0.1);
+      setTimeRemainingText(timeRemaining.toFixed(1));
     },
     running ? 100 : null
   );
@@ -69,40 +72,46 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     return interArea / unionArea;
   };
 
-  const drawTruth = (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-    context.beginPath();
-    context.strokeStyle = "yellow";
-    context.lineWidth = 3;
-    context.rect(truth[0], truth[1], truth[2] - truth[0], truth[3] - truth[1]);
-    context.stroke();
+  const drawTruth = useCallback(
+    (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+      context.beginPath();
+      context.strokeStyle = "yellow";
+      context.lineWidth = 3;
+      context.rect(truth[0], truth[1], truth[2] - truth[0], truth[3] - truth[1]);
+      context.stroke();
 
-    if (bbIntersectionOverUnion(truth, predicted) > 0.5) {
-      context.strokeStyle = "green";
-    } else {
+      if (bbIntersectionOverUnion(truth, predicted) > 0.5) {
+        context.strokeStyle = "green";
+      } else {
+        context.strokeStyle = "red";
+      }
+
+      context.lineWidth = 3;
+      context.beginPath();
+      context.rect(
+        predicted[0],
+        predicted[1],
+        predicted[2] - predicted[0],
+        predicted[3] - predicted[1]
+      );
+      context.stroke();
+    },
+    [predicted, truth]
+  );
+
+  const drawHint = useCallback(
+    (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+      const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
+      const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
+
+      context.beginPath();
       context.strokeStyle = "red";
-    }
-
-    context.lineWidth = 3;
-    context.beginPath();
-    context.rect(
-      predicted[0],
-      predicted[1],
-      predicted[2] - predicted[0],
-      predicted[3] - predicted[1]
-    );
-    context.stroke();
-  };
-
-  const drawHint = (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-    const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
-    const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
-
-    context.beginPath();
-    context.strokeStyle = "red";
-    context.lineWidth = 2;
-    context.arc(x, y, 100, 0, 2 * Math.PI);
-    context.stroke();
-  };
+      context.lineWidth = 2;
+      context.arc(x, y, 100, 0, 2 * Math.PI);
+      context.stroke();
+    },
+    [truth]
+  );
 
   const getMousePosition = (playerX: number, playerY: number, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect(); // abs. size of element
@@ -124,7 +133,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const { x, y } = getMousePosition(mouseX, mouseY, canvas);
 
     if (truth[0] <= x && truth[1] <= x && y <= truth[2] && y <= truth[3]) {
-      setCorrect((prevState) => prevState + 1);
+      setPlayerPoints((prevState) => prevState + 1);
       context.strokeStyle = "green";
     } else {
       context.strokeStyle = "red";
@@ -145,6 +154,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) =>
         drawTruth(canvas, context)
       );
+
+      setAiPointsText(aiPoints);
     } else if (timeRemaining <= 2) {
       setCountdownColor("red");
     } else if (timeRemaining <= 5) {
@@ -162,7 +173,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     } else {
       setCountdownColor("#373737");
     }
-  }, [timeRemaining]);
+  }, [aiPoints, drawHint, drawTruth, hinted, timeRemaining]);
 
   const onCanvasClick = async (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
     if (timeRemaining <= 0 || clicked) {
@@ -179,6 +190,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       drawTruth(canvas, context);
       drawPlayer(canvas, context, mouseX, mouseY);
     });
+
+    setAiPointsText(aiPoints);
   };
 
   const getNewFileNumber = (): number => {
@@ -196,6 +209,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const loadNewImage = async () => {
     stopTimer();
+    setTimeRemaining(10);
 
     const fileNumber = getNewFileNumber();
 
@@ -207,7 +221,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         setPredicted(data.predicted);
 
         if (bbIntersectionOverUnion(truth, predicted) > 0.5) {
-          setOurCorrect(ourCorrect + 1);
+          setAiPoints((prevState) => prevState + 1);
         }
       });
 
@@ -222,7 +236,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       setClicked(false);
       setHinted(false);
-      setTimeRemaining(10);
+      setTimeRemainingText(timeRemaining.toFixed(1));
       setRunning(true);
       setTotal((prevState) => prevState + 1);
     };
@@ -256,13 +270,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </div>
 
         <div>
-          <h3 style={{ color: countdownColor }}>Time remaining: {timeRemaining.toFixed(1)}s</h3>
+          <h3 style={{ color: countdownColor }}>Time remaining: {timeRemainingText}s</h3>
 
           <h3>Results</h3>
 
-          <h4>Correct (you): {correct}</h4>
+          <h4>Correct (you): {playerPoints}</h4>
 
-          <h4>Correct (AI): {ourCorrect}</h4>
+          <h4>Correct (AI): {aiPointsText}</h4>
 
           <h4>Total Scans: {total}</h4>
         </div>
