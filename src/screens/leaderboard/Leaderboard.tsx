@@ -9,6 +9,14 @@ const useStyles = makeStyles(() =>
     appbar: {
       alignItems: "center",
       justifyContent: "center",
+      backgroundColor: "#003B46",
+    },
+    indicator: {
+      backgroundColor: "#C4DFE6",
+    },
+    tab: {
+      fontFamily: "segoe UI",
+      fontSize: 24,
     },
   })
 );
@@ -31,10 +39,30 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setBackButton }: LeaderboardP
   return (
     <Grid container justify="center">
       <AppBar className={styles.appbar} position="static">
-        <Tabs value={currentTabIndex} onChange={handleChange} aria-label="Leaderboards">
-          <Tab label="Daily" id="leaderboard-0" aria-controls="leaderboard-view-0" />
-          <Tab label="Monthly" id="leaderboard-1" aria-controls="leaderboard-view-1" />
-          <Tab label="All Time" id="leaderboard-2" aria-controls="leaderboard-view-2" />
+        <Tabs
+          value={currentTabIndex}
+          onChange={handleChange}
+          aria-label="Leaderboards"
+          classes={{ indicator: styles.indicator }}
+        >
+          <Tab
+            className={styles.tab}
+            label="Daily"
+            id="leaderboard-0"
+            aria-controls="leaderboard-view-0"
+          />
+          <Tab
+            className={styles.tab}
+            label="Monthly"
+            id="leaderboard-1"
+            aria-controls="leaderboard-view-1"
+          />
+          <Tab
+            className={styles.tab}
+            label="All Time"
+            id="leaderboard-2"
+            aria-controls="leaderboard-view-2"
+          />
         </Tabs>
       </AppBar>
       <TabPanel currentIndex={currentTabIndex} index={0} dbRef={dailyRef} />

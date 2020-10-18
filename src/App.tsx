@@ -17,6 +17,11 @@ const useStyles = makeStyles((theme) =>
     menuButton: {
       marginRight: theme.spacing(2),
     },
+    appBar: {
+      fontFamily: "segoe UI",
+      fontSize: 24,
+      fontWeight: "bold",
+    },
   })
 );
 
@@ -68,7 +73,7 @@ const App: React.FC = () => {
               <BackButtonIcon />
             </IconButton>
           )}
-          <Typography>Spot the Lesion</Typography>
+          <Typography className={styles.appBar}>Spot the Lesion</Typography>
         </Toolbar>
       </AppBar>
       {currentScreen}
