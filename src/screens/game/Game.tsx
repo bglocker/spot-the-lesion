@@ -88,7 +88,6 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
 
   const [playerPoints, setPlayerPoints] = useState(0);
   const [aiPoints, setAiPoints] = useState(0);
-  const [aiPointsText, setAiPointsText] = useState(0);
   const [total, setTotal] = useState(0);
 
   const [truth, setTruth] = useState<number[]>([]);
@@ -184,7 +183,7 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
       // Drawing Predicted Rectangle
       drawRectangle(context, predicted, strokeStyle, 3);
     },
-    [predicted, truth, drawRectangle]
+    [predicted, drawRectangle]
   );
 
   const drawHint = useCallback(
@@ -239,10 +238,10 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
 
       setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
         drawTruth(canvas, context);
+        // TODO: increment ai points if correct
+        // setAiPoints(aiPoints);
         drawPredicted(canvas, context, DEFAULT_COLOUR);
       });
-
-      setAiPointsText(aiPoints);
     } else if (timeRemaining <= 2) {
       setCountdownColor("red");
     } else if (timeRemaining <= 5) {
@@ -286,25 +285,30 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
       drawPlayer(canvas, context, mouseX, mouseY, DEFAULT_COLOUR);
       setTimeout(() => {
         drawPredicted(canvas, context, DEFAULT_COLOUR);
-        drawTruth(canvas, context);
+      }, 1000);
 
+      setTimeout(() => {
+        drawTruth(canvas, context);
+      }, 2000);
+
+      setTimeout(() => {
         if (playerIsRight(canvas, mouseX, mouseY)) {
           setPlayerPoints((prevState) => prevState + 1);
           drawPlayer(canvas, context, mouseX, mouseY, VALID_COLOUR);
         } else {
           drawPlayer(canvas, context, mouseX, mouseY, INVALID_COLOUR);
         }
+      }, 3000);
 
+      setTimeout(() => {
         if (aiPredictionIsRight()) {
           setAiPoints((prevState) => prevState + 1);
           drawPredicted(canvas, context, VALID_COLOUR);
         } else {
           drawPredicted(canvas, context, INVALID_COLOUR);
         }
-      }, 1000);
+      }, 4000);
     });
-
-    setAiPointsText(aiPoints);
   };
 
   const getNewFileNumber = (): number => {
@@ -405,7 +409,7 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
         </Typography>
 
         <Typography variant="subtitle1" className={classes.scoreTypography}>
-          Correct (AI): {aiPointsText}
+          Correct (AI): {aiPoints}
         </Typography>
 
         <Typography variant="subtitle1" className={classes.scoreTypography}>
