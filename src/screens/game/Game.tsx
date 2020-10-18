@@ -3,11 +3,14 @@ import {
   Button,
   Card,
   CircularProgress,
+  Grid,
   LinearProgress,
-  Typography,
   makeStyles,
+  TextField,
+  Typography,
 } from "@material-ui/core";
 import useInterval from "../../components/useInterval";
+import { db } from "../../firebase/firebaseApp";
 
 const useStyles = makeStyles({
   container: {
@@ -29,11 +32,13 @@ const useStyles = makeStyles({
   loadingButtonContainer: {
     position: "relative",
     marginTop: 16,
+    marginBottom: 16,
   },
-  startNextButton: {
+  startNextSubmitButton: {
     backgroundColor: "#07575B",
     color: "white",
   },
+  submitTextField: {},
   circularProgress: {
     position: "absolute",
     top: "50%",
@@ -84,6 +89,8 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
   const [aiPoints, setAiPoints] = useState(0);
   const [aiPointsText, setAiPointsText] = useState(0);
   const [total, setTotal] = useState(0);
+
+  const [username, setUsername] = useState("");
 
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
@@ -317,6 +324,31 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     await loadNewImage();
   };
 
+  const submitScores = async () => {
+    const date = new Date();
+    const score = {
+      score: playerPoints,
+    };
+    await db
+      .collection("daily-scores")
+      .doc(date.getDay().toString())
+      .collection("scores")
+      .doc(username)
+      .set(score);
+    await db
+      .collection("monthly-scores")
+      .doc(date.getMonth().toString())
+      .collection("scores")
+      .doc(username)
+      .set(score);
+    await db
+      .collection("all-time-scores")
+      .doc(date.getFullYear().toString())
+      .collection("scores")
+      .doc(username)
+      .set(score);
+  };
+
   setBackButton(true);
 
   return (
@@ -328,7 +360,7 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
 
         <div className={classes.loadingButtonContainer}>
           <Button
-            className={classes.startNextButton}
+            className={classes.startNextSubmitButton}
             variant="contained"
             size="large"
             disabled={running || loading}
@@ -339,6 +371,25 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
 
           {loading && <CircularProgress className={classes.circularProgress} size={24} />}
         </div>
+
+        <Grid container justify="center">
+          <TextField
+            id="username"
+            label="Username"
+            variant="outlined"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+          />
+          <Button
+            className={classes.startNextSubmitButton}
+            variant="contained"
+            size="large"
+            disabled={running || loading}
+            onClick={submitScores}
+          >
+            Submit Score
+          </Button>
+        </Grid>
       </div>
 
       <Card className={classes.scoresContainer}>
