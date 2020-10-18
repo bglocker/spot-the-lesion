@@ -24,16 +24,19 @@ const slideImages = [
 ];
 
 const myStyle = makeStyles({
-  white: {
-    marginTop: "2vh",
-    backgroundColor: "white",
+  screenSize: {
+    marginTop: "2%",
+    width: "inherit",
     height: "80vh",
+  },
+  white: {
+    backgroundColor: "white",
     borderRadius: 25,
+    height: "inherit",
     borderColor: "black",
     borderWidth: "5px",
     borderStyle: "solid",
-    marginLeft: "4.75vw",
-    marginRight: "4.75vw",
+    display: "flex",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -128,23 +131,25 @@ const Tutorial: React.FC<TutorialProps> = ({ setRoute, setBackButton }: Tutorial
     <div>
       <Grid container direction="column" alignItems="center" justify="center">
         <Slide in={slideIn} direction={slideDirection}>
-          <div className={styles.white}>
-            <Grid container direction="column" justify="space-around" alignItems="center">
-              <TutorialCard textContent={textContent} imageLink={imageContent} />
-              {index === 7 ? (
-                <Button
-                  className={`${styles.centeredButton}`}
-                  style={{ color: buttonColor }}
-                  onClick={() => setRoute("game")}
-                  onMouseEnter={() => setButtonColor("#07575B")}
-                  onMouseLeave={() => setButtonColor("white")}
-                >
-                  Play
-                </Button>
-              ) : (
-                ""
-              )}
-            </Grid>
+          <div className={styles.screenSize}>
+            <div className={styles.white}>
+              <Grid container direction="column" justify="space-around" alignItems="center">
+                <TutorialCard textContent={textContent} imageLink={imageContent} />
+                {index === 7 ? (
+                  <Button
+                    className={`${styles.centeredButton}`}
+                    style={{ color: buttonColor }}
+                    onClick={() => setRoute("game")}
+                    onMouseEnter={() => setButtonColor("#07575B")}
+                    onMouseLeave={() => setButtonColor("white")}
+                  >
+                    Play
+                  </Button>
+                ) : (
+                  ""
+                )}
+              </Grid>
+            </div>
           </div>
         </Slide>
         <ButtonGroup size="large" className={styles.groupButton}>
