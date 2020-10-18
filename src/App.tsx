@@ -7,6 +7,7 @@ import Game from "./screens/game/Game";
 import Tutorial from "./screens/tutorial/Tutorial";
 import About from "./screens/about/About";
 import Credits from "./screens/credits/Credits";
+import Leaderboard from "./screens/leaderboard/Leaderboard";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -34,7 +35,10 @@ const App: React.FC = () => {
     case "game":
       currentScreen = <Game setRoute={setRoute} setBackButton={setBackButton} />;
       break;
-    case "tutorial1":
+    case "leaderboard":
+      currentScreen = <Leaderboard setRoute={setRoute} setBackButton={setBackButton} />;
+      break;
+    case "tutorial":
       currentScreen = <Tutorial setRoute={setRoute} setBackButton={setBackButton} />;
       break;
     case "about":

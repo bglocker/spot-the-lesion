@@ -83,7 +83,15 @@ const Home: React.FC<HomeProps> = ({ setRoute, setBackButton }: HomeProps) => {
             variant="contained"
             size="large"
             className={styles.button}
-            onClick={() => setRoute("tutorial1")}
+            onClick={() => setRoute("leaderboard")}
+          >
+            Leaderboard
+          </Button>
+          <Button
+            variant="contained"
+            size="large"
+            className={styles.button}
+            onClick={() => setRoute("tutorial")}
           >
             How to Play
           </Button>
