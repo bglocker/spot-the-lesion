@@ -137,12 +137,24 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     return interArea / unionArea;
   };
 
+  // WARNING: Don't use this function outside of this class
+  // PRE: rectBounds has at least 4 elements
+  function setRect(context: CanvasRenderingContext2D, rectBounds: number[]) {
+    const xBase = rectBounds[0];
+    const yBase = rectBounds[1];
+    const xEnd = rectBounds[2];
+    const yEnd = rectBounds[3];
+    const widthRect = xEnd - xBase;
+    const heightRect = yEnd - yBase;
+    context.rect(xBase, yBase, widthRect, heightRect);
+  }
+
   const drawTruth = useCallback(
     (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
       context.beginPath();
       context.strokeStyle = "yellow";
       context.lineWidth = 3;
-      context.rect(truth[0], truth[1], truth[2] - truth[0], truth[3] - truth[1]);
+      setRect(context, truth);
       context.stroke();
 
       if (bbIntersectionOverUnion(truth, predicted) > 0.5) {
@@ -153,12 +165,7 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
 
       context.lineWidth = 3;
       context.beginPath();
-      context.rect(
-        predicted[0],
-        predicted[1],
-        predicted[2] - predicted[0],
-        predicted[3] - predicted[1]
-      );
+      setRect(context, predicted);
       context.stroke();
     },
     [predicted, truth]
