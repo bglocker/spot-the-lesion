@@ -62,6 +62,12 @@ const useStyles = makeStyles({
   },
 });
 
+// Colour codes
+const VALID_COLOUR = "green";
+const INVALID_COLOUR = "red";
+const DEFAULT_COLOUR = "yellow";
+const TRUE_COLOUR = "blue";
+
 const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
   const classes = useStyles();
 
@@ -168,17 +174,15 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
   const drawTruth = useCallback(
     (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
       // Drawing True Rectangle
-      drawRectangle(context, truth, "yellow", 3);
+      drawRectangle(context, truth, TRUE_COLOUR, 3);
     },
     [truth, drawRectangle]
   );
 
   const drawPredicted = useCallback(
-    (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+    (_: HTMLCanvasElement, context: CanvasRenderingContext2D, strokeStyle: string) => {
       // Drawing Predicted Rectangle
-      const predictionIntersectsTruth = bbIntersectionOverUnion(truth, predicted) > 0.5;
-      const predictedStrokeStyle = predictionIntersectsTruth ? "green" : "red";
-      drawRectangle(context, predicted, predictedStrokeStyle, 3);
+      drawRectangle(context, predicted, strokeStyle, 3);
     },
     [predicted, truth, drawRectangle]
   );
@@ -208,12 +212,6 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     };
   };
 
-  // function delayAiAnswer(context: CanvasRenderingContext2D, color: string) {
-  //   setTimeout(() => {
-  //     context.strokeStyle = color;
-  //   }, 2000);
-  // }
-
   const drawPlayer = useCallback(
     (
       canvas: HTMLCanvasElement,
@@ -241,7 +239,7 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
 
       setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
         drawTruth(canvas, context);
-        drawPredicted(canvas, context);
+        drawPredicted(canvas, context, DEFAULT_COLOUR);
       });
 
       setAiPointsText(aiPoints);
@@ -269,6 +267,10 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
   }
 
+  function aiPredictionIsRight() {
+    return bbIntersectionOverUnion(truth, predicted) > 0.5;
+  }
+
   const onCanvasClick = async (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
     if (timeRemaining <= 0 || clicked || !running) {
       return;
@@ -281,16 +283,23 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     const [mouseX, mouseY] = [event.clientX, event.clientY];
 
     setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-      drawPlayer(canvas, context, mouseX, mouseY, "yellow");
+      drawPlayer(canvas, context, mouseX, mouseY, DEFAULT_COLOUR);
       setTimeout(() => {
-        drawPredicted(canvas, context);
+        drawPredicted(canvas, context, DEFAULT_COLOUR);
         drawTruth(canvas, context);
 
         if (playerIsRight(canvas, mouseX, mouseY)) {
-          drawPlayer(canvas, context, mouseX, mouseY, "green");
           setPlayerPoints((prevState) => prevState + 1);
+          drawPlayer(canvas, context, mouseX, mouseY, VALID_COLOUR);
         } else {
-          drawPlayer(canvas, context, mouseX, mouseY, "red");
+          drawPlayer(canvas, context, mouseX, mouseY, INVALID_COLOUR);
+        }
+
+        if (aiPredictionIsRight()) {
+          setAiPoints((prevState) => prevState + 1);
+          drawPredicted(canvas, context, VALID_COLOUR);
+        } else {
+          drawPredicted(canvas, context, INVALID_COLOUR);
         }
       }, 1000);
     });
@@ -324,10 +333,6 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
       .then((data: { truth: number[]; predicted: number[] }) => {
         setTruth(data.truth);
         setPredicted(data.predicted);
-
-        if (bbIntersectionOverUnion(truth, predicted) > 0.5) {
-          setAiPoints((prevState) => prevState + 1);
-        }
       });
 
     // Build the image
