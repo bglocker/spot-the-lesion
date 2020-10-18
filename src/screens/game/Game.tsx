@@ -232,15 +232,33 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     []
   );
 
+  const isAIPredictionRight = useCallback(() => {
+    return bbIntersectionOverUnion(truth, predicted) > 0.5;
+  }, [truth, predicted]);
+
   useEffect(() => {
+    if (!running) {
+      return;
+    }
+
     if (timeRemaining <= 0) {
       stopTimer();
 
       setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-        drawTruth(canvas, context);
-        // TODO: increment ai points if correct
-        // setAiPoints(aiPoints);
         drawPredicted(canvas, context, DEFAULT_COLOUR);
+
+        setTimeout(() => {
+          drawTruth(canvas, context);
+        }, 1000);
+
+        setTimeout(() => {
+          if (isAIPredictionRight()) {
+            setAiPoints((prevState) => prevState + 1);
+            drawPredicted(canvas, context, VALID_COLOUR);
+          } else {
+            drawPredicted(canvas, context, INVALID_COLOUR);
+          }
+        }, 2000);
       });
     } else if (timeRemaining <= 2) {
       setCountdownColor("red");
@@ -259,15 +277,20 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     } else {
       setCountdownColor("#373737");
     }
-  }, [aiPoints, drawHint, drawTruth, drawPredicted, hinted, timeRemaining]);
+  }, [
+    aiPoints,
+    drawHint,
+    drawTruth,
+    drawPredicted,
+    hinted,
+    running,
+    timeRemaining,
+    isAIPredictionRight,
+  ]);
 
-  function playerIsRight(canvas: HTMLCanvasElement, mouseX: number, mouseY: number) {
+  function isPlayerRight(canvas: HTMLCanvasElement, mouseX: number, mouseY: number) {
     const { x, y } = getMousePosition(mouseX, mouseY, canvas);
     return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
-  }
-
-  function aiPredictionIsRight() {
-    return bbIntersectionOverUnion(truth, predicted) > 0.5;
   }
 
   const onCanvasClick = async (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
@@ -292,7 +315,7 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
       }, 2000);
 
       setTimeout(() => {
-        if (playerIsRight(canvas, mouseX, mouseY)) {
+        if (isPlayerRight(canvas, mouseX, mouseY)) {
           setPlayerPoints((prevState) => prevState + 1);
           drawPlayer(canvas, context, mouseX, mouseY, VALID_COLOUR);
         } else {
@@ -301,7 +324,7 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
       }, 3000);
 
       setTimeout(() => {
-        if (aiPredictionIsRight()) {
+        if (isAIPredictionRight()) {
           setAiPoints((prevState) => prevState + 1);
           drawPredicted(canvas, context, VALID_COLOUR);
         } else {
