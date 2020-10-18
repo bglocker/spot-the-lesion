@@ -91,8 +91,6 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
   type DrawType = ((canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => void) | null;
   const [draw, setDraw] = useState<DrawType>(null);
 
-  const [playerColor, setPlayerColor] = useState<string>("yellow");
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas === null) {
@@ -216,33 +214,26 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
   //   }, 2000);
   // }
 
-  const drawPlayer = (
-    canvas: HTMLCanvasElement,
-    context: CanvasRenderingContext2D,
-    mouseX: number,
-    mouseY: number
-  ) => {
-    const { x, y } = getMousePosition(mouseX, mouseY, canvas);
+  const drawPlayer = useCallback(
+    (
+      canvas: HTMLCanvasElement,
+      context: CanvasRenderingContext2D,
+      mouseX: number,
+      mouseY: number,
+      playerColour: string
+    ) => {
+      const { x, y } = getMousePosition(mouseX, mouseY, canvas);
 
-    context.strokeStyle = playerColor;
-
-    setTimeout(() => {
-      if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
-        setPlayerPoints((prevState) => prevState + 1);
-        setPlayerColor("green");
-      } else {
-        setPlayerColor("red");
-      }
-      context.strokeStyle = playerColor;
-    }, 4000);
-
-    context.beginPath();
-    context.moveTo(x - 5, y - 5);
-    context.lineTo(x + 5, y + 5);
-    context.moveTo(x + 5, y - 5);
-    context.lineTo(x - 5, y + 5);
-    context.stroke();
-  };
+      context.strokeStyle = playerColour;
+      context.beginPath();
+      context.moveTo(x - 5, y - 5);
+      context.lineTo(x + 5, y + 5);
+      context.moveTo(x + 5, y - 5);
+      context.lineTo(x - 5, y + 5);
+      context.stroke();
+    },
+    []
+  );
 
   useEffect(() => {
     if (timeRemaining <= 0) {
@@ -273,6 +264,11 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     }
   }, [aiPoints, drawHint, drawTruth, drawPredicted, hinted, timeRemaining]);
 
+  function playerIsRight(canvas: HTMLCanvasElement, mouseX: number, mouseY: number) {
+    const { x, y } = getMousePosition(mouseX, mouseY, canvas);
+    return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
+  }
+
   const onCanvasClick = async (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
     if (timeRemaining <= 0 || clicked || !running) {
       return;
@@ -285,11 +281,18 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     const [mouseX, mouseY] = [event.clientX, event.clientY];
 
     setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-      drawPlayer(canvas, context, mouseX, mouseY);
+      drawPlayer(canvas, context, mouseX, mouseY, "yellow");
       setTimeout(() => {
-        drawTruth(canvas, context);
         drawPredicted(canvas, context);
-      }, 4000);
+        drawTruth(canvas, context);
+
+        if (playerIsRight(canvas, mouseX, mouseY)) {
+          drawPlayer(canvas, context, mouseX, mouseY, "green");
+          setPlayerPoints((prevState) => prevState + 1);
+        } else {
+          drawPlayer(canvas, context, mouseX, mouseY, "red");
+        }
+      }, 1000);
     });
 
     setAiPointsText(aiPoints);
@@ -349,7 +352,6 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     if (!started) {
       setStarted(true);
     }
-    setPlayerColor("yellow");
     await loadNewImage();
   };
 
