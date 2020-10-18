@@ -151,25 +151,38 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     context.rect(xBase, yBase, widthRect, heightRect);
   }
 
-  const drawTruth = useCallback(
-    (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+  const drawRectangle = useCallback(
+    (
+      context: CanvasRenderingContext2D,
+      rectBounds: number[],
+      strokeStyle: string,
+      lineWidth: number
+    ) => {
+      context.strokeStyle = strokeStyle;
+      context.lineWidth = lineWidth;
       context.beginPath();
-      context.strokeStyle = "yellow";
-      context.lineWidth = 3;
-      setRect(context, truth);
-      context.stroke();
-
-      if (bbIntersectionOverUnion(truth, predicted) > 0.5) {
-        context.strokeStyle = "green";
-      } else {
-        context.strokeStyle = "red";
-      }
-      context.lineWidth = 3;
-      context.beginPath();
-      setRect(context, predicted);
+      setRect(context, rectBounds);
       context.stroke();
     },
-    [predicted, truth]
+    []
+  );
+
+  const drawTruth = useCallback(
+    (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+      // Drawing True Rectangle
+      drawRectangle(context, truth, "yellow", 3);
+    },
+    [truth, drawRectangle]
+  );
+
+  const drawPredicted = useCallback(
+    (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+      // Drawing Predicted Rectangle
+      const predictionIntersectsTruth = bbIntersectionOverUnion(truth, predicted) > 0.5;
+      const predictedStrokeStyle = predictionIntersectsTruth ? "green" : "red";
+      drawRectangle(context, predicted, predictedStrokeStyle, 3);
+    },
+    [predicted, truth, drawRectangle]
   );
 
   const drawHint = useCallback(
@@ -235,9 +248,10 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     if (timeRemaining <= 0) {
       stopTimer();
 
-      setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) =>
-        drawTruth(canvas, context)
-      );
+      setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+        drawTruth(canvas, context);
+        drawPredicted(canvas, context);
+      });
 
       setAiPointsText(aiPoints);
     } else if (timeRemaining <= 2) {
@@ -257,7 +271,7 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     } else {
       setCountdownColor("#373737");
     }
-  }, [aiPoints, drawHint, drawTruth, hinted, timeRemaining]);
+  }, [aiPoints, drawHint, drawTruth, drawPredicted, hinted, timeRemaining]);
 
   const onCanvasClick = async (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
     if (timeRemaining <= 0 || clicked || !running) {
@@ -274,6 +288,7 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
       drawPlayer(canvas, context, mouseX, mouseY);
       setTimeout(() => {
         drawTruth(canvas, context);
+        drawPredicted(canvas, context);
       }, 4000);
     });
 
