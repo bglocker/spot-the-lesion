@@ -488,13 +488,41 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const entryNameForDaily = `${date.getDate()}.${date.getMonth()}.${date.getFullYear()}.${
       entry.user
     }`;
-    await db.collection("daily-scores").doc(entryNameForDaily).set(entry);
-
     const entryNameForMonthly = `${date.getMonth()}.${entry.user}`;
-    await db.collection("monthly-scores").doc(entryNameForMonthly).set(entry);
-
     const entryNameForAllTime = entry.user;
-    await db.collection("alltime-scores").doc(entryNameForAllTime).set(entry);
+
+    const dailySnapshot = await db
+      .collection("daily-scores")
+      .where("user", "==", username)
+      .where("score", ">", playerPoints)
+      .get();
+
+    if (dailySnapshot.empty) {
+      // Current player score higher than Current Daily Maximum
+      await db.collection("daily-scores").doc(entryNameForDaily).set(entry);
+    }
+
+    const monthlySnapshot = await db
+      .collection("monthly-scores")
+      .where("user", "==", username)
+      .where("score", ">", playerPoints)
+      .get();
+
+    if (monthlySnapshot.empty) {
+      // Current player score higher than Current Month Maximum
+      await db.collection("monthly-scores").doc(entryNameForMonthly).set(entry);
+    }
+
+    const allTimeSnapshot = await db
+      .collection("alltime-scores")
+      .where("user", "==", username)
+      .where("score", ">", playerPoints)
+      .get();
+
+    if (allTimeSnapshot.empty) {
+      // Current player score higher than Current All-Time Score
+      await db.collection("alltime-scores").doc(entryNameForAllTime).set(entry);
+    }
   };
 
   return (
