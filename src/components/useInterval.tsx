@@ -7,7 +7,7 @@ import { useEffect, useRef } from "react";
  * @param delay    How often to call the function, or null to pause the interval
  */
 const useInterval = (callback: () => void, delay: number | null): void => {
-  const savedCallback = useRef<() => void>();
+  const savedCallback = useRef<(() => void) | null>(null);
 
   /* Update callback to catch state changes */
   useEffect(() => {
@@ -17,7 +17,7 @@ const useInterval = (callback: () => void, delay: number | null): void => {
   /* Trigger or pause the interval */
   useEffect(() => {
     const tick = () => {
-      if (savedCallback.current !== undefined) {
+      if (savedCallback.current !== null) {
         savedCallback.current();
       }
     };
