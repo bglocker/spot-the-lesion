@@ -4,6 +4,11 @@ import {
   Button,
   Card,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   IconButton,
   LinearProgress,
   makeStyles,
@@ -15,11 +20,10 @@ import useInterval from "../../components/useInterval";
 
 const useStyles = makeStyles({
   container: {
-    // display: "flex",
-    // flexDirection: "column",
-    // justifyContent: "space-evenly",
-    // alignItems: "center",
-    // height: "93vh",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-evenly",
+    alignItems: "center",
   },
   canvasContainer: {
     display: "flex",
@@ -74,6 +78,8 @@ const useStyles = makeStyles({
 
 const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const styles = useStyles();
+
+  const [open, setOpen] = React.useState(true);
 
   const seenFiles = new Set<number>();
 
@@ -224,6 +230,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   useEffect(() => {
     if (timeRemaining <= 0) {
+      setOpen(true);
       stopTimer();
 
       setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) =>
@@ -267,6 +274,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     });
 
     // setAiPointsText(aiPoints);
+
+    setOpen(true);
   };
 
   const getNewFileNumber = (): number => {
@@ -323,6 +332,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     if (!started) {
       setStarted(true);
     }
+    setOpen(false);
 
     await loadNewImage();
   };
@@ -342,6 +352,35 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           <Typography>Spot the Lesion</Typography>
         </Toolbar>
       </AppBar>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">Sugi?</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Let Google help apps determine location. This means sending anonymous location data to
+            Google, even when no apps are running.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <div className={styles.loadingButtonContainer}>
+            <Button
+              className={styles.startNextButton}
+              variant="contained"
+              size="large"
+              disabled={running || loading}
+              onClick={onStartNextClick}
+            >
+              {started ? "Next" : "Start"}
+            </Button>
+
+            {loading && <CircularProgress className={styles.circularProgress} size={24} />}
+          </div>
+        </DialogActions>
+      </Dialog>
       <div className={styles.container}>
         <Card className={styles.scoresContainer}>
           <Typography variant="h4" className={styles.countdown} style={{ color: countdownColor }}>
@@ -359,20 +398,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           <Card className={styles.cardCanvas}>
             <canvas ref={canvasRef} onClick={onCanvasClick} width="512px" height="512px" />
           </Card>
-
-          <div className={styles.loadingButtonContainer}>
-            <Button
-              className={styles.startNextButton}
-              variant="contained"
-              size="large"
-              disabled={running || loading}
-              onClick={onStartNextClick}
-            >
-              {started ? "Next" : "Start"}
-            </Button>
-
-            {loading && <CircularProgress className={styles.circularProgress} size={24} />}
-          </div>
         </div>
       </div>
     </div>
