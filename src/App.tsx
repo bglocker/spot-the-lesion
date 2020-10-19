@@ -20,6 +20,8 @@ const useStyles = makeStyles(() =>
   createStyles({
     container: {
       height: "100vh",
+      display: "flex",
+      flexDirection: "column",
       backgroundColor: "#63A2AB",
     },
   })
