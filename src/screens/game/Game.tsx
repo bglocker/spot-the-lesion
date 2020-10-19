@@ -141,6 +141,18 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setRunning(false);
   };
 
+  const IsFullWidth = () => {
+    const [size, setSize] = useState(Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8));
+    window.addEventListener("resize", () => {
+      const newWidth = window.innerWidth * 0.8;
+      const newHeight = window.innerHeight * 0.8;
+      setSize(Math.min(newHeight, newWidth));
+    });
+    return size;
+  };
+
+  const canvasSize = IsFullWidth();
+
   const bbIntersectionOverUnion = (boxA: number[], boxB: number[]): number => {
     const xA = Math.max(boxA[0], boxB[0]);
     const yA = Math.max(boxA[1], boxB[1]);
@@ -192,10 +204,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       context.beginPath();
       context.strokeStyle = "red";
       context.lineWidth = 2;
-      context.arc(x, y, 100, 0, 2 * Math.PI);
+      context.arc(x, y, (100 * canvasSize) / 512, 0, 2 * Math.PI);
       context.stroke();
     },
-    [truth]
+    [canvasSize, truth]
   );
 
   const getMousePosition = (playerX: number, playerY: number, canvas: HTMLCanvasElement) => {
@@ -306,8 +318,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     await fetch(`${process.env.PUBLIC_URL}/content/annotation/${fileNumber}.json`)
       .then((res) => res.json())
       .then((data: { truth: number[]; predicted: number[] }) => {
-        setTruth(data.truth);
-        setPredicted(data.predicted);
+        setTruth(data.truth.map((pixel) => (pixel * canvasSize) / 512));
+        setPredicted(data.predicted.map((pixel) => (pixel * canvasSize) / 512));
 
         if (bbIntersectionOverUnion(truth, predicted) > 0.5) {
           setAiPoints((prevState) => prevState + 1);
@@ -340,18 +352,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     await loadNewImage();
   };
-
-  const IsFullWidth = () => {
-    const [size, setSize] = useState(Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8));
-    window.addEventListener("resize", () => {
-      const newWidth = window.innerWidth * 0.8;
-      const newHeight = window.innerHeight * 0.8;
-      setSize(Math.min(newHeight, newWidth));
-    });
-    return size;
-  };
-
-  const cavasSize = IsFullWidth();
 
   return (
     <div>
@@ -412,7 +412,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </Card>
         <div className={styles.canvasContainer}>
           <Card className={styles.cardCanvas}>
-            <canvas ref={canvasRef} onClick={onCanvasClick} width={cavasSize} height={cavasSize} />
+            <canvas
+              ref={canvasRef}
+              onClick={onCanvasClick}
+              width={canvasSize}
+              height={canvasSize}
+            />
           </Card>
         </div>
       </div>
