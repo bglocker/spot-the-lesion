@@ -1,81 +1,97 @@
 import React from "react";
-import { makeStyles } from "@material-ui/styles";
-import { AppBar, IconButton, Toolbar, Typography } from "@material-ui/core";
+import { AppBar, IconButton, Toolbar, Typography, Card, Theme } from "@material-ui/core";
+import { makeStyles, createStyles } from "@material-ui/styles";
 import BackButtonIcon from "@material-ui/icons/KeyboardBackspace";
 
-const myStyles = makeStyles({
-  white: {
-    marginTop: "2vh",
-    backgroundColor: "white",
-    height: "80vh",
-    borderRadius: 25,
-    borderColor: "black",
-    borderWidth: "5px",
-    borderStyle: "solid",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  textContent: {
-    margin: "5%",
-    fontSize: "calc((3vh + 3vw)/2)",
-    textAlign: "center",
-  },
-  maxWidth: {
-    width: "100%",
-  },
-  centerContent: {
-    lineItems: "center",
-  },
-  navbar: {
-    background: "#07575B",
-  },
-});
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    backButton: {
+      marginRight: 8,
+    },
+    container: {
+      height: "100%",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    card: {
+      height: "80%",
+      width: "80%",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "space-evenly",
+      padding: 8,
+    },
+    text: {
+      textAlign: "center",
+      [theme.breakpoints.only("xs")]: {
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.only("sm")]: {
+        fontSize: "1.25rem",
+      },
+      [theme.breakpoints.only("md")]: {
+        fontSize: "1.5rem",
+      },
+      [theme.breakpoints.up("lg")]: {
+        fontSize: "2rem",
+      },
+    },
+  })
+);
 
 const Credits: React.FC<CreditsProps> = ({ setRoute }: CreditsProps) => {
-  const styles = myStyles();
+  const classes = useStyles();
 
   return (
-    <div>
-      <AppBar position="static">
-        <Toolbar className={styles.navbar} variant="dense">
+    <>
+      <AppBar position="sticky">
+        <Toolbar variant="dense">
           <IconButton
+            className={classes.backButton}
             edge="start"
             color="inherit"
-            aria-label="menu"
+            aria-label="Back"
             onClick={() => setRoute("home")}
           >
             <BackButtonIcon />
           </IconButton>
+
           <Typography>Spot the Lesion</Typography>
         </Toolbar>
       </AppBar>
-      <div className={styles.white}>
-        <Typography className={`${styles.textContent} ${styles.centerContent}`}>
-          This demo is based on our{" "}
-          <a target="blank" href="https://arxiv.org/abs/1906.02283">
-            MICCAI 2019 paper
-          </a>
-          .
-        </Typography>
-        <Typography className={`${styles.textContent} ${styles.centerContent}`}>
-          CT Scan AI developed by Martin Zlocha, Qi Dou and Ben Glocker.
-        </Typography>
-        <Typography className={`${styles.textContent} ${styles.centerContent}`}>
-          This site was made with React for 3rd year Software Engineering Group Project by:
-          Andrei-Matei Roman, Andrei-Ovidiu Badea, Calin-Andrei Alexandru, Calin Biberea,
-          Cosmin-Ionut Baies, Tiberiu-Andrei Georgescu
-        </Typography>
-        <Typography className={`${styles.textContent} ${styles.centerContent}`}>
-          (c) 2019 Data obtained from the{" "}
-          <a
-            target="blank"
-            href="https://www.nih.gov/news-events/news-releases/nih-clinical-center-releases-dataset-32000-ct-images"
-          >
-            NIH Clinical Center
-          </a>
-        </Typography>
+
+      <div className={classes.container}>
+        <Card className={classes.card}>
+          <Typography className={classes.text}>
+            This demo is based on our{" "}
+            <a href="https://arxiv.org/abs/1906.02283" target="blank">
+              MICCAI 2019 paper
+            </a>
+          </Typography>
+
+          <Typography className={classes.text}>
+            CT Scan AI developed by Martin Zlocha, Qi Dou and Ben Glocker.
+          </Typography>
+
+          <Typography className={classes.text}>
+            This site was made with React for the 3rd year Software Engineering Group Project by:
+            Andrei-Matei Roman, Andrei-Ovidiu Badea, Calin-Andrei Alexandru, Calin Biberea,
+            Cosmin-Ionut Baies, Tiberiu-Andrei Georgescu
+          </Typography>
+
+          <Typography className={classes.text}>
+            (c) 2019 Data obtained from the{" "}
+            <a
+              href="https://www.nih.gov/news-events/news-releases/nih-clinical-center-releases-dataset-32000-ct-images"
+              target="blank"
+            >
+              NIH Clinical Center
+            </a>
+          </Typography>
+        </Card>
       </div>
-    </div>
+    </>
   );
 };
 
