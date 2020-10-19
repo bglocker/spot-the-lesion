@@ -16,7 +16,7 @@ import useInterval from "../../components/useInterval";
 const useStyles = makeStyles({
   container: {
     display: "flex",
-    flexDirection: "row",
+    flexDirection: "column",
     justifyContent: "space-evenly",
     alignItems: "center",
     height: "93vh",
@@ -27,7 +27,8 @@ const useStyles = makeStyles({
     alignItems: "center",
   },
   cardCanvas: {
-    height: 512,
+    height: "min(91vh, 91vw)",
+    width: "min(91vh, 91vw)",
     padding: 8,
   },
   loadingButtonContainer: {
@@ -46,13 +47,15 @@ const useStyles = makeStyles({
     marginLeft: -12,
   },
   scoresContainer: {
-    display: "flex",
+    display: "block",
     flexDirection: "column",
     alignItems: "center",
+    width: "min(91vh, 91vw)",
     padding: 8,
   },
   countdown: {
-    marginBottom: 8,
+    marginBottom: "1%",
+    fontSize: "calc((10vw+10vh)/2)",
   },
   linearProgress: {
     width: "100%",
@@ -87,10 +90,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [timeRemainingText, setTimeRemainingText] = useState("10.0");
   const [countdownColor, setCountdownColor] = useState("green");
 
-  const [playerPoints, setPlayerPoints] = useState(0);
+  // const [playerPoints, setPlayerPoints] = useState(0);
   const [aiPoints, setAiPoints] = useState(0);
-  const [aiPointsText, setAiPointsText] = useState(0);
-  const [total, setTotal] = useState(0);
+  // const [aiPointsText, setAiPointsText] = useState(0);
+  // const [total, setTotal] = useState(0);
 
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
@@ -205,7 +208,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const { x, y } = getMousePosition(mouseX, mouseY, canvas);
 
     if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
-      setPlayerPoints((prevState) => prevState + 1);
+      // setPlayerPoints((prevState) => prevState + 1);
       context.strokeStyle = "green";
     } else {
       context.strokeStyle = "red";
@@ -227,7 +230,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         drawTruth(canvas, context)
       );
 
-      setAiPointsText(aiPoints);
+      // setAiPointsText(aiPoints);
     } else if (timeRemaining <= 2) {
       setCountdownColor("red");
     } else if (timeRemaining <= 5) {
@@ -263,7 +266,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       drawPlayer(canvas, context, mouseX, mouseY);
     });
 
-    setAiPointsText(aiPoints);
+    // setAiPointsText(aiPoints);
   };
 
   const getNewFileNumber = (): number => {
@@ -312,7 +315,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       setTimeRemainingText(timeRemaining.toFixed(1));
       setRunning(true);
       setLoading(false);
-      setTotal((prevState) => prevState + 1);
+      // setTotal((prevState) => prevState + 1);
     };
   };
 
@@ -340,6 +343,18 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </Toolbar>
       </AppBar>
       <div className={styles.container}>
+        <Card className={styles.scoresContainer}>
+          <Typography variant="h4" className={styles.countdown} style={{ color: countdownColor }}>
+            Time remaining: {timeRemainingText}s
+          </Typography>
+
+          <LinearProgress
+            variant="determinate"
+            value={timeRemaining * 10}
+            className={styles.linearProgress}
+            classes={{ barColorPrimary: countdownColor }}
+          />
+        </Card>
         <div className={styles.canvasContainer}>
           <Card className={styles.cardCanvas}>
             <canvas ref={canvasRef} onClick={onCanvasClick} width="512px" height="512px" />
@@ -359,35 +374,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
             {loading && <CircularProgress className={styles.circularProgress} size={24} />}
           </div>
         </div>
-
-        <Card className={styles.scoresContainer}>
-          <Typography variant="h4" className={styles.countdown} style={{ color: countdownColor }}>
-            Time remaining: {timeRemainingText}s
-          </Typography>
-
-          <LinearProgress
-            variant="determinate"
-            value={timeRemaining * 10}
-            className={styles.linearProgress}
-            classes={{ barColorPrimary: countdownColor }}
-          />
-
-          <Typography variant="h4" className={styles.results}>
-            Results
-          </Typography>
-
-          <Typography variant="subtitle1" className={styles.scoreTypography}>
-            Correct (you): {playerPoints}
-          </Typography>
-
-          <Typography variant="subtitle1" className={styles.scoreTypography}>
-            Correct (AI): {aiPointsText}
-          </Typography>
-
-          <Typography variant="subtitle1" className={styles.scoreTypography}>
-            Total Scans: {total}
-          </Typography>
-        </Card>
       </div>
     </div>
   );
