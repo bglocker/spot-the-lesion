@@ -47,3 +47,6 @@ yarn-error.log*
 
 # JIRA plugin
 atlassian-ide-plugin.xml
+
+# Protect API keys
+.env
