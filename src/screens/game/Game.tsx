@@ -31,8 +31,9 @@ const useStyles = makeStyles({
     alignItems: "center",
   },
   cardCanvas: {
-    height: "min(91vh, 91vw)",
-    width: "min(91vh, 91vw)",
+    position: "relative",
+    height: "min(81vh, 81vw)",
+    width: "min(81vh, 81vw)",
     padding: 8,
   },
   loadingButtonContainer: {
@@ -54,12 +55,15 @@ const useStyles = makeStyles({
     display: "block",
     flexDirection: "column",
     alignItems: "center",
-    width: "min(91vh, 91vw)",
+    width: "min(81vh, 81vw)",
+    height: "5vh",
+    margin: "1%",
     padding: 8,
   },
   countdown: {
     marginBottom: "1%",
-    fontSize: "calc((10vw+10vh)/2)",
+    textAlign: "center",
+    fontSize: "min(calc((10vw+10vh)/2), 3vh)",
   },
   linearProgress: {
     width: "100%",
@@ -337,6 +341,18 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     await loadNewImage();
   };
 
+  const IsFullWidth = () => {
+    const [size, setSize] = useState(Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8));
+    window.addEventListener("resize", () => {
+      const newWidth = window.innerWidth * 0.8;
+      const newHeight = window.innerHeight * 0.8;
+      setSize(Math.min(newHeight, newWidth));
+    });
+    return size;
+  };
+
+  const cavasSize = IsFullWidth();
+
   return (
     <div>
       <AppBar position="static">
@@ -396,7 +412,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </Card>
         <div className={styles.canvasContainer}>
           <Card className={styles.cardCanvas}>
-            <canvas ref={canvasRef} onClick={onCanvasClick} width="512px" height="512px" />
+            <canvas ref={canvasRef} onClick={onCanvasClick} width={cavasSize} height={cavasSize} />
           </Card>
         </div>
       </div>
