@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   AppBar,
   Button,
@@ -8,12 +8,12 @@ import {
   Toolbar,
   Typography,
 } from "@material-ui/core";
-import { makeStyles, createStyles } from "@material-ui/core/styles";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
 import logo from "./images/logo.gif";
 import scan from "./images/ct-scan.png";
 import brain from "./images/brain.png";
 
-const useStyles = makeStyles((theme) =>
+const useStyles = makeStyles(() =>
   createStyles({
     button: {
       background: "#07575B",
@@ -25,8 +25,8 @@ const useStyles = makeStyles((theme) =>
       fontWeight: "bold",
       marginTop: "3vh",
       fontSize: 22,
-      width: 300,
-      margin: theme.spacing(2),
+      width: 290,
+      margin: "1vh",
     },
     container: {
       width: "100vw",
@@ -38,7 +38,7 @@ const useStyles = makeStyles((theme) =>
     logo: {
       marginTop: "1vh",
       width: "auto",
-      height: "360px",
+      height: "350px",
     },
     visible: {
       width: "250px",
@@ -57,18 +57,17 @@ const useStyles = makeStyles((theme) =>
 const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
   const styles = useStyles();
   const minWidth = 1360;
-  const [fullWidth, setFullWidth] = useState(window.innerWidth > minWidth);
 
-  useEffect(() => {
-    window.addEventListener(
-      "resize",
-      () => {
-        const newFullWidth: boolean = window.innerWidth > minWidth;
-        setFullWidth(newFullWidth);
-      },
-      false
-    );
-  }, [fullWidth]);
+  const IsFullWidth = () => {
+    const [hasFullWidth, setHasFullWidth] = useState(window.innerWidth > minWidth);
+    window.addEventListener("resize", () => {
+      const newHasFullWidth: boolean = window.innerWidth > minWidth;
+      setHasFullWidth(newHasFullWidth);
+    });
+    return hasFullWidth;
+  };
+
+  const fullWidth = IsFullWidth();
 
   return (
     <div>
