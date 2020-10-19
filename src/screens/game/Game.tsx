@@ -15,11 +15,11 @@ import useInterval from "../../components/useInterval";
 
 const useStyles = makeStyles({
   container: {
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-evenly",
-    alignItems: "center",
-    height: "93vh",
+    // display: "flex",
+    // flexDirection: "column",
+    // justifyContent: "space-evenly",
+    // alignItems: "center",
+    // height: "93vh",
   },
   canvasContainer: {
     display: "flex",

@@ -44,6 +44,9 @@ const myStyle = makeStyles(() =>
       width: "inherit",
       height: "80vh",
     },
+    container: {
+      overflow: "hidden",
+    },
     white: {
       backgroundColor: "white",
       borderRadius: 25,
@@ -146,7 +149,7 @@ const Tutorial: React.FC<TutorialProps> = ({ setRoute }: TutorialProps) => {
   });
 
   return (
-    <div>
+    <div className={styles.container}>
       <AppBar position="static">
         <Toolbar className={styles.navbar} variant="dense">
           <IconButton
