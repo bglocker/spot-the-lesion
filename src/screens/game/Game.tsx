@@ -56,7 +56,6 @@ const useStyles = makeStyles({
     flexDirection: "column",
     alignItems: "center",
     width: "min(81vh, 81vw)",
-    height: "5vh",
     margin: "1%",
     padding: 8,
   },
@@ -100,10 +99,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [timeRemainingText, setTimeRemainingText] = useState("10.0");
   const [countdownColor, setCountdownColor] = useState("green");
 
-  // const [playerPoints, setPlayerPoints] = useState(0);
+  const [playerPoints, setPlayerPoints] = useState(0);
   const [aiPoints, setAiPoints] = useState(0);
-  // const [aiPointsText, setAiPointsText] = useState(0);
-  // const [total, setTotal] = useState(0);
+  const [aiPointsText, setAiPointsText] = useState(0);
+  const [total, setTotal] = useState(0);
 
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
@@ -230,7 +229,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const { x, y } = getMousePosition(mouseX, mouseY, canvas);
 
     if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
-      // setPlayerPoints((prevState) => prevState + 1);
+      setPlayerPoints((prevState) => prevState + 1);
       context.strokeStyle = "green";
     } else {
       context.strokeStyle = "red";
@@ -253,7 +252,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         drawTruth(canvas, context)
       );
 
-      // setAiPointsText(aiPoints);
+      setAiPointsText(aiPoints);
     } else if (timeRemaining <= 2) {
       setCountdownColor("red");
     } else if (timeRemaining <= 5) {
@@ -289,7 +288,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       drawPlayer(canvas, context, mouseX, mouseY);
     });
 
-    // setAiPointsText(aiPoints);
+    setAiPointsText(aiPoints);
 
     setOpen(true);
   };
@@ -340,7 +339,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       setTimeRemainingText(timeRemaining.toFixed(1));
       setRunning(true);
       setLoading(false);
-      // setTotal((prevState) => prevState + 1);
+      setTotal((prevState) => prevState + 1);
     };
   };
 
@@ -374,11 +373,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">Sugi?</DialogTitle>
+        <DialogTitle id="alert-dialog-title">Results</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Let Google help apps determine location. This means sending anonymous location data to
-            Google, even when no apps are running.
+            <Typography variant="subtitle1">Correct (you): {playerPoints}</Typography>
+
+            <Typography variant="subtitle1">Correct (AI): {aiPointsText}</Typography>
+
+            <Typography variant="subtitle1">Total Scans: {total}</Typography>
           </DialogContentText>
         </DialogContent>
         <DialogActions>
