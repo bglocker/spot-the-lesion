@@ -13,14 +13,16 @@ import right_ai from "./images/right ai.png";
 import actual_lesion from "./images/actual lesion.png";
 
 const slideImages = [
-  [doctor, ""],
-  [start_screen, ""],
-  [start_screen, ""],
-  [help, ""],
-  [wrong_click, right_click],
-  [wrong_ai, right_ai],
-  [actual_lesion, ""],
-  ["", ""],
+  doctor,
+  start_screen,
+  start_screen,
+  help,
+  right_click,
+  wrong_click,
+  wrong_ai,
+  right_ai,
+  actual_lesion,
+  "",
 ];
 
 const myStyle = makeStyles({
@@ -78,8 +80,10 @@ const Tutorial: React.FC<TutorialProps> = ({ setRoute, setBackButton }: Tutorial
     "You’ll receive a sample of a CT scan like this one below, and you’’ll have to find the lesion present in it.",
     " You have 10 seconds to click on the region of the scan where you think the lesion is located.",
     "After 5 seconds, a hint will appear - the red circle indicates the part of the image which you should look at.",
-    "If your click was correct, then you’ll see a green cross (x) on the spot you selected, otherwise a red cross (x) will appear.",
-    "You’ll also see the AI’s prediction on the lesion, marked in red if the AI was wrong, or in green if the AI was correct.",
+    "If your click was correct, then you’ll see a green cross (x) on the spot you selected...",
+    "...otherwise a red cross (x) will appear.",
+    "You’ll also see the AI’s prediction on the lesion, marked in red if the AI was wrong...",
+    "...or in green if the AI was correct.",
     "Finally, you will see the correct answer marked in yellow.",
     "That's it! Now, can you spot more lesions than the AI?",
   ];
@@ -135,7 +139,7 @@ const Tutorial: React.FC<TutorialProps> = ({ setRoute, setBackButton }: Tutorial
             <div className={styles.white}>
               <Grid container direction="column" justify="space-around" alignItems="center">
                 <TutorialCard textContent={textContent} imageLink={imageContent} />
-                {index === 7 ? (
+                {index === 9 ? (
                   <Button
                     className={`${styles.centeredButton}`}
                     style={{ color: buttonColor }}

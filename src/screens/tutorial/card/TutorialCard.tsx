@@ -8,7 +8,7 @@ const useStyles = makeStyles(() => ({
   },
   image: {
     maxWidth: "inherit",
-    maxHeight: "inherit",
+    maxHeight: "70vh",
     display: "block",
     marginLeft: "auto",
     marginRight: "auto",
@@ -47,22 +47,13 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
           </Typography>
         </div>
       </Grid>
-      <Grid container direction="row" justify="center" alignItems="center" spacing={1}>
-        {imageLink[0] !== "" ? (
-          <Grid item xs={9} sm={6} spacing={3}>
-            <img className={styles.image} src={imageLink[0]} alt={imageLink[0]} />
-          </Grid>
-        ) : (
-          ""
-        )}
-        {imageLink[1] !== "" ? (
-          <Grid item xs={9} sm={6} spacing={3}>
-            <img className={styles.image} src={imageLink[1]} alt={imageLink[1]} />{" "}
-          </Grid>
-        ) : (
-          ""
-        )}
-      </Grid>
+      {imageLink !== "" ? (
+        <Grid item xs={9} spacing={3}>
+          <img className={styles.image} src={imageLink} alt={imageLink} />
+        </Grid>
+      ) : (
+        ""
+      )}
     </Grid>
   );
 };
