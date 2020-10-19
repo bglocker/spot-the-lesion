@@ -4,6 +4,7 @@ import Game from "./screens/game/Game";
 import Tutorial from "./screens/tutorial/Tutorial";
 import About from "./screens/about/About";
 import Credits from "./screens/credits/Credits";
+import Leaderboard from "./screens/leaderboard/Leaderboard";
 
 const App: React.FC = () => {
   const [route, setRoute] = useState<Route>("home");
@@ -17,7 +18,10 @@ const App: React.FC = () => {
     case "game":
       currentScreen = <Game setRoute={setRoute} />;
       break;
-    case "tutorial1":
+    case "leaderboard":
+      currentScreen = <Leaderboard setRoute={setRoute} />;
+      break;
+    case "tutorial":
       currentScreen = <Tutorial setRoute={setRoute} />;
       break;
     case "about":

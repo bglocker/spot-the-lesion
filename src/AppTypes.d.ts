@@ -1,1 +1,1 @@
-type Route = "home" | "game" | "tutorial1" | "about" | "credits";
+type Route = "home" | "game" | "leaderboard" | "tutorial" | "about" | "credits";
