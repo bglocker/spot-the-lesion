@@ -477,27 +477,24 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const submitScores = async () => {
     const date = new Date();
-    const score = {
+    const entry = {
+      user: username,
       score: playerPoints,
+      day: date.getDate(),
+      month: date.getMonth(),
+      year: date.getFullYear(),
     };
-    await db
-      .collection("daily-scores")
-      .doc(date.getDay().toString())
-      .collection("scores")
-      .doc(username)
-      .set(score);
-    await db
-      .collection("monthly-scores")
-      .doc(date.getMonth().toString())
-      .collection("scores")
-      .doc(username)
-      .set(score);
-    await db
-      .collection("all-time-scores")
-      .doc(date.getFullYear().toString())
-      .collection("scores")
-      .doc(username)
-      .set(score);
+
+    const entryNameForDaily = `${date.getDate()}.${date.getMonth()}.${date.getFullYear()}.${
+      entry.user
+    }`;
+    await db.collection("daily-scores").doc(entryNameForDaily).set(entry);
+
+    const entryNameForMonthly = `${date.getMonth()}.${entry.user}`;
+    await db.collection("monthly-scores").doc(entryNameForMonthly).set(entry);
+
+    const entryNameForAllTime = entry.user;
+    await db.collection("alltime-scores").doc(entryNameForAllTime).set(entry);
   };
 
   return (
