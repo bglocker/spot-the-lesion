@@ -91,6 +91,11 @@ const INVALID_COLOUR = "red";
 const DEFAULT_COLOUR = "yellow";
 const TRUE_COLOUR = "blue";
 
+// Firebase Collections
+const DAILY_LEADERBOARD = "daily-scores";
+const MONTHLY_LEADERBOARD = "monthly-scores";
+const ALL_TIME_LEADERBOARD = "alltime-scores";
+
 const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const classes = useStyles();
 
@@ -485,44 +490,28 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       year: date.getFullYear(),
     };
 
-    const entryNameForDaily = `${date.getDate()}.${date.getMonth()}.${date.getFullYear()}.${
+    const docNameForDaily = `${date.getDate()}.${date.getMonth()}.${date.getFullYear()}.${
       entry.user
     }`;
-    const entryNameForMonthly = `${date.getMonth()}.${entry.user}`;
-    const entryNameForAllTime = entry.user;
+    const docNameForMonthly = `${date.getMonth()}.${entry.user}`;
+    const docNameForAllTime = entry.user;
 
-    const dailySnapshot = await db
-      .collection("daily-scores")
-      .where("user", "==", username)
-      .where("score", ">", playerPoints)
-      .get();
+    async function updateLeaderBoardFirebase(collection: string, docName: string) {
+      const dailySnapshot = await db
+        .collection(collection)
+        .where("user", "==", username)
+        .where("score", ">", playerPoints)
+        .get();
 
-    if (dailySnapshot.empty) {
-      // Current player score higher than Current Daily Maximum
-      await db.collection("daily-scores").doc(entryNameForDaily).set(entry);
+      if (dailySnapshot.empty) {
+        // New score record
+        await db.collection(collection).doc(docName).set(entry);
+      }
     }
 
-    const monthlySnapshot = await db
-      .collection("monthly-scores")
-      .where("user", "==", username)
-      .where("score", ">", playerPoints)
-      .get();
-
-    if (monthlySnapshot.empty) {
-      // Current player score higher than Current Month Maximum
-      await db.collection("monthly-scores").doc(entryNameForMonthly).set(entry);
-    }
-
-    const allTimeSnapshot = await db
-      .collection("alltime-scores")
-      .where("user", "==", username)
-      .where("score", ">", playerPoints)
-      .get();
-
-    if (allTimeSnapshot.empty) {
-      // Current player score higher than Current All-Time Score
-      await db.collection("alltime-scores").doc(entryNameForAllTime).set(entry);
-    }
+    await updateLeaderBoardFirebase(DAILY_LEADERBOARD, docNameForDaily);
+    await updateLeaderBoardFirebase(MONTHLY_LEADERBOARD, docNameForMonthly);
+    await updateLeaderBoardFirebase(ALL_TIME_LEADERBOARD, docNameForAllTime);
   };
 
   return (
