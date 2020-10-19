@@ -72,6 +72,7 @@ const useStyles = makeStyles({
     marginBottom: 8,
   },
   scoreTypography: {
+    textAlign: "center",
     fontWeight: "bold",
   },
   navbar: {
@@ -79,8 +80,14 @@ const useStyles = makeStyles({
   },
 });
 
+// Colour codes
+const VALID_COLOUR = "green";
+const INVALID_COLOUR = "red";
+const DEFAULT_COLOUR = "yellow";
+const TRUE_COLOUR = "blue";
+
 const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
-  const styles = useStyles();
+  const classes = useStyles();
 
   const [open, setOpen] = React.useState(true);
 
@@ -101,11 +108,16 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [playerPoints, setPlayerPoints] = useState(0);
   const [aiPoints, setAiPoints] = useState(0);
-  const [aiPointsText, setAiPointsText] = useState(0);
   const [total, setTotal] = useState(0);
 
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
+
+  const [playerCorrect, setPlayerCorrect] = useState<boolean>(false);
+  const [aiCorrect, setAiCorrect] = useState<boolean>(false);
+
+  const [playerResultVisible, setPlayerResultVisible] = useState<boolean>(false);
+  const [aiResultVisible, setAiResultVisible] = useState<boolean>(false);
 
   type DrawType = ((canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => void) | null;
   const [draw, setDraw] = useState<DrawType>(null);
@@ -168,31 +180,48 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     return interArea / unionArea;
   };
 
-  const drawTruth = useCallback(
-    (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-      context.beginPath();
-      context.strokeStyle = "yellow";
-      context.lineWidth = 3;
-      context.rect(truth[0], truth[1], truth[2] - truth[0], truth[3] - truth[1]);
-      context.stroke();
+  // WARNING: Don't use this function outside of this class
+  // PRE: rectBounds has at least 4 elements
+  function setRect(context: CanvasRenderingContext2D, rectBounds: number[]) {
+    const xBase = rectBounds[0];
+    const yBase = rectBounds[1];
+    const xEnd = rectBounds[2];
+    const yEnd = rectBounds[3];
+    const widthRect = xEnd - xBase;
+    const heightRect = yEnd - yBase;
+    context.rect(xBase, yBase, widthRect, heightRect);
+  }
 
-      if (bbIntersectionOverUnion(truth, predicted) > 0.5) {
-        context.strokeStyle = "green";
-      } else {
-        context.strokeStyle = "red";
-      }
-
-      context.lineWidth = 3;
+  const drawRectangle = useCallback(
+    (
+      context: CanvasRenderingContext2D,
+      rectBounds: number[],
+      strokeStyle: string,
+      lineWidth: number
+    ) => {
+      context.strokeStyle = strokeStyle;
+      context.lineWidth = lineWidth;
       context.beginPath();
-      context.rect(
-        predicted[0],
-        predicted[1],
-        predicted[2] - predicted[0],
-        predicted[3] - predicted[1]
-      );
+      setRect(context, rectBounds);
       context.stroke();
     },
-    [predicted, truth]
+    []
+  );
+
+  const drawTruth = useCallback(
+    (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+      // Drawing True Rectangle
+      drawRectangle(context, truth, TRUE_COLOUR, 3);
+    },
+    [truth, drawRectangle]
+  );
+
+  const drawPredicted = useCallback(
+    (_: HTMLCanvasElement, context: CanvasRenderingContext2D, strokeStyle: string) => {
+      // Drawing Predicted Rectangle
+      drawRectangle(context, predicted, strokeStyle, 3);
+    },
+    [predicted, drawRectangle]
   );
 
   const drawHint = useCallback(
@@ -220,39 +249,60 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     };
   };
 
-  const drawPlayer = (
-    canvas: HTMLCanvasElement,
-    context: CanvasRenderingContext2D,
-    mouseX: number,
-    mouseY: number
-  ) => {
-    const { x, y } = getMousePosition(mouseX, mouseY, canvas);
+  const drawPlayer = useCallback(
+    (
+      canvas: HTMLCanvasElement,
+      context: CanvasRenderingContext2D,
+      mouseX: number,
+      mouseY: number,
+      playerColour: string
+    ) => {
+      const { x, y } = getMousePosition(mouseX, mouseY, canvas);
 
-    if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
-      setPlayerPoints((prevState) => prevState + 1);
-      context.strokeStyle = "green";
-    } else {
-      context.strokeStyle = "red";
-    }
+      context.strokeStyle = playerColour;
+      context.beginPath();
+      context.moveTo(x - 5, y - 5);
+      context.lineTo(x + 5, y + 5);
+      context.moveTo(x + 5, y - 5);
+      context.lineTo(x - 5, y + 5);
+      context.stroke();
+    },
+    []
+  );
 
-    context.beginPath();
-    context.moveTo(x - 5, y - 5);
-    context.lineTo(x + 5, y + 5);
-    context.moveTo(x + 5, y - 5);
-    context.lineTo(x - 5, y + 5);
-    context.stroke();
-  };
+  const isAIPredictionRight = useCallback(() => {
+    return bbIntersectionOverUnion(truth, predicted) > 0.5;
+  }, [truth, predicted]);
 
   useEffect(() => {
+    if (!running) {
+      return;
+    }
+
     if (timeRemaining <= 0) {
       setOpen(true);
       stopTimer();
 
-      setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) =>
-        drawTruth(canvas, context)
-      );
+      setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+        drawPredicted(canvas, context, DEFAULT_COLOUR);
 
-      setAiPointsText(aiPoints);
+        setTimeout(() => {
+          drawTruth(canvas, context);
+        }, 1000);
+
+        setTimeout(() => {
+          if (isAIPredictionRight()) {
+            setAiPoints((prevState) => prevState + 1);
+            drawPredicted(canvas, context, VALID_COLOUR);
+            setAiCorrect(true);
+          } else {
+            setAiCorrect(false);
+            drawPredicted(canvas, context, INVALID_COLOUR);
+          }
+          setAiResultVisible(true);
+          setPlayerResultVisible(true);
+        }, 2000);
+      });
     } else if (timeRemaining <= 2) {
       setCountdownColor("red");
     } else if (timeRemaining <= 5) {
@@ -270,7 +320,21 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     } else {
       setCountdownColor("#373737");
     }
-  }, [aiPoints, drawHint, drawTruth, hinted, timeRemaining]);
+  }, [
+    aiPoints,
+    drawHint,
+    drawTruth,
+    drawPredicted,
+    hinted,
+    running,
+    timeRemaining,
+    isAIPredictionRight,
+  ]);
+
+  function isPlayerRight(canvas: HTMLCanvasElement, mouseX: number, mouseY: number) {
+    const { x, y } = getMousePosition(mouseX, mouseY, canvas);
+    return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
+  }
 
   const onCanvasClick = async (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
     if (timeRemaining <= 0 || clicked || !running) {
@@ -284,11 +348,39 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const [mouseX, mouseY] = [event.clientX, event.clientY];
 
     setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-      drawTruth(canvas, context);
-      drawPlayer(canvas, context, mouseX, mouseY);
-    });
+      drawPlayer(canvas, context, mouseX, mouseY, DEFAULT_COLOUR);
+      setTimeout(() => {
+        drawPredicted(canvas, context, DEFAULT_COLOUR);
+      }, 1000);
 
-    setAiPointsText(aiPoints);
+      setTimeout(() => {
+        drawTruth(canvas, context);
+      }, 1500);
+
+      setTimeout(() => {
+        if (isPlayerRight(canvas, mouseX, mouseY)) {
+          setPlayerPoints((prevState) => prevState + 1);
+          drawPlayer(canvas, context, mouseX, mouseY, VALID_COLOUR);
+          setPlayerCorrect(true);
+        } else {
+          drawPlayer(canvas, context, mouseX, mouseY, INVALID_COLOUR);
+          setPlayerCorrect(false);
+        }
+        setPlayerResultVisible(true);
+      }, 2000);
+
+      setTimeout(() => {
+        if (isAIPredictionRight()) {
+          setAiPoints((prevState) => prevState + 1);
+          drawPredicted(canvas, context, VALID_COLOUR);
+          setAiCorrect(true);
+        } else {
+          drawPredicted(canvas, context, INVALID_COLOUR);
+          setAiCorrect(false);
+        }
+        setAiResultVisible(true);
+      }, 2500);
+    });
 
     setOpen(true);
   };
@@ -319,10 +411,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       .then((data: { truth: number[]; predicted: number[] }) => {
         setTruth(data.truth.map((pixel) => (pixel * canvasSize) / 512));
         setPredicted(data.predicted.map((pixel) => (pixel * canvasSize) / 512));
-
-        if (bbIntersectionOverUnion(truth, predicted) > 0.5) {
-          setAiPoints((prevState) => prevState + 1);
-        }
       });
 
     // Build the image
@@ -348,14 +436,42 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       setStarted(true);
     }
     setOpen(false);
+    setAiCorrect(false);
+    setPlayerCorrect(false);
+    setAiResultVisible(false);
+    setPlayerResultVisible(false);
 
     await loadNewImage();
+  };
+
+  const roundCorrectness = (correct: boolean, visible: boolean) => {
+    if (visible) {
+      return correct ? (
+        <Typography
+          variant="subtitle1"
+          className={classes.scoreTypography}
+          style={{ color: VALID_COLOUR }}
+        >
+          {" "}
+          Correct!
+        </Typography>
+      ) : (
+        <Typography
+          variant="subtitle1"
+          className={classes.scoreTypography}
+          style={{ color: INVALID_COLOUR }}
+        >
+          Wrong!
+        </Typography>
+      );
+    }
+    return null;
   };
 
   return (
     <div>
       <AppBar position="static">
-        <Toolbar className={styles.navbar} variant="dense">
+        <Toolbar className={classes.navbar} variant="dense">
           <IconButton
             edge="start"
             color="inherit"
@@ -376,17 +492,35 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         <DialogTitle id="alert-dialog-title">Results</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            <Typography variant="subtitle1">Correct (you): {playerPoints}</Typography>
+            <Typography variant="h4" className={classes.results}>
+              You were: {roundCorrectness(playerCorrect, playerResultVisible)}
+            </Typography>
 
-            <Typography variant="subtitle1">Correct (AI): {aiPointsText}</Typography>
+            <Typography variant="h4" className={classes.results}>
+              AI was: {roundCorrectness(aiCorrect, aiResultVisible)}
+            </Typography>
 
-            <Typography variant="subtitle1">Total Scans: {total}</Typography>
+            <Typography variant="h4" className={classes.results}>
+              Results
+            </Typography>
+
+            <Typography variant="subtitle1" className={classes.scoreTypography}>
+              Correct (you): {playerPoints}
+            </Typography>
+
+            <Typography variant="subtitle1" className={classes.scoreTypography}>
+              Correct (AI): {aiPoints}
+            </Typography>
+
+            <Typography variant="subtitle1" className={classes.scoreTypography}>
+              Total Scans: {total}
+            </Typography>
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <div className={styles.loadingButtonContainer}>
+          <div className={classes.loadingButtonContainer}>
             <Button
-              className={styles.startNextButton}
+              className={classes.startNextButton}
               variant="contained"
               size="large"
               disabled={running || loading}
@@ -395,25 +529,25 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               {started ? "Next" : "Start"}
             </Button>
 
-            {loading && <CircularProgress className={styles.circularProgress} size={24} />}
+            {loading && <CircularProgress className={classes.circularProgress} size={24} />}
           </div>
         </DialogActions>
       </Dialog>
-      <div className={styles.container}>
-        <Card className={styles.scoresContainer}>
-          <Typography variant="h4" className={styles.countdown} style={{ color: countdownColor }}>
+      <div className={classes.container}>
+        <Card className={classes.scoresContainer}>
+          <Typography variant="h4" className={classes.countdown} style={{ color: countdownColor }}>
             Time remaining: {timeRemainingText}s
           </Typography>
 
           <LinearProgress
             variant="determinate"
             value={timeRemaining * 10}
-            className={styles.linearProgress}
+            className={classes.linearProgress}
             classes={{ barColorPrimary: countdownColor }}
           />
         </Card>
-        <div className={styles.canvasContainer}>
-          <Card className={styles.cardCanvas}>
+        <div className={classes.canvasContainer}>
+          <Card className={classes.cardCanvas}>
             <canvas
               ref={canvasRef}
               onClick={onCanvasClick}
