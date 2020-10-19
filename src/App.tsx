@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { makeStyles, createStyles } from "@material-ui/core/styles";
 import Home from "./screens/home/Home";
 import Game from "./screens/game/Game";
 import Tutorial from "./screens/tutorial/Tutorial";
@@ -6,7 +7,18 @@ import About from "./screens/about/About";
 import Credits from "./screens/credits/Credits";
 import Leaderboard from "./screens/leaderboard/Leaderboard";
 
+const useStyles = makeStyles(() =>
+  createStyles({
+    container: {
+      height: "100vh",
+      backgroundColor: "#63A2AB",
+    },
+  })
+);
+
 const App: React.FC = () => {
+  const classes = useStyles();
+
   const [route, setRoute] = useState<Route>("home");
 
   let currentScreen: React.ReactNode;
@@ -32,7 +44,7 @@ const App: React.FC = () => {
       break;
   }
 
-  return <div>{currentScreen}</div>;
+  return <div className={classes.container}>{currentScreen}</div>;
 };
 
 export default App;
