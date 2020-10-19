@@ -1,12 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  AppBar,
   Button,
   Card,
   CircularProgress,
+  IconButton,
   LinearProgress,
-  Typography,
   makeStyles,
+  Toolbar,
+  Typography,
 } from "@material-ui/core";
+import BackButtonIcon from "@material-ui/icons/KeyboardBackspace";
 import useInterval from "../../components/useInterval";
 
 const useStyles = makeStyles({
@@ -60,10 +64,13 @@ const useStyles = makeStyles({
   scoreTypography: {
     fontWeight: "bold",
   },
+  navbar: {
+    background: "#07575B",
+  },
 });
 
-const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
-  const classes = useStyles();
+const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
+  const styles = useStyles();
 
   const seenFiles = new Set<number>();
 
@@ -317,58 +324,71 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     await loadNewImage();
   };
 
-  setBackButton(true);
-
   return (
-    <div className={classes.container}>
-      <div className={classes.canvasContainer}>
-        <Card className={classes.cardCanvas}>
-          <canvas ref={canvasRef} onClick={onCanvasClick} width="512px" height="512px" />
-        </Card>
-
-        <div className={classes.loadingButtonContainer}>
-          <Button
-            className={classes.startNextButton}
-            variant="contained"
-            size="large"
-            disabled={running || loading}
-            onClick={onStartNextClick}
+    <div>
+      <AppBar position="static">
+        <Toolbar className={styles.navbar} variant="dense">
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            onClick={() => setRoute("home")}
           >
-            {started ? "Next" : "Start"}
-          </Button>
+            <BackButtonIcon />
+          </IconButton>
+          <Typography>Spot the Lesion</Typography>
+        </Toolbar>
+      </AppBar>
+      <div className={styles.container}>
+        <div className={styles.canvasContainer}>
+          <Card className={styles.cardCanvas}>
+            <canvas ref={canvasRef} onClick={onCanvasClick} width="512px" height="512px" />
+          </Card>
 
-          {loading && <CircularProgress className={classes.circularProgress} size={24} />}
+          <div className={styles.loadingButtonContainer}>
+            <Button
+              className={styles.startNextButton}
+              variant="contained"
+              size="large"
+              disabled={running || loading}
+              onClick={onStartNextClick}
+            >
+              {started ? "Next" : "Start"}
+            </Button>
+
+            {loading && <CircularProgress className={styles.circularProgress} size={24} />}
+          </div>
         </div>
+
+        <Card className={styles.scoresContainer}>
+          <Typography variant="h4" className={styles.countdown} style={{ color: countdownColor }}>
+            Time remaining: {timeRemainingText}s
+          </Typography>
+
+          <LinearProgress
+            variant="determinate"
+            value={timeRemaining * 10}
+            className={styles.linearProgress}
+            classes={{ barColorPrimary: countdownColor }}
+          />
+
+          <Typography variant="h4" className={styles.results}>
+            Results
+          </Typography>
+
+          <Typography variant="subtitle1" className={styles.scoreTypography}>
+            Correct (you): {playerPoints}
+          </Typography>
+
+          <Typography variant="subtitle1" className={styles.scoreTypography}>
+            Correct (AI): {aiPointsText}
+          </Typography>
+
+          <Typography variant="subtitle1" className={styles.scoreTypography}>
+            Total Scans: {total}
+          </Typography>
+        </Card>
       </div>
-
-      <Card className={classes.scoresContainer}>
-        <Typography variant="h4" className={classes.countdown} style={{ color: countdownColor }}>
-          Time remaining: {timeRemainingText}s
-        </Typography>
-
-        <LinearProgress
-          variant="determinate"
-          value={timeRemaining * 10}
-          className={classes.linearProgress}
-          classes={{ barColorPrimary: countdownColor }}
-        />
-
-        <Typography variant="h4" className={classes.results}>
-          Results
-        </Typography>
-
-        <Typography variant="subtitle1" className={classes.scoreTypography}>
-          Correct (you): {playerPoints}
-        </Typography>
-
-        <Typography variant="subtitle1" className={classes.scoreTypography}>
-          Correct (AI): {aiPointsText}
-        </Typography>
-
-        <Typography variant="subtitle1" className={classes.scoreTypography}>
-          Total Scans: {total}
-        </Typography>
-      </Card>
     </div>
   );
 };

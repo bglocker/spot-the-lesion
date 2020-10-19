@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Button, ButtonGroup, Container, Grid } from "@material-ui/core";
+import {
+  AppBar,
+  Button,
+  ButtonGroup,
+  Container,
+  Grid,
+  Toolbar,
+  Typography,
+} from "@material-ui/core";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 import logo from "./images/logo.gif";
 import scan from "./images/ct-scan.png";
@@ -40,10 +48,13 @@ const useStyles = makeStyles((theme) =>
     invisible: {
       display: "none",
     },
+    navbar: {
+      background: "#07575B",
+    },
   })
 );
 
-const Home: React.FC<HomeProps> = ({ setRoute, setBackButton }: HomeProps) => {
+const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
   const styles = useStyles();
   const minWidth = 1360;
   const [fullWidth, setFullWidth] = useState(window.innerWidth > minWidth);
@@ -59,58 +70,63 @@ const Home: React.FC<HomeProps> = ({ setRoute, setBackButton }: HomeProps) => {
     );
   }, [fullWidth]);
 
-  setBackButton(false);
-
   return (
-    <Container className={styles.container}>
-      <img className={styles.logo} src={logo} alt="Spot the Lesion Logo" />
-      <Grid container direction="row" justify="space-evenly" alignItems="center">
-        <img
-          className={fullWidth ? styles.visible : styles.invisible}
-          src={scan}
-          alt="Scanner.png"
-        />
-        <ButtonGroup orientation="vertical">
-          <Button
-            variant="contained"
-            size="large"
-            className={styles.button}
-            onClick={() => setRoute("game")}
-          >
-            Play
-          </Button>
-          <Button
-            variant="contained"
-            size="large"
-            className={styles.button}
-            onClick={() => setRoute("tutorial1")}
-          >
-            How to Play
-          </Button>
-          <Button
-            variant="contained"
-            size="large"
-            className={styles.button}
-            onClick={() => setRoute("about")}
-          >
-            About CT Scans
-          </Button>
-          <Button
-            variant="contained"
-            size="large"
-            className={styles.button}
-            onClick={() => setRoute("credits")}
-          >
-            Credits
-          </Button>
-        </ButtonGroup>
-        <img
-          className={fullWidth ? styles.visible : styles.invisible}
-          src={brain}
-          alt="Brain.png"
-        />
-      </Grid>
-    </Container>
+    <div>
+      <AppBar position="static">
+        <Toolbar className={styles.navbar} variant="dense">
+          <Typography>Spot the Lesion</Typography>
+        </Toolbar>
+      </AppBar>
+      <Container className={styles.container}>
+        <img className={styles.logo} src={logo} alt="Spot the Lesion Logo" />
+        <Grid container direction="row" justify="space-evenly" alignItems="center">
+          <img
+            className={fullWidth ? styles.visible : styles.invisible}
+            src={scan}
+            alt="Scanner.png"
+          />
+          <ButtonGroup orientation="vertical">
+            <Button
+              variant="contained"
+              size="large"
+              className={styles.button}
+              onClick={() => setRoute("game")}
+            >
+              Play
+            </Button>
+            <Button
+              variant="contained"
+              size="large"
+              className={styles.button}
+              onClick={() => setRoute("tutorial1")}
+            >
+              How to Play
+            </Button>
+            <Button
+              variant="contained"
+              size="large"
+              className={styles.button}
+              onClick={() => setRoute("about")}
+            >
+              About CT Scans
+            </Button>
+            <Button
+              variant="contained"
+              size="large"
+              className={styles.button}
+              onClick={() => setRoute("credits")}
+            >
+              Credits
+            </Button>
+          </ButtonGroup>
+          <img
+            className={fullWidth ? styles.visible : styles.invisible}
+            src={brain}
+            alt="Brain.png"
+          />
+        </Grid>
+      </Container>
+    </div>
   );
 };
 

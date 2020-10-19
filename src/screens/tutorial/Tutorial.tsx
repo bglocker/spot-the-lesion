@@ -1,7 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Button, Slide, SlideProps, Grid, ButtonGroup } from "@material-ui/core";
+import {
+  AppBar,
+  Button,
+  ButtonGroup,
+  createStyles,
+  Grid,
+  IconButton,
+  Slide,
+  SlideProps,
+  Toolbar,
+  Typography,
+} from "@material-ui/core";
 import { ArrowBack, ArrowForward } from "@material-ui/icons";
 import { makeStyles } from "@material-ui/styles";
+import BackButtonIcon from "@material-ui/icons/KeyboardBackspace";
 import TutorialCard from "./card/TutorialCard";
 import doctor from "./images/doctor.png";
 import start_screen from "./images/start screen.png";
@@ -25,53 +37,57 @@ const slideImages = [
   "",
 ];
 
-const myStyle = makeStyles({
-  screenSize: {
-    marginTop: "2%",
-    width: "inherit",
-    height: "80vh",
-  },
-  white: {
-    backgroundColor: "white",
-    borderRadius: 25,
-    height: "inherit",
-    borderColor: "black",
-    borderWidth: "5px",
-    borderStyle: "solid",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  groupButton: {
-    marginTop: "2vh",
-    background: "#07575B",
-    color: "white",
-    fontSize: "calc((2vw + 2vh)/2)",
-    fontWeight: "bold",
-  },
-  centeredButton: {
-    background: "#07575B",
-    borderRadius: "calc((2vw + 2vh)/2)",
-    color: "white",
-    height: "10vh",
-    width: "30vw",
-    fontSize: "calc((2vw + 2vh)/2)",
-    fontFamily: "segoe UI",
-    marginTop: "15vh",
-  },
+const myStyle = makeStyles(() =>
+  createStyles({
+    screenSize: {
+      marginTop: "2%",
+      width: "inherit",
+      height: "80vh",
+    },
+    white: {
+      backgroundColor: "white",
+      borderRadius: 25,
+      height: "inherit",
+      borderColor: "black",
+      borderWidth: "5px",
+      borderStyle: "solid",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    groupButton: {
+      marginTop: "2vh",
+      background: "#07575B",
+      color: "white",
+      fontSize: "calc((2vw + 2vh)/2)",
+      fontWeight: "bold",
+    },
+    centeredButton: {
+      background: "#07575B",
+      borderRadius: "calc((2vw + 2vh)/2)",
+      color: "white",
+      height: "10vh",
+      width: "30vw",
+      fontSize: "calc((2vw + 2vh)/2)",
+      fontFamily: "segoe UI",
+      marginTop: "15vh",
+    },
+    moveButtonGroup: {
+      marginLeft: "20vw",
+    },
+    centerImages: {
+      display: "flex",
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    navbar: {
+      background: "#07575B",
+    },
+  })
+);
 
-  moveButtonGroup: {
-    marginLeft: "20vw",
-  },
-  centerImages: {
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});
-
-const Tutorial: React.FC<TutorialProps> = ({ setRoute, setBackButton }: TutorialProps) => {
+const Tutorial: React.FC<TutorialProps> = ({ setRoute }: TutorialProps) => {
   const styles = myStyle();
 
   // The slide text
@@ -129,10 +145,21 @@ const Tutorial: React.FC<TutorialProps> = ({ setRoute, setBackButton }: Tutorial
     };
   });
 
-  setBackButton(true);
-
   return (
     <div>
+      <AppBar position="static">
+        <Toolbar className={styles.navbar} variant="dense">
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            onClick={() => setRoute("home")}
+          >
+            <BackButtonIcon />
+          </IconButton>
+          <Typography>Spot the Lesion</Typography>
+        </Toolbar>
+      </AppBar>
       <Grid container direction="column" alignItems="center" justify="center">
         <Slide in={slideIn} direction={slideDirection}>
           <div className={styles.screenSize}>
