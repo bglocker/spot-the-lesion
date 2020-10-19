@@ -1,11 +1,20 @@
 import React, { useState } from "react";
-import { makeStyles, createStyles } from "@material-ui/core/styles";
+import { makeStyles, createStyles, createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
+import colors from "./res/colors";
 import Home from "./screens/home/Home";
 import Game from "./screens/game/Game";
 import Tutorial from "./screens/tutorial/Tutorial";
 import About from "./screens/about/About";
 import Credits from "./screens/credits/Credits";
 import Leaderboard from "./screens/leaderboard/Leaderboard";
+
+const theme = createMuiTheme({
+  palette: {
+    primary: {
+      main: colors.primary,
+    },
+  },
+});
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -44,7 +53,11 @@ const App: React.FC = () => {
       break;
   }
 
-  return <div className={classes.container}>{currentScreen}</div>;
+  return (
+    <ThemeProvider theme={theme}>
+      <div className={classes.container}>{currentScreen}</div>
+    </ThemeProvider>
+  );
 };
 
 export default App;
