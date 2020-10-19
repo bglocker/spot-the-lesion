@@ -37,8 +37,8 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
   const styles = useStyles();
 
   return (
-    <Grid container direction="column" justify="center" alignItems="center" spacing={1}>
-      <Grid item xs={12} spacing={3}>
+    <Grid container direction="column" justify="center" alignItems="center" spacing={3}>
+      <Grid item xs={12}>
         <div className={styles.textWrapper}>
           <Typography
             className={`${styles.textContent} ${styles.maxWidth} ${styles.centerContent}`}
@@ -48,7 +48,7 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
         </div>
       </Grid>
       {imageLink !== "" ? (
-        <Grid item xs={9} spacing={3}>
+        <Grid item xs={9}>
           <img className={styles.image} src={imageLink} alt={imageLink} />
         </Grid>
       ) : (
