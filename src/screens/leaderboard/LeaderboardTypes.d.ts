@@ -1,3 +1,3 @@
-interface HomeProps {
+interface LeaderboardProps {
   setRoute: (Route) => void;
 }

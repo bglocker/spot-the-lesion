@@ -7,14 +7,19 @@ const useStyles = makeStyles(() => ({
     flexGrow: 1,
   },
   image: {
-    margin: "3%",
-    maxWidth: "50%",
-    maxHeight: "40%",
+    maxWidth: "inherit",
+    maxHeight: "70vh",
+    display: "block",
+    marginLeft: "auto",
+    marginRight: "auto",
   },
   textContent: {
-    margin: "5%",
+    marginTop: "1%",
     fontSize: "calc((3vh + 3vw)/2)",
     textAlign: "center",
+  },
+  textWrapper: {
+    width: "inherit",
   },
   maxWidth: {
     width: "100%",
@@ -30,31 +35,21 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
   imageLink,
 }: TutorialCardProps) => {
   const styles = useStyles();
+
   return (
-    <Grid container spacing={1}>
-      <Grid container item xs={12} spacing={3}>
-        <Typography className={`${styles.textContent} ${styles.maxWidth} ${styles.centerContent}`}>
-          {textContent}
-        </Typography>
+    <Grid container direction="column" justify="center" alignItems="center" spacing={3}>
+      <Grid item xs={12}>
+        <div className={styles.textWrapper}>
+          <Typography
+            className={`${styles.textContent} ${styles.maxWidth} ${styles.centerContent}`}
+          >
+            {textContent}
+          </Typography>
+        </div>
       </Grid>
-      {imageLink[0] !== "" ? (
-        <Grid container item xs={12} spacing={3}>
-          <div className={`${styles.maxWidth} ${styles.centerContent}`}>
-            <img
-              className={`${styles.image} ${styles.centerContent}`}
-              src={imageLink[0]}
-              alt={imageLink[0]}
-            />
-            {imageLink[1] !== "" ? (
-              <img
-                className={`${styles.image} ${styles.centerContent}`}
-                src={imageLink[1]}
-                alt={imageLink[1]}
-              />
-            ) : (
-              ""
-            )}
-          </div>
+      {imageLink !== "" ? (
+        <Grid item xs={9}>
+          <img className={styles.image} src={imageLink} alt={imageLink} />
         </Grid>
       ) : (
         ""

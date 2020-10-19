@@ -1,21 +1,32 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  AppBar,
   Button,
   Card,
   CircularProgress,
+  Grid,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
   LinearProgress,
-  Typography,
   makeStyles,
+  TextField,
+  Toolbar,
+  Typography,
 } from "@material-ui/core";
+import BackButtonIcon from "@material-ui/icons/KeyboardBackspace";
 import useInterval from "../../components/useInterval";
+import { db } from "../../firebase/firebaseApp";
 
 const useStyles = makeStyles({
   container: {
     display: "flex",
-    flexDirection: "row",
+    flexDirection: "column",
     justifyContent: "space-evenly",
     alignItems: "center",
-    height: "93vh",
   },
   canvasContainer: {
     display: "flex",
@@ -23,17 +34,21 @@ const useStyles = makeStyles({
     alignItems: "center",
   },
   cardCanvas: {
-    height: 512,
+    position: "relative",
+    height: "min(81vh, 81vw)",
+    width: "min(81vh, 81vw)",
     padding: 8,
   },
   loadingButtonContainer: {
     position: "relative",
     marginTop: 16,
+    marginBottom: 16,
   },
-  startNextButton: {
+  startNextSubmitButton: {
     backgroundColor: "#07575B",
     color: "white",
   },
+  submitTextField: {},
   circularProgress: {
     position: "absolute",
     top: "50%",
@@ -42,13 +57,17 @@ const useStyles = makeStyles({
     marginLeft: -12,
   },
   scoresContainer: {
-    display: "flex",
+    display: "block",
     flexDirection: "column",
     alignItems: "center",
+    width: "min(81vh, 81vw)",
+    margin: "1%",
     padding: 8,
   },
   countdown: {
-    marginBottom: 8,
+    marginBottom: "1%",
+    textAlign: "center",
+    fontSize: "min(calc((10vw+10vh)/2), 3vh)",
   },
   linearProgress: {
     width: "100%",
@@ -61,6 +80,9 @@ const useStyles = makeStyles({
     textAlign: "center",
     fontWeight: "bold",
   },
+  navbar: {
+    background: "#07575B",
+  },
 });
 
 // Colour codes
@@ -69,8 +91,10 @@ const INVALID_COLOUR = "red";
 const DEFAULT_COLOUR = "yellow";
 const TRUE_COLOUR = "blue";
 
-const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
+const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const classes = useStyles();
+
+  const [open, setOpen] = React.useState(true);
 
   const seenFiles = new Set<number>();
 
@@ -90,6 +114,8 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
   const [playerPoints, setPlayerPoints] = useState(0);
   const [aiPoints, setAiPoints] = useState(0);
   const [total, setTotal] = useState(0);
+
+  const [username, setUsername] = useState("");
 
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
@@ -132,6 +158,18 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
   const stopTimer = () => {
     setRunning(false);
   };
+
+  const IsFullWidth = () => {
+    const [size, setSize] = useState(Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8));
+    window.addEventListener("resize", () => {
+      const newWidth = window.innerWidth * 0.8;
+      const newHeight = window.innerHeight * 0.8;
+      setSize(Math.min(newHeight, newWidth));
+    });
+    return size;
+  };
+
+  const canvasSize = IsFullWidth();
 
   const bbIntersectionOverUnion = (boxA: number[], boxB: number[]): number => {
     const xA = Math.max(boxA[0], boxB[0]);
@@ -201,10 +239,10 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
       context.beginPath();
       context.strokeStyle = "red";
       context.lineWidth = 2;
-      context.arc(x, y, 100, 0, 2 * Math.PI);
+      context.arc(x, y, (100 * canvasSize) / 512, 0, 2 * Math.PI);
       context.stroke();
     },
-    [truth]
+    [canvasSize, truth]
   );
 
   const getMousePosition = (playerX: number, playerY: number, canvas: HTMLCanvasElement) => {
@@ -249,6 +287,7 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     }
 
     if (timeRemaining <= 0) {
+      setOpen(true);
       stopTimer();
 
       setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
@@ -349,6 +388,8 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
         setAiResultVisible(true);
       }, 2500);
     });
+
+    setOpen(true);
   };
 
   const getNewFileNumber = (): number => {
@@ -375,8 +416,8 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     await fetch(`${process.env.PUBLIC_URL}/content/annotation/${fileNumber}.json`)
       .then((res) => res.json())
       .then((data: { truth: number[]; predicted: number[] }) => {
-        setTruth(data.truth);
-        setPredicted(data.predicted);
+        setTruth(data.truth.map((pixel) => (pixel * canvasSize) / 512));
+        setPredicted(data.predicted.map((pixel) => (pixel * canvasSize) / 512));
       });
 
     // Build the image
@@ -401,14 +442,14 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     if (!started) {
       setStarted(true);
     }
+    setOpen(false);
     setAiCorrect(false);
     setPlayerCorrect(false);
     setAiResultVisible(false);
     setPlayerResultVisible(false);
+
     await loadNewImage();
   };
-
-  setBackButton(true);
 
   const roundCorrectness = (correct: boolean, visible: boolean) => {
     if (visible) {
@@ -434,64 +475,140 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     return null;
   };
 
+  const submitScores = async () => {
+    const date = new Date();
+    const score = {
+      score: playerPoints,
+    };
+    await db
+      .collection("daily-scores")
+      .doc(date.getDay().toString())
+      .collection("scores")
+      .doc(username)
+      .set(score);
+    await db
+      .collection("monthly-scores")
+      .doc(date.getMonth().toString())
+      .collection("scores")
+      .doc(username)
+      .set(score);
+    await db
+      .collection("all-time-scores")
+      .doc(date.getFullYear().toString())
+      .collection("scores")
+      .doc(username)
+      .set(score);
+  };
+
   return (
-    <div className={classes.container}>
-      <div className={classes.canvasContainer}>
-        <Card className={classes.cardCanvas}>
-          <canvas ref={canvasRef} onClick={onCanvasClick} width="512px" height="512px" />
-        </Card>
-
-        <div className={classes.loadingButtonContainer}>
-          <Button
-            className={classes.startNextButton}
-            variant="contained"
-            size="large"
-            disabled={running || loading}
-            onClick={onStartNextClick}
+    <div>
+      <AppBar position="static">
+        <Toolbar className={classes.navbar} variant="dense">
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            onClick={() => setRoute("home")}
           >
-            {started ? "Next" : "Start"}
-          </Button>
+            <BackButtonIcon />
+          </IconButton>
+          <Typography>Spot the Lesion</Typography>
+        </Toolbar>
+      </AppBar>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">Results</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            <Typography variant="h4" className={classes.results}>
+              You were: {roundCorrectness(playerCorrect, playerResultVisible)}
+            </Typography>
 
-          {loading && <CircularProgress className={classes.circularProgress} size={24} />}
+            <Typography variant="h4" className={classes.results}>
+              AI was: {roundCorrectness(aiCorrect, aiResultVisible)}
+            </Typography>
+
+            <Typography variant="h4" className={classes.results}>
+              Results
+            </Typography>
+
+            <Typography variant="subtitle1" className={classes.scoreTypography}>
+              Correct (you): {playerPoints}
+            </Typography>
+
+            <Typography variant="subtitle1" className={classes.scoreTypography}>
+              Correct (AI): {aiPoints}
+            </Typography>
+
+            <Typography variant="subtitle1" className={classes.scoreTypography}>
+              Total Scans: {total}
+            </Typography>
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <div className={classes.loadingButtonContainer}>
+            <Button
+              className={classes.startNextSubmitButton}
+              variant="contained"
+              size="large"
+              disabled={running || loading}
+              onClick={onStartNextClick}
+            >
+              {started ? "Next" : "Start"}
+            </Button>
+
+            {loading && <CircularProgress className={classes.circularProgress} size={24} />}
+          </div>
+        </DialogActions>
+      </Dialog>
+
+      <Grid container justify="center">
+        <TextField
+          id="username"
+          label="Username"
+          variant="outlined"
+          value={username}
+          onChange={(event) => setUsername(event.target.value)}
+        />
+        <Button
+          className={classes.startNextSubmitButton}
+          variant="contained"
+          size="large"
+          disabled={running || loading}
+          onClick={submitScores}
+        >
+          Submit Score
+        </Button>
+      </Grid>
+
+      <div className={classes.container}>
+        <Card className={classes.scoresContainer}>
+          <Typography variant="h4" className={classes.countdown} style={{ color: countdownColor }}>
+            Time remaining: {timeRemainingText}s
+          </Typography>
+
+          <LinearProgress
+            variant="determinate"
+            value={timeRemaining * 10}
+            className={classes.linearProgress}
+            classes={{ barColorPrimary: countdownColor }}
+          />
+        </Card>
+        <div className={classes.canvasContainer}>
+          <Card className={classes.cardCanvas}>
+            <canvas
+              ref={canvasRef}
+              onClick={onCanvasClick}
+              width={canvasSize}
+              height={canvasSize}
+            />
+          </Card>
         </div>
       </div>
-
-      <Card className={classes.scoresContainer}>
-        <Typography variant="h4" className={classes.countdown} style={{ color: countdownColor }}>
-          Time remaining: {timeRemainingText}s
-        </Typography>
-
-        <LinearProgress
-          variant="determinate"
-          value={timeRemaining * 10}
-          className={classes.linearProgress}
-          classes={{ barColorPrimary: countdownColor }}
-        />
-
-        <Typography variant="h4" className={classes.results}>
-          You were: {roundCorrectness(playerCorrect, playerResultVisible)}
-        </Typography>
-
-        <Typography variant="h4" className={classes.results}>
-          AI was: {roundCorrectness(aiCorrect, aiResultVisible)}
-        </Typography>
-
-        <Typography variant="h4" className={classes.results}>
-          Results
-        </Typography>
-
-        <Typography variant="subtitle1" className={classes.scoreTypography}>
-          Correct (you): {playerPoints}
-        </Typography>
-
-        <Typography variant="subtitle1" className={classes.scoreTypography}>
-          Correct (AI): {aiPoints}
-        </Typography>
-
-        <Typography variant="subtitle1" className={classes.scoreTypography}>
-          Total Scans: {total}
-        </Typography>
-      </Card>
     </div>
   );
 };
