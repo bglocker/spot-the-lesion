@@ -58,6 +58,7 @@ const useStyles = makeStyles({
     marginBottom: 8,
   },
   scoreTypography: {
+    textAlign: "center",
     fontWeight: "bold",
   },
 });
@@ -92,6 +93,12 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
 
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
+
+  const [playerCorrect, setPlayerCorrect] = useState<boolean>(false);
+  const [aiCorrect, setAiCorrect] = useState<boolean>(false);
+
+  const [playerResultVisible, setPlayerResultVisible] = useState<boolean>(false);
+  const [aiResultVisible, setAiResultVisible] = useState<boolean>(false);
 
   type DrawType = ((canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => void) | null;
   const [draw, setDraw] = useState<DrawType>(null);
@@ -255,9 +262,13 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
           if (isAIPredictionRight()) {
             setAiPoints((prevState) => prevState + 1);
             drawPredicted(canvas, context, VALID_COLOUR);
+            setAiCorrect(true);
           } else {
+            setAiCorrect(false);
             drawPredicted(canvas, context, INVALID_COLOUR);
           }
+          setAiResultVisible(true);
+          setPlayerResultVisible(true);
         }, 2000);
       });
     } else if (timeRemaining <= 2) {
@@ -312,25 +323,31 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
 
       setTimeout(() => {
         drawTruth(canvas, context);
-      }, 2000);
+      }, 1500);
 
       setTimeout(() => {
         if (isPlayerRight(canvas, mouseX, mouseY)) {
           setPlayerPoints((prevState) => prevState + 1);
           drawPlayer(canvas, context, mouseX, mouseY, VALID_COLOUR);
+          setPlayerCorrect(true);
         } else {
           drawPlayer(canvas, context, mouseX, mouseY, INVALID_COLOUR);
+          setPlayerCorrect(false);
         }
-      }, 3000);
+        setPlayerResultVisible(true);
+      }, 2000);
 
       setTimeout(() => {
         if (isAIPredictionRight()) {
           setAiPoints((prevState) => prevState + 1);
           drawPredicted(canvas, context, VALID_COLOUR);
+          setAiCorrect(true);
         } else {
           drawPredicted(canvas, context, INVALID_COLOUR);
+          setAiCorrect(false);
         }
-      }, 4000);
+        setAiResultVisible(true);
+      }, 2500);
     });
   };
 
@@ -384,10 +401,38 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
     if (!started) {
       setStarted(true);
     }
+    setAiCorrect(false);
+    setPlayerCorrect(false);
+    setAiResultVisible(false);
+    setPlayerResultVisible(false);
     await loadNewImage();
   };
 
   setBackButton(true);
+
+  const roundCorrectness = (correct: boolean, visible: boolean) => {
+    if (visible) {
+      return correct ? (
+        <Typography
+          variant="subtitle1"
+          className={classes.scoreTypography}
+          style={{ color: VALID_COLOUR }}
+        >
+          {" "}
+          Correct!
+        </Typography>
+      ) : (
+        <Typography
+          variant="subtitle1"
+          className={classes.scoreTypography}
+          style={{ color: INVALID_COLOUR }}
+        >
+          Wrong!
+        </Typography>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className={classes.container}>
@@ -422,6 +467,14 @@ const Game: React.FC<GameProps> = ({ setBackButton }: GameProps) => {
           className={classes.linearProgress}
           classes={{ barColorPrimary: countdownColor }}
         />
+
+        <Typography variant="h4" className={classes.results}>
+          You were: {roundCorrectness(playerCorrect, playerResultVisible)}
+        </Typography>
+
+        <Typography variant="h4" className={classes.results}>
+          AI was: {roundCorrectness(aiCorrect, aiResultVisible)}
+        </Typography>
 
         <Typography variant="h4" className={classes.results}>
           Results
