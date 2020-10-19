@@ -1,11 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { Button, ButtonGroup, Container, Grid } from "@material-ui/core";
-import { makeStyles, createStyles } from "@material-ui/core/styles";
+import React, { useState } from "react";
+import {
+  AppBar,
+  Button,
+  ButtonGroup,
+  Container,
+  Grid,
+  Toolbar,
+  Typography,
+} from "@material-ui/core";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
 import logo from "./images/logo.gif";
 import scan from "./images/ct-scan.png";
 import brain from "./images/brain.png";
 
-const useStyles = makeStyles((theme) =>
+const useStyles = makeStyles(() =>
   createStyles({
     button: {
       background: "#07575B",
@@ -17,8 +25,8 @@ const useStyles = makeStyles((theme) =>
       fontWeight: "bold",
       marginTop: "3vh",
       fontSize: 22,
-      width: 300,
-      margin: theme.spacing(2),
+      width: 290,
+      margin: "1vh",
     },
     container: {
       width: "100vw",
@@ -30,7 +38,7 @@ const useStyles = makeStyles((theme) =>
     logo: {
       marginTop: "1vh",
       width: "auto",
-      height: "360px",
+      height: "350px",
     },
     visible: {
       width: "250px",
@@ -40,85 +48,92 @@ const useStyles = makeStyles((theme) =>
     invisible: {
       display: "none",
     },
+    navbar: {
+      background: "#07575B",
+    },
   })
 );
 
-const Home: React.FC<HomeProps> = ({ setRoute, setBackButton }: HomeProps) => {
+const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
   const styles = useStyles();
   const minWidth = 1360;
-  const [fullWidth, setFullWidth] = useState(window.innerWidth > minWidth);
 
-  useEffect(() => {
-    window.addEventListener(
-      "resize",
-      () => {
-        const newFullWidth: boolean = window.innerWidth > minWidth;
-        setFullWidth(newFullWidth);
-      },
-      false
-    );
-  }, [fullWidth]);
+  const IsFullWidth = () => {
+    const [hasFullWidth, setHasFullWidth] = useState(window.innerWidth > minWidth);
+    window.addEventListener("resize", () => {
+      const newHasFullWidth: boolean = window.innerWidth > minWidth;
+      setHasFullWidth(newHasFullWidth);
+    });
+    return hasFullWidth;
+  };
 
-  setBackButton(false);
+  const fullWidth = IsFullWidth();
 
   return (
-    <Container className={styles.container}>
-      <img className={styles.logo} src={logo} alt="Spot the Lesion Logo" />
-      <Grid container direction="row" justify="space-evenly" alignItems="center">
-        <img
-          className={fullWidth ? styles.visible : styles.invisible}
-          src={scan}
-          alt="Scanner.png"
-        />
-        <ButtonGroup orientation="vertical">
-          <Button
-            variant="contained"
-            size="large"
-            className={styles.button}
-            onClick={() => setRoute("game")}
-          >
-            Play
-          </Button>
-          <Button
-            variant="contained"
-            size="large"
-            className={styles.button}
-            onClick={() => setRoute("leaderboard")}
-          >
-            Leaderboard
-          </Button>
-          <Button
-            variant="contained"
-            size="large"
-            className={styles.button}
-            onClick={() => setRoute("tutorial")}
-          >
-            How to Play
-          </Button>
-          <Button
-            variant="contained"
-            size="large"
-            className={styles.button}
-            onClick={() => setRoute("about")}
-          >
-            About CT Scans
-          </Button>
-          <Button
-            variant="contained"
-            size="large"
-            className={styles.button}
-            onClick={() => setRoute("credits")}
-          >
-            Credits
-          </Button>
-        </ButtonGroup>
-        <img
-          className={fullWidth ? styles.visible : styles.invisible}
-          src={brain}
-          alt="Brain.png"
-        />
-      </Grid>
-    </Container>
+    <div>
+      <AppBar position="static">
+        <Toolbar className={styles.navbar} variant="dense">
+          <Typography>Spot the Lesion</Typography>
+        </Toolbar>
+      </AppBar>
+      <Container className={styles.container}>
+        <img className={styles.logo} src={logo} alt="Spot the Lesion Logo" />
+        <Grid container direction="row" justify="space-evenly" alignItems="center">
+          <img
+            className={fullWidth ? styles.visible : styles.invisible}
+            src={scan}
+            alt="Scanner.png"
+          />
+          <ButtonGroup orientation="vertical">
+            <Button
+              variant="contained"
+              size="large"
+              className={styles.button}
+              onClick={() => setRoute("game")}
+            >
+              Play
+            </Button>
+            <Button
+              variant="contained"
+              size="large"
+              className={styles.button}
+              onClick={() => setRoute("leaderboard")}
+            >
+              Leaderboard
+            </Button>
+            <Button
+              variant="contained"
+              size="large"
+              className={styles.button}
+              onClick={() => setRoute("tutorial")}
+            >
+              How to Play
+            </Button>
+            <Button
+              variant="contained"
+              size="large"
+              className={styles.button}
+              onClick={() => setRoute("about")}
+            >
+              About CT Scans
+            </Button>
+            <Button
+              variant="contained"
+              size="large"
+              className={styles.button}
+              onClick={() => setRoute("credits")}
+            >
+              Credits
+            </Button>
+          </ButtonGroup>
+          <img
+            className={fullWidth ? styles.visible : styles.invisible}
+            src={brain}
+            alt="Brain.png"
+          />
+        </Grid>
+      </Container>
+    </div>
   );
 };
 

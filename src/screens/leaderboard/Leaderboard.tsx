@@ -21,7 +21,7 @@ const useStyles = makeStyles(() =>
   })
 );
 
-const Leaderboard: React.FC<LeaderboardProps> = ({ setBackButton }: LeaderboardProps) => {
+const Leaderboard: React.FC<LeaderboardProps> = () => {
   const styles = useStyles();
 
   const [currentTabIndex, setCurrentTabIndex] = React.useState(0);
@@ -33,8 +33,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setBackButton }: LeaderboardP
   const dailyRef = db.collection("daily-scores");
   const monthlyRef = db.collection("monthly-scores");
   const allTimeRef = db.collection("all-time-scores");
-
-  setBackButton(true);
 
   return (
     <Grid container justify="center">
