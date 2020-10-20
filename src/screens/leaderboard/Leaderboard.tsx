@@ -7,6 +7,9 @@ import { db } from "../../firebase/firebaseApp";
 
 const useStyles = makeStyles(() =>
   createStyles({
+    backButton: {
+      marginRight: 8,
+    },
     appBar: {
       alignItems: "center",
       backgroundColor: "#003B46",
@@ -41,16 +44,19 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
       <AppBar position="sticky">
         <Toolbar variant="dense">
           <IconButton
+            className={classes.backButton}
             edge="start"
             color="inherit"
-            aria-label="menu"
+            aria-label="Back"
             onClick={() => setRoute("home")}
           >
             <KeyboardBackspace />
           </IconButton>
+
           <Typography>Spot the Lesion</Typography>
         </Toolbar>
       </AppBar>
+
       <AppBar className={classes.appBar} position="sticky">
         <Tabs
           value={currentTabIndex}
