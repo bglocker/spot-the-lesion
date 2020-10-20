@@ -23,11 +23,13 @@ const useStyles = makeStyles((theme: Theme) =>
       alignItems: "center",
     },
     logo: {
-      height: 300,
       marginTop: 16,
       marginBottom: 24,
       [theme.breakpoints.down("xs")]: {
         height: 200,
+      },
+      [theme.breakpoints.up("sm")]: {
+        height: 300,
       },
     },
     iconsAndButtonsContainer: {
@@ -41,12 +43,25 @@ const useStyles = makeStyles((theme: Theme) =>
       [theme.breakpoints.down("sm")]: {
         display: "none",
       },
+      [theme.breakpoints.up("md")]: {
+        display: "inline-block",
+      },
     },
     button: {
-      width: 290,
       margin: 8,
       borderRadius: 20,
-      fontSize: 18,
+      [theme.breakpoints.only("xs")]: {
+        width: 250,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.only("sm")]: {
+        width: 300,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        width: 320,
+        fontSize: "1.25rem",
+      },
     },
   })
 );
