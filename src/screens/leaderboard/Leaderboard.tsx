@@ -1,7 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { AppBar, Grid, Tab, Tabs } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-// import * as firebase from "firebase";
 import TabPanel from "./tabPanel/TabPanel";
 import { db } from "../../firebase/firebaseApp";
 import BasicTable from "./Table";
@@ -29,26 +28,42 @@ const useStyles = makeStyles(() =>
 );
 
 const Leaderboard: React.FC<LeaderboardProps> = () => {
+  const dailyRef = db.collection("daily-scores");
+  const monthlyRef = db.collection("monthly-scores");
+  const allTimeRef = db.collection("all-time-scores");
+
   const styles = useStyles();
 
   const [currentTabIndex, setCurrentTabIndex] = React.useState(0);
+
+  const [scores, setScores] = useState<ScoreType[]>([]);
+
+  async function getLeaderboard() {
+    const snapshot = await dailyRef.orderBy("score", "desc").limit(10).get();
+    snapshot.forEach((doc) => {
+      const score: ScoreType = { user: doc.data().user, score: doc.data().score };
+      scores.push(score);
+      setScores(scores);
+    });
+  }
 
   const handleChange = (_: React.ChangeEvent<unknown>, newIndex: number) => {
     setCurrentTabIndex(newIndex);
   };
 
-  const dailyRef = db.collection("daily-scores");
-  const monthlyRef = db.collection("monthly-scores");
-  const allTimeRef = db.collection("all-time-scores");
+  getLeaderboard();
 
-  let results: ScoreType[] = [];
-
-  dailyRef.orderBy("score", "desc").onSnapshot((snapshot) => {
-    results = [];
-    snapshot.docs.forEach((doc) => {
-      results.push({ user: doc.data().user, score: doc.data().score });
-    });
-  });
+  // // let results: ScoreType[] = []; // [{ user: "fane", score: 1000 }];
+  // dailyRef.orderBy("score", "desc").onSnapshot((snapshot) => {
+  //   // results = [];
+  //   setScores([]);
+  //   snapshot.docs.forEach((doc) => {
+  //     const score: ScoreType = { user: doc.data().user, score: doc.data().score };
+  //     // results.push(score);
+  //     scores.push(score);
+  //     setScores(scores);
+  //   });
+  // });
 
   return (
     <div>
@@ -84,7 +99,7 @@ const Leaderboard: React.FC<LeaderboardProps> = () => {
         <TabPanel currentIndex={currentTabIndex} index={1} dbRef={monthlyRef} />
         <TabPanel currentIndex={currentTabIndex} index={2} dbRef={allTimeRef} />
       </Grid>
-      {BasicTable(results)}
+      {BasicTable(scores)}
     </div>
   );
 };

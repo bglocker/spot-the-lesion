@@ -19,17 +19,6 @@ const useStyles = makeStyles({
   },
 });
 
-function createData(user: string, score: number): ScoreType {
-  return { user, score };
-}
-
-function createRows(results: ScoreType[]): ScoreType[] {
-  results.forEach((entry) => {
-    createData(entry.user, entry.score);
-  });
-  return results;
-}
-
 export default function BasicTable(results: ScoreType[]) {
   const classes = useStyles();
 
@@ -44,8 +33,9 @@ export default function BasicTable(results: ScoreType[]) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {createRows(results).map((row) => (
+          {results.map((row) => (
             <TableRow key={row.user}>
+              <TableCell align="center">1</TableCell>
               <TableCell align="center" component="th" scope="row">
                 {row.user}
               </TableCell>
