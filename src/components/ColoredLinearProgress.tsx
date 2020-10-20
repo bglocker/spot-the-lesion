@@ -2,6 +2,11 @@ import React from "react";
 import { LinearProgress, LinearProgressProps, Theme } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 
+interface ColoredLinearProgressProps extends LinearProgressProps {
+  barColor?: string;
+  barBackgroundColor?: string;
+}
+
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
@@ -14,11 +19,6 @@ const useStyles = makeStyles((theme: Theme) =>
     },
   })
 );
-
-interface ColoredLinearProgressProps extends LinearProgressProps {
-  barColor?: string;
-  barBackgroundColor?: string;
-}
 
 const ColoredLinearProgress: React.FC<ColoredLinearProgressProps> = ({
   barColor,
