@@ -509,22 +509,39 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const docNameForMonthly = `${entry.year}.${entry.month}.${entry.user}`;
     const docNameForAllTime = entry.user;
 
-    async function updateLeaderBoardFirebase(collection: string, docName: string) {
+    async function updateLeaderBoardFirebase() {
       const dailySnapshot = await db
-        .collection(collection)
+        .collection(DAILY_LEADERBOARD)
+        .where("year", "==", entry.year)
+        .where("month", "==", entry.month)
+        .where("day", "==", entry.day)
         .where("user", "==", username)
         .where("score", ">", playerPoints)
         .get();
-
       if (dailySnapshot.empty) {
-        // New score record
-        await db.collection(collection).doc(docName).set(entry);
+        await db.collection(DAILY_LEADERBOARD).doc(docNameForDaily).set(entry);
+      }
+      const monthlySnapshot = await db
+        .collection(MONTHLY_LEADERBOARD)
+        .where("year", "==", entry.year)
+        .where("month", "==", entry.month)
+        .where("user", "==", username)
+        .where("score", ">", playerPoints)
+        .get();
+      if (monthlySnapshot.empty) {
+        await db.collection(MONTHLY_LEADERBOARD).doc(docNameForMonthly).set(entry);
+      }
+      const alltimeSnapshot = await db
+        .collection(ALL_TIME_LEADERBOARD)
+        .where("user", "==", username)
+        .where("score", ">", playerPoints)
+        .get();
+      if (alltimeSnapshot.empty) {
+        await db.collection(ALL_TIME_LEADERBOARD).doc(docNameForAllTime).set(entry);
       }
     }
 
-    await updateLeaderBoardFirebase(DAILY_LEADERBOARD, docNameForDaily);
-    await updateLeaderBoardFirebase(MONTHLY_LEADERBOARD, docNameForMonthly);
-    await updateLeaderBoardFirebase(ALL_TIME_LEADERBOARD, docNameForAllTime);
+    await updateLeaderBoardFirebase();
   };
 
   return (
