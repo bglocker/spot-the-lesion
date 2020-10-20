@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
   AppBar,
   Button,
@@ -15,112 +15,92 @@ import {
   Toolbar,
   Typography,
 } from "@material-ui/core";
-import { makeStyles } from "@material-ui/core/styles";
+import { makeStyles, createStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import useInterval from "../../components/useInterval";
 import { db } from "../../firebase/firebaseApp";
-// import { db } from "../../firebase/firebaseApp";
 
-const useStyles = makeStyles({
-  container: {
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-evenly",
-    alignItems: "center",
-  },
-  canvasContainer: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-  },
-  cardCanvas: {
-    position: "relative",
-    height: "min(81vh, 81vw)",
-    width: "min(81vh, 81vw)",
-    padding: 8,
-  },
-  loadingButtonContainer: {
-    flexDirection: "row",
-    position: "relative",
-    marginTop: 16,
-    marginBottom: 16,
-  },
-  startNextSubmitButton: {
-    backgroundColor: "#07575B",
-    color: "white",
-  },
-  submitTextField: {},
-  circularProgress: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    marginTop: -12,
-    marginLeft: -12,
-  },
-  scoresContainer: {
-    display: "block",
-    flexDirection: "column",
-    alignItems: "center",
-    width: "min(81vh, 81vw)",
-    margin: "1%",
-    padding: 8,
-  },
-  countdown: {
-    marginBottom: "1%",
-    textAlign: "center",
-    fontSize: "min(calc((10vw+10vh)/2), 3vh)",
-  },
-  linearProgress: {
-    width: "100%",
-  },
-  results: {
-    textAlign: "center",
-    marginTop: 8,
-    marginBottom: 8,
-  },
-  scoreTypography: {
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-  navbar: {
-    background: "#07575B",
-  },
-  dialogPaper: {
-    width: "200vw",
-  },
-});
+const useStyles = makeStyles(() =>
+  createStyles({
+    backButton: {
+      marginRight: 8,
+    },
+    container: {
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "space-evenly",
+      alignItems: "center",
+    },
+    countdownContainer: {
+      width: "min(81vh, 81vw)",
+      margin: 8,
+      padding: 8,
+    },
+    countdownText: {
+      marginBottom: 8,
+      textAlign: "center",
+      fontSize: "1.5rem",
+    },
+    countdownProgress: {
+      width: "100%",
+    },
+    canvasContainer: {
+      height: "min(81vh, 81vw)",
+      width: "min(81vh, 81vw)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 8,
+    },
+    dialogPaper: {
+      width: "200vw",
+    },
+    result: {
+      marginTop: 8,
+      marginBottom: 8,
+      textAlign: "center",
+    },
+    loadingButtonContainer: {
+      position: "relative",
+      marginTop: 16,
+      marginBottom: 16,
+    },
+    circularProgress: {
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      marginTop: -12,
+      marginLeft: -12,
+    },
+  })
+);
 
-// Colour codes
 const VALID_COLOUR = "green";
 const INVALID_COLOUR = "red";
 const DEFAULT_COLOUR = "yellow";
 const TRUE_COLOUR = "blue";
 
-// Number of rounds per game
 const NUMBER_OF_ROUNDS = 10;
+const TOTAL_TIME = 10;
 
 const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const classes = useStyles();
-
-  // Keep track of the current round
-  const [currentRound, setCurrentRound] = useState(0);
-
-  const [open, setOpen] = useState(true);
 
   const seenFiles = new Set<number>();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const [currentRound, setCurrentRound] = useState(0);
+  const [showDialog, setShowDialog] = useState(true);
+
   const [loading, setLoading] = useState(false);
-  const [started, setStarted] = useState(false);
   const [running, setRunning] = useState(false);
   const [clicked, setClicked] = useState(false);
   const [hinted, setHinted] = useState(false);
 
-  const totalTime = 10;
-  const [timeRemaining, setTimeRemaining] = useState(totalTime);
-  const [timeRemainingText, setTimeRemainingText] = useState("10.0");
+  const [timeRemaining, setTimeRemaining] = useState(TOTAL_TIME);
+  const [timeRemainingText, setTimeRemainingText] = useState(TOTAL_TIME.toFixed(1));
   const [countdownColor, setCountdownColor] = useState("green");
 
   const [playerPoints, setPlayerPoints] = useState(0);
@@ -132,11 +112,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
 
-  const [playerCorrect, setPlayerCorrect] = useState<boolean>(false);
-  const [aiCorrect, setAiCorrect] = useState<boolean>(false);
+  const [playerCorrect, setPlayerCorrect] = useState(false);
+  const [aiCorrect, setAiCorrect] = useState(false);
 
-  const [playerResultVisible, setPlayerResultVisible] = useState<boolean>(false);
-  const [aiResultVisible, setAiResultVisible] = useState<boolean>(false);
+  const [playerResultVisible, setPlayerResultVisible] = useState(false);
+  const [aiResultVisible, setAiResultVisible] = useState(false);
 
   type DrawType = ((canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => void) | null;
   const [draw, setDraw] = useState<DrawType>(null);
@@ -297,7 +277,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
 
     if (timeRemaining <= 0) {
-      setOpen(true);
+      setShowDialog(true);
       stopTimer();
 
       setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
@@ -399,7 +379,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       }, 2500);
     });
 
-    setOpen(true);
+    setShowDialog(true);
   };
 
   const getNewFileNumber = (): number => {
@@ -417,7 +397,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const loadNewImage = async () => {
     stopTimer();
-    setTimeRemaining(totalTime);
+    setTimeRemaining(TOTAL_TIME);
     setLoading(true);
 
     const fileNumber = getNewFileNumber();
@@ -449,11 +429,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   const onStartNextClick = async () => {
-    if (!started) {
-      setStarted(true);
-    }
-    setCurrentRound(currentRound + 1);
-    setOpen(false);
+    setCurrentRound((prevState) => prevState + 1);
+    setShowDialog(false);
     setAiCorrect(false);
     setPlayerCorrect(false);
     setAiResultVisible(false);
@@ -462,47 +439,26 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     await loadNewImage();
   };
 
-  const roundCorrectness = (correct: boolean, visible: boolean) => {
-    if (visible) {
-      return correct ? (
-        <Typography
-          variant="subtitle1"
-          className={classes.scoreTypography}
-          style={{ color: VALID_COLOUR }}
-        >
-          {" "}
-          Correct!
-        </Typography>
-      ) : (
-        <Typography
-          variant="subtitle1"
-          className={classes.scoreTypography}
-          style={{ color: INVALID_COLOUR }}
-        >
-          Wrong!
-        </Typography>
-      );
-    }
-    return null;
-  };
-
   const submitScores = async () => {
     const date = new Date();
     const score = {
       score: playerPoints,
     };
+
     await db
       .collection("daily-scores")
       .doc(date.getDay().toString())
       .collection("scores")
       .doc(username)
       .set(score);
+
     await db
       .collection("monthly-scores")
       .doc(date.getMonth().toString())
       .collection("scores")
       .doc(username)
       .set(score);
+
     await db
       .collection("all-time-scores")
       .doc(date.getFullYear().toString())
@@ -511,126 +467,154 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       .set(score);
   };
 
+  const displayCorrect = (correct: boolean, visible: boolean) => {
+    if (!visible) {
+      return null;
+    }
+
+    return (
+      <span style={{ color: correct ? VALID_COLOUR : INVALID_COLOUR }}>
+        {correct ? "Correct!" : "Wrong!"}
+      </span>
+    );
+  };
+
+  const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
+    setUsername(event.target.value);
+  };
+
   const dialogAction = () => {
     if (currentRound < NUMBER_OF_ROUNDS) {
       return (
         <div className={classes.loadingButtonContainer}>
           <Button
-            className={classes.startNextSubmitButton}
             variant="contained"
+            color="primary"
             size="large"
             disabled={running || loading}
             onClick={onStartNextClick}
           >
-            {started ? "Next" : "Start"}
+            {currentRound === 0 ? "Start" : "Next"}
           </Button>
-          {loading && <CircularProgress className={classes.circularProgress} size={24} />}
+
+          {loading && (
+            <CircularProgress className={classes.circularProgress} color="primary" size={24} />
+          )}
         </div>
       );
     }
+
     return (
-      <div className={classes.loadingButtonContainer}>
+      <>
         <TwitterShareButton
           url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
           title={`I got ${playerPoints} points in Spot-the-Lesion! Can you beat my score?`}
         >
-          <TwitterIcon size="min(6vh,6vw)" round />
+          <TwitterIcon size="50px" round />
         </TwitterShareButton>
+
         <TextField
-          id="username"
           label="Username"
           variant="outlined"
           value={username}
-          onChange={(event) => setUsername(event.target.value)}
+          onChange={onChangeUsername}
         />
+
         <Button
-          className={classes.startNextSubmitButton}
           variant="contained"
+          color="primary"
           size="large"
           disabled={running || loading}
           onClick={submitScores}
         >
           Submit Score
         </Button>
-      </div>
+      </>
     );
   };
 
   return (
-    <div>
-      <AppBar position="static">
-        <Toolbar className={classes.navbar} variant="dense">
+    <>
+      <AppBar position="sticky">
+        <Toolbar variant="dense">
           <IconButton
+            className={classes.backButton}
             edge="start"
             color="inherit"
-            aria-label="menu"
+            aria-label="Back"
             onClick={() => setRoute("home")}
           >
             <KeyboardBackspace />
           </IconButton>
+
           <Typography>Spot the Lesion</Typography>
         </Toolbar>
       </AppBar>
-      <Dialog
-        classes={{ paper: classes.dialogPaper }}
-        open={open}
-        onClose={() => setOpen(false)}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle className={classes.results} id="alert-dialog-title">
-          Results
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            <Typography variant="h4" className={classes.results}>
-              You were: {roundCorrectness(playerCorrect, playerResultVisible)}
-            </Typography>
-            <Typography variant="h4" className={classes.results}>
-              AI was: {roundCorrectness(aiCorrect, aiResultVisible)}
-            </Typography>
-            <Typography variant="h4" className={classes.results}>
-              Results
-            </Typography>
-            <Typography variant="subtitle1" className={classes.scoreTypography}>
-              Correct (you): {playerPoints}
-            </Typography>
-            <Typography variant="subtitle1" className={classes.scoreTypography}>
-              Correct (AI): {aiPoints}
-            </Typography>
-            <Typography variant="subtitle1" className={classes.scoreTypography}>
-              Total Scans: {total}
-            </Typography>
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>{dialogAction()}</DialogActions>
-      </Dialog>
 
       <div className={classes.container}>
-        <Card className={classes.scoresContainer}>
-          <Typography variant="h4" className={classes.countdown} style={{ color: countdownColor }}>
+        <Card className={classes.countdownContainer}>
+          <Typography
+            className={classes.countdownText}
+            variant="h4"
+            style={{ color: countdownColor }}
+          >
             Time remaining: {timeRemainingText}s
           </Typography>
 
           <LinearProgress
+            className={classes.countdownProgress}
             variant="determinate"
             value={timeRemaining * 10}
-            className={classes.linearProgress}
-            classes={{ barColorPrimary: countdownColor }}
           />
         </Card>
-        <div className={classes.canvasContainer}>
-          <Card className={classes.cardCanvas}>
-            <canvas
-              ref={canvasRef}
-              onClick={onCanvasClick}
-              width={canvasSize}
-              height={canvasSize}
-            />
-          </Card>
-        </div>
+
+        <Card className={classes.canvasContainer}>
+          <canvas ref={canvasRef} width={canvasSize} height={canvasSize} onClick={onCanvasClick} />
+        </Card>
       </div>
-    </div>
+
+      <Dialog
+        classes={{ paper: classes.dialogPaper }}
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle className={classes.result} id="alert-dialog-title">
+          <Typography variant="h3">Results</Typography>
+        </DialogTitle>
+
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            <Typography className={classes.result} variant="h4">
+              You were: {displayCorrect(playerCorrect, playerResultVisible)}
+            </Typography>
+
+            <Typography className={classes.result} variant="h4">
+              AI was: {displayCorrect(aiCorrect, aiResultVisible)}
+            </Typography>
+
+            <Typography className={classes.result} variant="h4">
+              Results
+            </Typography>
+
+            <Typography className={classes.result} variant="h4">
+              Correct (you): {playerPoints}
+            </Typography>
+
+            <Typography className={classes.result} variant="h4">
+              Correct (AI): {aiPoints}
+            </Typography>
+
+            <Typography className={classes.result} variant="h4">
+              Total Scans: {total}
+            </Typography>
+          </DialogContentText>
+        </DialogContent>
+
+        <DialogActions>{dialogAction()}</DialogActions>
+      </Dialog>
+    </>
   );
 };
 
