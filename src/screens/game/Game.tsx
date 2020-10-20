@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
   AppBar,
   Button,
@@ -20,7 +20,6 @@ import { KeyboardBackspace } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import useInterval from "../../components/useInterval";
 import { db } from "../../firebase/firebaseApp";
-// import { db } from "../../firebase/firebaseApp";
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -38,12 +37,12 @@ const useStyles = makeStyles(() =>
       margin: 8,
       padding: 8,
     },
-    countdown: {
+    countdownText: {
       marginBottom: 8,
       textAlign: "center",
       fontSize: "1.5rem",
     },
-    linearProgress: {
+    countdownProgress: {
       width: "100%",
     },
     canvasContainer: {
@@ -474,14 +473,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
 
     return (
-      <Typography
-        className={classes.result}
-        variant="h4"
-        style={{ color: correct ? VALID_COLOUR : INVALID_COLOUR }}
-      >
+      <span style={{ color: correct ? VALID_COLOUR : INVALID_COLOUR }}>
         {correct ? "Correct!" : "Wrong!"}
-      </Typography>
+      </span>
     );
+  };
+
+  const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
+    setUsername(event.target.value);
   };
 
   const dialogAction = () => {
@@ -495,7 +494,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
             disabled={running || loading}
             onClick={onStartNextClick}
           >
-            {currentRound === 0 ? "Next" : "Start"}
+            {currentRound === 0 ? "Start" : "Next"}
           </Button>
 
           {loading && (
@@ -506,7 +505,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
 
     return (
-      <div>
+      <>
         <TwitterShareButton
           url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
           title={`I got ${playerPoints} points in Spot-the-Lesion! Can you beat my score?`}
@@ -515,11 +514,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </TwitterShareButton>
 
         <TextField
-          id="username"
           label="Username"
           variant="outlined"
           value={username}
-          onChange={(event) => setUsername(event.target.value)}
+          onChange={onChangeUsername}
         />
 
         <Button
@@ -531,7 +529,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         >
           Submit Score
         </Button>
-      </div>
+      </>
     );
   };
 
@@ -555,13 +553,16 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       <div className={classes.container}>
         <Card className={classes.countdownContainer}>
-          <Typography className={classes.countdown} variant="h4" style={{ color: countdownColor }}>
+          <Typography
+            className={classes.countdownText}
+            variant="h4"
+            style={{ color: countdownColor }}
+          >
             Time remaining: {timeRemainingText}s
           </Typography>
 
           <LinearProgress
-            className={classes.linearProgress}
-            style={{ color: countdownColor }}
+            className={classes.countdownProgress}
             variant="determinate"
             value={timeRemaining * 10}
           />
