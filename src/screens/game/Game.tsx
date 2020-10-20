@@ -14,6 +14,7 @@ import {
   TextField,
   Toolbar,
   Typography,
+  withStyles,
 } from "@material-ui/core";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
@@ -41,9 +42,6 @@ const useStyles = makeStyles(() =>
       marginBottom: 8,
       textAlign: "center",
       fontSize: "1.5rem",
-    },
-    countdownProgress: {
-      width: "100%",
     },
     canvasContainer: {
       height: "min(81vh, 81vw)",
@@ -328,6 +326,15 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     isAIPredictionRight,
   ]);
 
+  const ColorLinearProgress = withStyles({
+    root: {
+      backgroundColor: "gray",
+    },
+    bar: {
+      backgroundColor: countdownColor,
+    },
+  })(LinearProgress);
+
   function isPlayerRight(canvas: HTMLCanvasElement, mouseX: number, mouseY: number) {
     const { x, y } = getMousePosition(mouseX, mouseY, canvas);
     return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
@@ -561,11 +568,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
             Time remaining: {timeRemainingText}s
           </Typography>
 
-          <LinearProgress
-            className={classes.countdownProgress}
-            variant="determinate"
-            value={timeRemaining * 10}
-          />
+          <ColorLinearProgress variant="determinate" value={timeRemaining * 10} />
         </Card>
 
         <Card className={classes.canvasContainer}>
