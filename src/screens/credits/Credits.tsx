@@ -1,7 +1,7 @@
 import React from "react";
 import { AppBar, IconButton, Toolbar, Typography, Card, Theme } from "@material-ui/core";
-import { makeStyles, createStyles } from "@material-ui/styles";
-import BackButtonIcon from "@material-ui/icons/KeyboardBackspace";
+import { makeStyles, createStyles } from "@material-ui/core/styles";
+import { KeyboardBackspace } from "@material-ui/icons";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -54,7 +54,7 @@ const Credits: React.FC<CreditsProps> = ({ setRoute }: CreditsProps) => {
             aria-label="Back"
             onClick={() => setRoute("home")}
           >
-            <BackButtonIcon />
+            <KeyboardBackspace />
           </IconButton>
 
           <Typography>Spot the Lesion</Typography>
