@@ -96,6 +96,21 @@ const DAILY_LEADERBOARD = "daily-scores";
 const MONTHLY_LEADERBOARD = "monthly-scores";
 const ALL_TIME_LEADERBOARD = "alltime-scores";
 
+const monthNames = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
 const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const classes = useStyles();
 
@@ -486,14 +501,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       user: username,
       score: playerPoints,
       day: date.getDate(),
-      month: date.getMonth(),
+      month: monthNames[date.getMonth()],
       year: date.getFullYear(),
     };
 
-    const docNameForDaily = `${date.getDate()}.${date.getMonth()}.${date.getFullYear()}.${
-      entry.user
-    }`;
-    const docNameForMonthly = `${date.getMonth()}.${entry.user}`;
+    const docNameForDaily = `${entry.year}.${entry.month}.${entry.day}.${entry.user}`;
+    const docNameForMonthly = `${entry.year}.${entry.month}.${entry.user}`;
     const docNameForAllTime = entry.user;
 
     async function updateLeaderBoardFirebase(collection: string, docName: string) {
