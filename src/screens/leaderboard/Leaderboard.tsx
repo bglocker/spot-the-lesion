@@ -1,6 +1,7 @@
 import React from "react";
-import { AppBar, Grid, Tab, Tabs } from "@material-ui/core";
+import { AppBar, Grid, IconButton, Tab, Tabs, Typography, Toolbar } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
+import { KeyboardBackspace } from "@material-ui/icons";
 import TabPanel from "./tabPanel/TabPanel";
 import { db } from "../../firebase/firebaseApp";
 
@@ -22,7 +23,7 @@ const useStyles = makeStyles(() =>
   })
 );
 
-const Leaderboard: React.FC<LeaderboardProps> = () => {
+const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps) => {
   const classes = useStyles();
 
   const [currentTabIndex, setCurrentTabIndex] = React.useState(0);
@@ -37,6 +38,19 @@ const Leaderboard: React.FC<LeaderboardProps> = () => {
 
   return (
     <>
+      <AppBar position="sticky">
+        <Toolbar variant="dense">
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            onClick={() => setRoute("home")}
+          >
+            <KeyboardBackspace />
+          </IconButton>
+          <Typography>Spot the Lesion</Typography>
+        </Toolbar>
+      </AppBar>
       <AppBar className={classes.appBar} position="sticky">
         <Tabs
           value={currentTabIndex}
