@@ -1,60 +1,45 @@
 import React from "react";
-import { Grid, Typography } from "@material-ui/core";
-import { makeStyles } from "@material-ui/core/styles";
+import { Typography } from "@material-ui/core";
+import { makeStyles, createStyles } from "@material-ui/core/styles";
 
-const useStyles = makeStyles(() => ({
-  root: {
-    flexGrow: 1,
-  },
-  image: {
-    maxWidth: "inherit",
-    maxHeight: "70vh",
-    display: "block",
-    marginLeft: "auto",
-    marginRight: "auto",
-  },
-  textContent: {
-    marginTop: "1%",
-    fontSize: "calc((3vh + 3vw)/2)",
-    textAlign: "center",
-  },
-  textWrapper: {
-    width: "inherit",
-  },
-  maxWidth: {
-    width: "100%",
-  },
-  centerContent: {
-    display: "flex",
-    justifyContent: "center",
-  },
-}));
+const useStyles = makeStyles(() =>
+  createStyles({
+    container: {
+      height: (props: Record<string, unknown>) => (props.imageLink !== "" ? "100%" : "50%"),
+      width: "100%",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 24,
+      boxSizing: "border-box",
+    },
+    text: {
+      fontSize: "2rem",
+      textAlign: "center",
+      marginBottom: 24,
+    },
+    image: {
+      display: (props: Record<string, unknown>) =>
+        props.imageLink !== "" ? "inline-block" : "none",
+      maxWidth: "75%",
+      maxHeight: "75%",
+    },
+  })
+);
 
 const TutorialCard: React.FC<TutorialCardProps> = ({
   textContent,
   imageLink,
 }: TutorialCardProps) => {
-  const styles = useStyles();
+  const classes = useStyles({ imageLink });
 
   return (
-    <Grid container direction="column" justify="center" alignItems="center" spacing={3}>
-      <Grid item xs={12}>
-        <div className={styles.textWrapper}>
-          <Typography
-            className={`${styles.textContent} ${styles.maxWidth} ${styles.centerContent}`}
-          >
-            {textContent}
-          </Typography>
-        </div>
-      </Grid>
-      {imageLink !== "" ? (
-        <Grid item xs={9}>
-          <img className={styles.image} src={imageLink} alt={imageLink} />
-        </Grid>
-      ) : (
-        ""
-      )}
-    </Grid>
+    <div className={classes.container}>
+      <Typography className={classes.text}>{textContent}</Typography>
+
+      <img className={classes.image} src={imageLink} alt={imageLink} />
+    </div>
   );
 };
 
