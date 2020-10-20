@@ -3,7 +3,6 @@ import {
   AppBar,
   Button,
   Card,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -20,6 +19,7 @@ import { TwitterIcon, TwitterShareButton } from "react-share";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import useInterval from "../../components/useInterval";
 import { db } from "../../firebase/firebaseApp";
+import LoadingButton from "../../components/LoadingButton";
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -57,18 +57,6 @@ const useStyles = makeStyles(() =>
       marginTop: 8,
       marginBottom: 8,
       textAlign: "center",
-    },
-    loadingButtonContainer: {
-      position: "relative",
-      marginTop: 16,
-      marginBottom: 16,
-    },
-    circularProgress: {
-      position: "absolute",
-      top: "50%",
-      left: "50%",
-      marginTop: -12,
-      marginLeft: -12,
     },
   })
 );
@@ -483,21 +471,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const dialogAction = () => {
     if (currentRound < NUMBER_OF_ROUNDS) {
       return (
-        <div className={classes.loadingButtonContainer}>
-          <Button
-            variant="contained"
-            color="primary"
-            size="large"
-            disabled={running || loading}
-            onClick={onStartNextClick}
-          >
-            {currentRound === 0 ? "Start" : "Next"}
-          </Button>
-
-          {loading && (
-            <CircularProgress className={classes.circularProgress} color="primary" size={24} />
-          )}
-        </div>
+        <LoadingButton
+          loading={loading}
+          buttonDisabled={running || loading}
+          onButtonClick={onStartNextClick}
+          buttonText={currentRound === 0 ? "Start" : "Next"}
+        />
       );
     }
 
