@@ -4,7 +4,6 @@ import {
   Button,
   Card,
   CircularProgress,
-  Grid,
   Dialog,
   DialogActions,
   DialogContent,
@@ -91,10 +90,16 @@ const INVALID_COLOUR = "red";
 const DEFAULT_COLOUR = "yellow";
 const TRUE_COLOUR = "blue";
 
+// Number of rounds per game
+const NUMBER_OF_ROUNDS = 10;
+
 const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const classes = useStyles();
 
-  const [open, setOpen] = React.useState(true);
+  // Keep track of the current round
+  const [currentRound, setCurrentRound] = useState(0);
+
+  const [open, setOpen] = useState(true);
 
   const seenFiles = new Set<number>();
 
@@ -187,8 +192,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     return interArea / unionArea;
   };
 
-  // WARNING: Don't use this function outside of this class
-  // PRE: rectBounds has at least 4 elements
   function setRect(context: CanvasRenderingContext2D, rectBounds: number[]) {
     const xBase = rectBounds[0];
     const yBase = rectBounds[1];
@@ -442,6 +445,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     if (!started) {
       setStarted(true);
     }
+    setCurrentRound(currentRound + 1);
     setOpen(false);
     setAiCorrect(false);
     setPlayerCorrect(false);
@@ -500,6 +504,45 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       .set(score);
   };
 
+  const dialogAction = () => {
+    if (currentRound < NUMBER_OF_ROUNDS) {
+      return (
+        <div className={classes.loadingButtonContainer}>
+          <Button
+            className={classes.startNextSubmitButton}
+            variant="contained"
+            size="large"
+            disabled={running || loading}
+            onClick={onStartNextClick}
+          >
+            {started ? "Next" : "Start"}
+          </Button>
+          {loading && <CircularProgress className={classes.circularProgress} size={24} />}
+        </div>
+      );
+    }
+    return (
+      <div className={classes.loadingButtonContainer}>
+        <TextField
+          id="username"
+          label="Username"
+          variant="outlined"
+          value={username}
+          onChange={(event) => setUsername(event.target.value)}
+        />
+        <Button
+          className={classes.startNextSubmitButton}
+          variant="contained"
+          size="large"
+          disabled={running || loading}
+          onClick={submitScores}
+        >
+          Submit Score
+        </Button>
+      </div>
+    );
+  };
+
   return (
     <div>
       <AppBar position="static">
@@ -549,41 +592,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
             </Typography>
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
-          <div className={classes.loadingButtonContainer}>
-            <Button
-              className={classes.startNextSubmitButton}
-              variant="contained"
-              size="large"
-              disabled={running || loading}
-              onClick={onStartNextClick}
-            >
-              {started ? "Next" : "Start"}
-            </Button>
-
-            {loading && <CircularProgress className={classes.circularProgress} size={24} />}
-          </div>
-        </DialogActions>
+        <DialogActions>{dialogAction()}</DialogActions>
       </Dialog>
-
-      <Grid container justify="center">
-        <TextField
-          id="username"
-          label="Username"
-          variant="outlined"
-          value={username}
-          onChange={(event) => setUsername(event.target.value)}
-        />
-        <Button
-          className={classes.startNextSubmitButton}
-          variant="contained"
-          size="large"
-          disabled={running || loading}
-          onClick={submitScores}
-        >
-          Submit Score
-        </Button>
-      </Grid>
 
       <div className={classes.container}>
         <Card className={classes.scoresContainer}>
