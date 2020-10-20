@@ -10,15 +10,14 @@ import {
   DialogContentText,
   DialogTitle,
   IconButton,
-  LinearProgress,
   TextField,
   Toolbar,
   Typography,
-  withStyles,
 } from "@material-ui/core";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
+import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import useInterval from "../../components/useInterval";
 import { db } from "../../firebase/firebaseApp";
 
@@ -99,7 +98,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [timeRemaining, setTimeRemaining] = useState(TOTAL_TIME);
   const [timeRemainingText, setTimeRemainingText] = useState(TOTAL_TIME.toFixed(1));
-  const [countdownColor, setCountdownColor] = useState("green");
+  const [countdownColor, setCountdownColor] = useState("#373737");
 
   const [playerPoints, setPlayerPoints] = useState(0);
   const [aiPoints, setAiPoints] = useState(0);
@@ -325,15 +324,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     timeRemaining,
     isAIPredictionRight,
   ]);
-
-  const ColorLinearProgress = withStyles({
-    root: {
-      backgroundColor: "gray",
-    },
-    bar: {
-      backgroundColor: countdownColor,
-    },
-  })(LinearProgress);
 
   function isPlayerRight(canvas: HTMLCanvasElement, mouseX: number, mouseY: number) {
     const { x, y } = getMousePosition(mouseX, mouseY, canvas);
@@ -568,7 +558,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
             Time remaining: {timeRemainingText}s
           </Typography>
 
-          <ColorLinearProgress variant="determinate" value={timeRemaining * 10} />
+          <ColoredLinearProgress
+            barColor={countdownColor}
+            variant="determinate"
+            value={timeRemaining * 10}
+          />
         </Card>
 
         <Card className={classes.canvasContainer}>
