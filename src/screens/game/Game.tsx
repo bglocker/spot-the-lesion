@@ -4,7 +4,6 @@ import {
   Button,
   Card,
   CircularProgress,
-  Grid,
   Dialog,
   DialogActions,
   DialogContent,
@@ -18,8 +17,10 @@ import {
 } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
+import { TwitterIcon, TwitterShareButton } from "react-share";
 import useInterval from "../../components/useInterval";
 import { db } from "../../firebase/firebaseApp";
+// import { db } from "../../firebase/firebaseApp";
 
 const useStyles = makeStyles({
   container: {
@@ -40,6 +41,7 @@ const useStyles = makeStyles({
     padding: 8,
   },
   loadingButtonContainer: {
+    flexDirection: "row",
     position: "relative",
     marginTop: 16,
     marginBottom: 16,
@@ -73,6 +75,7 @@ const useStyles = makeStyles({
     width: "100%",
   },
   results: {
+    textAlign: "center",
     marginTop: 8,
     marginBottom: 8,
   },
@@ -83,6 +86,9 @@ const useStyles = makeStyles({
   navbar: {
     background: "#07575B",
   },
+  dialogPaper: {
+    width: "200vw",
+  },
 });
 
 // Colour codes
@@ -91,10 +97,16 @@ const INVALID_COLOUR = "red";
 const DEFAULT_COLOUR = "yellow";
 const TRUE_COLOUR = "blue";
 
+// Number of rounds per game
+const NUMBER_OF_ROUNDS = 10;
+
 const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const classes = useStyles();
 
-  const [open, setOpen] = React.useState(true);
+  // Keep track of the current round
+  const [currentRound, setCurrentRound] = useState(0);
+
+  const [open, setOpen] = useState(true);
 
   const seenFiles = new Set<number>();
 
@@ -187,8 +199,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     return interArea / unionArea;
   };
 
-  // WARNING: Don't use this function outside of this class
-  // PRE: rectBounds has at least 4 elements
   function setRect(context: CanvasRenderingContext2D, rectBounds: number[]) {
     const xBase = rectBounds[0];
     const yBase = rectBounds[1];
@@ -442,6 +452,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     if (!started) {
       setStarted(true);
     }
+    setCurrentRound(currentRound + 1);
     setOpen(false);
     setAiCorrect(false);
     setPlayerCorrect(false);
@@ -500,73 +511,31 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       .set(score);
   };
 
-  return (
-    <div>
-      <AppBar position="static">
-        <Toolbar className={classes.navbar} variant="dense">
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            onClick={() => setRoute("home")}
+  const dialogAction = () => {
+    if (currentRound < NUMBER_OF_ROUNDS) {
+      return (
+        <div className={classes.loadingButtonContainer}>
+          <Button
+            className={classes.startNextSubmitButton}
+            variant="contained"
+            size="large"
+            disabled={running || loading}
+            onClick={onStartNextClick}
           >
-            <KeyboardBackspace />
-          </IconButton>
-          <Typography>Spot the Lesion</Typography>
-        </Toolbar>
-      </AppBar>
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">Results</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            <Typography variant="h4" className={classes.results}>
-              You were: {roundCorrectness(playerCorrect, playerResultVisible)}
-            </Typography>
-
-            <Typography variant="h4" className={classes.results}>
-              AI was: {roundCorrectness(aiCorrect, aiResultVisible)}
-            </Typography>
-
-            <Typography variant="h4" className={classes.results}>
-              Results
-            </Typography>
-
-            <Typography variant="subtitle1" className={classes.scoreTypography}>
-              Correct (you): {playerPoints}
-            </Typography>
-
-            <Typography variant="subtitle1" className={classes.scoreTypography}>
-              Correct (AI): {aiPoints}
-            </Typography>
-
-            <Typography variant="subtitle1" className={classes.scoreTypography}>
-              Total Scans: {total}
-            </Typography>
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <div className={classes.loadingButtonContainer}>
-            <Button
-              className={classes.startNextSubmitButton}
-              variant="contained"
-              size="large"
-              disabled={running || loading}
-              onClick={onStartNextClick}
-            >
-              {started ? "Next" : "Start"}
-            </Button>
-
-            {loading && <CircularProgress className={classes.circularProgress} size={24} />}
-          </div>
-        </DialogActions>
-      </Dialog>
-
-      <Grid container justify="center">
+            {started ? "Next" : "Start"}
+          </Button>
+          {loading && <CircularProgress className={classes.circularProgress} size={24} />}
+        </div>
+      );
+    }
+    return (
+      <div className={classes.loadingButtonContainer}>
+        <TwitterShareButton
+          url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
+          title={`I got ${playerPoints} points in Spot-the-Lesion! Can you beat my score?`}
+        >
+          <TwitterIcon size="min(6vh,6vw)" round />
+        </TwitterShareButton>
         <TextField
           id="username"
           label="Username"
@@ -583,7 +552,59 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         >
           Submit Score
         </Button>
-      </Grid>
+      </div>
+    );
+  };
+
+  return (
+    <div>
+      <AppBar position="static">
+        <Toolbar className={classes.navbar} variant="dense">
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            onClick={() => setRoute("home")}
+          >
+            <KeyboardBackspace />
+          </IconButton>
+          <Typography>Spot the Lesion</Typography>
+        </Toolbar>
+      </AppBar>
+      <Dialog
+        classes={{ paper: classes.dialogPaper }}
+        open={open}
+        onClose={() => setOpen(false)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle className={classes.results} id="alert-dialog-title">
+          Results
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            <Typography variant="h4" className={classes.results}>
+              You were: {roundCorrectness(playerCorrect, playerResultVisible)}
+            </Typography>
+            <Typography variant="h4" className={classes.results}>
+              AI was: {roundCorrectness(aiCorrect, aiResultVisible)}
+            </Typography>
+            <Typography variant="h4" className={classes.results}>
+              Results
+            </Typography>
+            <Typography variant="subtitle1" className={classes.scoreTypography}>
+              Correct (you): {playerPoints}
+            </Typography>
+            <Typography variant="subtitle1" className={classes.scoreTypography}>
+              Correct (AI): {aiPoints}
+            </Typography>
+            <Typography variant="subtitle1" className={classes.scoreTypography}>
+              Total Scans: {total}
+            </Typography>
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>{dialogAction()}</DialogActions>
+      </Dialog>
 
       <div className={classes.container}>
         <Card className={classes.scoresContainer}>
