@@ -12,12 +12,12 @@ import {
   DialogTitle,
   IconButton,
   LinearProgress,
-  makeStyles,
   TextField,
   Toolbar,
   Typography,
 } from "@material-ui/core";
-import BackButtonIcon from "@material-ui/icons/KeyboardBackspace";
+import { makeStyles } from "@material-ui/core/styles";
+import { KeyboardBackspace } from "@material-ui/icons";
 import useInterval from "../../components/useInterval";
 import { db } from "../../firebase/firebaseApp";
 
@@ -510,7 +510,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
             aria-label="menu"
             onClick={() => setRoute("home")}
           >
-            <BackButtonIcon />
+            <KeyboardBackspace />
           </IconButton>
           <Typography>Spot the Lesion</Typography>
         </Toolbar>

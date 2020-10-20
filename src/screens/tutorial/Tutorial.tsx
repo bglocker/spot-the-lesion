@@ -11,9 +11,8 @@ import {
   Toolbar,
   Typography,
 } from "@material-ui/core";
-import { ArrowBack, ArrowForward } from "@material-ui/icons";
-import { makeStyles } from "@material-ui/styles";
-import BackButtonIcon from "@material-ui/icons/KeyboardBackspace";
+import { ArrowBack, ArrowForward, KeyboardBackspace } from "@material-ui/icons";
+import { makeStyles } from "@material-ui/core/styles";
 import TutorialCard from "./card/TutorialCard";
 import doctor from "./images/doctor.png";
 import start_screen from "./images/start screen.png";
@@ -158,7 +157,7 @@ const Tutorial: React.FC<TutorialProps> = ({ setRoute }: TutorialProps) => {
             aria-label="menu"
             onClick={() => setRoute("home")}
           >
-            <BackButtonIcon />
+            <KeyboardBackspace />
           </IconButton>
           <Typography>Spot the Lesion</Typography>
         </Toolbar>

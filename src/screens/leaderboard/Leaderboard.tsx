@@ -1,32 +1,34 @@
 import React from "react";
-import { AppBar, Grid, Tab, Tabs } from "@material-ui/core";
+import { AppBar, Grid, IconButton, Tab, Tabs, Typography, Toolbar } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
+import { KeyboardBackspace } from "@material-ui/icons";
 import TabPanel from "./tabPanel/TabPanel";
 import { db } from "../../firebase/firebaseApp";
 
 const useStyles = makeStyles(() =>
   createStyles({
-    appbar: {
+    appBar: {
       alignItems: "center",
-      justifyContent: "center",
       backgroundColor: "#003B46",
     },
-    indicator: {
+    tabIndicator: {
       backgroundColor: "#C4DFE6",
     },
     tab: {
-      fontFamily: "segoe UI",
-      fontSize: 24,
+      fontSize: "1.5rem",
+    },
+    container: {
+      height: "100%",
     },
   })
 );
 
-const Leaderboard: React.FC<LeaderboardProps> = () => {
-  const styles = useStyles();
+const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps) => {
+  const classes = useStyles();
 
   const [currentTabIndex, setCurrentTabIndex] = React.useState(0);
 
-  const handleChange = (_: React.ChangeEvent<unknown>, newIndex: number) => {
+  const onTabChange = (newIndex: number) => {
     setCurrentTabIndex(newIndex);
   };
 
@@ -35,38 +37,60 @@ const Leaderboard: React.FC<LeaderboardProps> = () => {
   const allTimeRef = db.collection("all-time-scores");
 
   return (
-    <Grid container justify="center">
-      <AppBar className={styles.appbar} position="static">
+    <>
+      <AppBar position="sticky">
+        <Toolbar variant="dense">
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            onClick={() => setRoute("home")}
+          >
+            <KeyboardBackspace />
+          </IconButton>
+          <Typography>Spot the Lesion</Typography>
+        </Toolbar>
+      </AppBar>
+      <AppBar className={classes.appBar} position="sticky">
         <Tabs
           value={currentTabIndex}
-          onChange={handleChange}
+          onChange={(_, newValue) => onTabChange(newValue)}
           aria-label="Leaderboards"
-          classes={{ indicator: styles.indicator }}
+          classes={{ indicator: classes.tabIndicator }}
         >
           <Tab
-            className={styles.tab}
+            className={classes.tab}
             label="Daily"
             id="leaderboard-0"
             aria-controls="leaderboard-view-0"
           />
+
           <Tab
-            className={styles.tab}
+            className={classes.tab}
             label="Monthly"
             id="leaderboard-1"
             aria-controls="leaderboard-view-1"
           />
+
           <Tab
-            className={styles.tab}
+            className={classes.tab}
             label="All Time"
             id="leaderboard-2"
             aria-controls="leaderboard-view-2"
           />
         </Tabs>
       </AppBar>
-      <TabPanel currentIndex={currentTabIndex} index={0} dbRef={dailyRef} />
-      <TabPanel currentIndex={currentTabIndex} index={1} dbRef={monthlyRef} />
-      <TabPanel currentIndex={currentTabIndex} index={2} dbRef={allTimeRef} />
-    </Grid>
+
+      <div className={classes.container}>
+        <Grid container justify="center">
+          <TabPanel currentIndex={currentTabIndex} index={0} dbRef={dailyRef} />
+
+          <TabPanel currentIndex={currentTabIndex} index={1} dbRef={monthlyRef} />
+
+          <TabPanel currentIndex={currentTabIndex} index={2} dbRef={allTimeRef} />
+        </Grid>
+      </div>
+    </>
   );
 };
 
