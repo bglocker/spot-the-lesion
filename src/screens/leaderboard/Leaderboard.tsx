@@ -10,6 +10,21 @@ interface ScoreType {
   score: number;
 }
 
+const monthNames = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
 const useStyles = makeStyles(() =>
   createStyles({
     appbar: {
@@ -38,10 +53,31 @@ const Leaderboard: React.FC<LeaderboardProps> = () => {
 
   const [scores, setScores] = useState<ScoreType[]>([]);
 
-  async function createLeaderboard() {
+  async function createLeaderboard(table: string) {
+    const date = new Date();
+    const tableRef = db.collection(table);
     setScores([]);
     const results: ScoreType[] = [];
-    const snapshot = await dailyRef.orderBy("score", "desc").limit(10).get();
+    let snapshot;
+
+    snapshot = tableRef;
+
+    switch (table) {
+      case "daily-scores":
+        snapshot = snapshot
+          .where("year", "==", date.getFullYear())
+          .where("month", "==", monthNames[date.getMonth()])
+          .where("day", "==", date.getDay());
+        break;
+      case "monthly-scores":
+        snapshot = await tableRef
+          .where("year", "==", date.getFullYear())
+          .where("month", "==", monthNames[date.getMonth()]);
+        break;
+      default:
+    }
+    snapshot = await snapshot.orderBy("score", "desc").limit(10).get();
+
     snapshot.forEach((doc) => {
       const score: ScoreType = { user: doc.data().user, score: doc.data().score };
       results.push(score);
@@ -51,7 +87,18 @@ const Leaderboard: React.FC<LeaderboardProps> = () => {
 
   const handleChange = (_: React.ChangeEvent<unknown>, newIndex: number) => {
     setCurrentTabIndex(newIndex);
-    createLeaderboard();
+    let table: string;
+    switch (newIndex) {
+      case 0:
+        table = "daily-scores";
+        break;
+      case 1:
+        table = "monthly-scores";
+        break;
+      default:
+        table = "alltime-scores";
+    }
+    createLeaderboard(table);
   };
 
   return (
