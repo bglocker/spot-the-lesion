@@ -34,36 +34,25 @@ const Leaderboard: React.FC<LeaderboardProps> = () => {
 
   const styles = useStyles();
 
-  const [currentTabIndex, setCurrentTabIndex] = React.useState(0);
+  const [currentTabIndex, setCurrentTabIndex] = React.useState(-1);
 
   const [scores, setScores] = useState<ScoreType[]>([]);
 
-  async function getLeaderboard() {
+  async function createLeaderboard() {
+    setScores([]);
+    const results: ScoreType[] = [];
     const snapshot = await dailyRef.orderBy("score", "desc").limit(10).get();
     snapshot.forEach((doc) => {
       const score: ScoreType = { user: doc.data().user, score: doc.data().score };
-      scores.push(score);
-      setScores(scores);
+      results.push(score);
     });
+    setScores(results);
   }
 
   const handleChange = (_: React.ChangeEvent<unknown>, newIndex: number) => {
     setCurrentTabIndex(newIndex);
+    createLeaderboard();
   };
-
-  getLeaderboard();
-
-  // // let results: ScoreType[] = []; // [{ user: "fane", score: 1000 }];
-  // dailyRef.orderBy("score", "desc").onSnapshot((snapshot) => {
-  //   // results = [];
-  //   setScores([]);
-  //   snapshot.docs.forEach((doc) => {
-  //     const score: ScoreType = { user: doc.data().user, score: doc.data().score };
-  //     // results.push(score);
-  //     scores.push(score);
-  //     setScores(scores);
-  //   });
-  // });
 
   return (
     <div>
