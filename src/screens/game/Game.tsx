@@ -13,7 +13,7 @@ import {
   Toolbar,
   Typography,
 } from "@material-ui/core";
-import { makeStyles, createStyles } from "@material-ui/core/styles";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
@@ -45,10 +45,14 @@ const useStyles = makeStyles(() =>
     canvasContainer: {
       height: "min(81vh, 81vw)",
       width: "min(81vh, 81vw)",
-      display: "flex",
+      display: "grid",
       justifyContent: "center",
       alignItems: "center",
       padding: 8,
+    },
+    canvas: {
+      gridColumnStart: 1,
+      gridRowStart: 1,
     },
     dialogPaper: {
       width: "200vw",
@@ -75,6 +79,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const seenFiles = new Set<number>();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<HTMLCanvasElement>(null);
 
   const [currentRound, setCurrentRound] = useState(0);
   const [showDialog, setShowDialog] = useState(true);
@@ -544,7 +549,19 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </Card>
 
         <Card className={classes.canvasContainer}>
-          <canvas ref={canvasRef} width={canvasSize} height={canvasSize} onClick={onCanvasClick} />
+          <canvas
+            className={classes.canvas}
+            ref={animationRef}
+            width={canvasSize}
+            height={canvasSize}
+          />
+          <canvas
+            className={classes.canvas}
+            ref={canvasRef}
+            width={canvasSize}
+            height={canvasSize}
+            onClick={onCanvasClick}
+          />
         </Card>
       </div>
 
