@@ -79,7 +79,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const seenFiles = new Set<number>();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<HTMLCanvasElement>(null);
+  const animCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const [currentRound, setCurrentRound] = useState(0);
   const [showDialog, setShowDialog] = useState(true);
@@ -110,10 +110,18 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   type DrawType = ((canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => void) | null;
   const [draw, setDraw] = useState<DrawType>(null);
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const [animDraw, setAnimDraw] = useState<DrawType>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas === null) {
+      return;
+    }
+
+    const animCanvas = animCanvasRef.current;
+    if (animCanvas === null) {
       return;
     }
 
@@ -122,12 +130,28 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
+    const animContext = animCanvas.getContext("2d");
+    if (animContext === null) {
+      return;
+    }
+
     if (draw === null) {
       return;
     }
 
+    // WARNING: animDraw is null, ends the program
+    // TODO: fix
+    /*
+    if (animDraw === null) {
+      return;
+    }
+     */
+
     draw(canvas, context);
-  }, [draw]);
+    /*
+    animDraw(animCanvas, animContext);
+     */
+  }, [draw, animDraw]);
 
   useInterval(
     () => {
@@ -551,7 +575,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         <Card className={classes.canvasContainer}>
           <canvas
             className={classes.canvas}
-            ref={animationRef}
+            ref={animCanvasRef}
             width={canvasSize}
             height={canvasSize}
           />
