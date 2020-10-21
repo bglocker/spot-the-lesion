@@ -6,7 +6,6 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
   IconButton,
   TextField,
@@ -92,38 +91,30 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8)
   );
 
-  const [currentRound, setCurrentRound] = useState(0);
   const [showDialog, setShowDialog] = useState(true);
 
+  const [currentRound, setCurrentRound] = useState(0);
   const [loading, setLoading] = useState(false);
   const [running, setRunning] = useState(false);
   const [hinted, setHinted] = useState(false);
 
   const [timeRemaining, setTimeRemaining] = useState(TOTAL_TIME);
-  const [timeRemainingText, setTimeRemainingText] = useState(TOTAL_TIME.toFixed(1));
   const [timerColor, setTimerColor] = useState("#373737");
-
-  const [playerPoints, setPlayerPoints] = useState(0);
-  const [aiPoints, setAiPoints] = useState(0);
-  const [total, setTotal] = useState(0);
 
   const [username, setUsername] = useState("");
 
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
 
+  const [playerPoints, setPlayerPoints] = useState(0);
+  const [aiPoints, setAiPoints] = useState(0);
+
   const [playerCorrect, setPlayerCorrect] = useState(false);
   const [aiCorrect, setAiCorrect] = useState(false);
 
-  const [playerResultVisible, setPlayerResultVisible] = useState(false);
-  const [aiResultVisible, setAiResultVisible] = useState(false);
-
   type DrawType = (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => void;
   const [draw, setDraw] = useState<DrawType | null>(null);
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const [animDraw, setAnimDraw] = useState<DrawType>(null);
+  const [animDraw, setAnimDraw] = useState<DrawType | null>(null);
 
   /**
    * Called on windows resize
@@ -173,6 +164,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     if (animDraw === null) {
       return;
     }
+
     animDraw(animCanvas, animContext);
   }, [animDraw]);
 
@@ -181,7 +173,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    */
   const timerTick = () => {
     setTimeRemaining((prevState) => prevState - 0.1);
-    setTimeRemainingText(timeRemaining.toFixed(1));
   };
 
   useInterval(timerTick, running ? 100 : null);
@@ -192,7 +183,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const stopTimer = () => setRunning(false);
 
   /**
-   * Given the coordinates of two rectangles, returns the value of their intersection
+   * Given the coordinates of two rectangles, returns the ratio of their intersection
    * over their union.
    *
    * Used in determining the success of a given AI prediction.
@@ -200,7 +191,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * @param rectA Coordinates for the corners of the first rectangle
    * @param rectB Coordinates for the corners of the second rectangle
    *
-   * @return Value of intersection area divided by union area
+   * @return Ratio of intersection area over union area
    */
   const getIntersectionOverUnion = (rectA: number[], rectB: number[]): number => {
     const xA = Math.max(rectA[0], rectB[0]);
@@ -218,92 +209,114 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     return inter / union;
   };
 
-  function setRect(context: CanvasRenderingContext2D, rect: number[]) {
-    const xBase = rect[0];
-    const xEnd = rect[2];
-    const yBase = rect[1];
-    const yEnd = rect[3];
-
-    const width = xEnd - xBase;
-    const height = yEnd - yBase;
-
-    context.rect(xBase, yBase, width, height);
-  }
-
   const drawRectangle = useCallback(
     (context: CanvasRenderingContext2D, rect: number[], strokeStyle: string, lineWidth: number) => {
+      const xBase = rect[0];
+      const xEnd = rect[2];
+      const yBase = rect[1];
+      const yEnd = rect[3];
+
+      const width = xEnd - xBase;
+      const height = yEnd - yBase;
+
       context.strokeStyle = strokeStyle;
       context.lineWidth = lineWidth;
       context.beginPath();
-      setRect(context, rect);
+      context.rect(xBase, yBase, width, height);
       context.stroke();
     },
     []
   );
 
+  const drawCross = (
+    context: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+    strokeStyle: string
+  ) => {
+    context.strokeStyle = strokeStyle;
+    context.beginPath();
+    context.moveTo(x - size, y - size);
+    context.lineTo(x + size, y + size);
+    context.moveTo(x + size, y - size);
+    context.lineTo(x - size, y + size);
+    context.stroke();
+  };
+
+  const drawCircle = useCallback(
+    (
+      context: CanvasRenderingContext2D,
+      x: number,
+      y: number,
+      radius: number,
+      width: number,
+      strokeStyle: string
+    ) => {
+      context.strokeStyle = strokeStyle;
+      context.lineWidth = width;
+      context.beginPath();
+      context.arc(x, y, (radius * canvasSize) / DEFAULT_CANVAS_SIZE, 0, 2 * Math.PI);
+      context.stroke();
+    },
+    [canvasSize]
+  );
+
   const drawTruth = useCallback(
-    (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+    (context: CanvasRenderingContext2D) => {
       drawRectangle(context, truth, TRUE_COLOUR, 3);
     },
     [truth, drawRectangle]
   );
 
   const drawPredicted = useCallback(
-    (_: HTMLCanvasElement, context: CanvasRenderingContext2D, strokeStyle: string) => {
+    (context: CanvasRenderingContext2D, strokeStyle: string) => {
       drawRectangle(context, predicted, strokeStyle, 3);
     },
     [predicted, drawRectangle]
   );
 
   const drawHint = useCallback(
-    (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+    (context: CanvasRenderingContext2D) => {
       const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
       const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
 
-      context.beginPath();
-      context.strokeStyle = "red";
-      context.lineWidth = 2;
-      context.arc(x, y, (100 * canvasSize) / DEFAULT_CANVAS_SIZE, 0, 2 * Math.PI);
-      context.stroke();
+      drawCircle(context, x, y, 100, 2, INVALID_COLOUR);
     },
-    [canvasSize, truth]
+    [drawCircle, truth]
   );
 
-  const getMousePosition = (playerX: number, playerY: number, canvas: HTMLCanvasElement) => {
-    const rect = canvas.getBoundingClientRect(); // abs. size of element
-    const scaleX = canvas.width / rect.width; // relationship bitmap vs. element for X
-    const scaleY = canvas.height / rect.height; // relationship bitmap vs. element for Y
-
-    return {
-      x: (playerX - rect.left) * scaleX, // scale mouse coordinates after they have
-      y: (playerY - rect.top) * scaleY, // been adjusted to be relative to element
-    };
+  const drawPlayerClick = (
+    context: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    playerColour: string
+  ) => {
+    drawCross(context, x, y, 5, playerColour);
   };
 
-  const drawPlayer = useCallback(
-    (
-      canvas: HTMLCanvasElement,
-      context: CanvasRenderingContext2D,
-      mouseX: number,
-      mouseY: number,
-      playerColour: string
-    ) => {
-      const { x, y } = getMousePosition(mouseX, mouseY, canvas);
-
-      context.strokeStyle = playerColour;
-      context.beginPath();
-      context.moveTo(x - 5, y - 5);
-      context.lineTo(x + 5, y + 5);
-      context.moveTo(x + 5, y - 5);
-      context.lineTo(x - 5, y + 5);
-      context.stroke();
-    },
-    []
-  );
-
-  const isAIPredictionRight = useCallback(() => {
+  /**
+   * Determines whether the AI prediction was successful, by checking that
+   * the ratio of the intersection over the union of the predicted and truth rectangles
+   * is greater than 0.5
+   *
+   * @return The success value
+   */
+  const isAiPredictionRight = useCallback(() => {
     return getIntersectionOverUnion(truth, predicted) > 0.5;
   }, [truth, predicted]);
+
+  /**
+   * Determines whether the player was successful, by checking that the click position
+   * is inside the truth rectangle
+   *
+   * @param x Click coordinate on width
+   * @param y Click coordinate on height
+   *
+   * @return The success value
+   */
+  const isPlayerRight = (x: number, y: number) =>
+    truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
 
   useEffect(() => {
     if (!running) {
@@ -313,161 +326,178 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     if (timeRemaining <= 0) {
       stopTimer();
 
-      setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-        drawPredicted(canvas, context, DEFAULT_COLOUR);
+      setDraw(() => (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+        drawPredicted(context, DEFAULT_COLOUR);
 
         setTimeout(() => {
-          drawTruth(canvas, context);
+          drawTruth(context);
         }, 1000);
 
         setTimeout(() => {
-          if (isAIPredictionRight()) {
+          if (isAiPredictionRight()) {
             setAiPoints((prevState) => prevState + 1);
-            drawPredicted(canvas, context, VALID_COLOUR);
+            drawPredicted(context, VALID_COLOUR);
             setAiCorrect(true);
           } else {
+            drawPredicted(context, INVALID_COLOUR);
             setAiCorrect(false);
-            drawPredicted(canvas, context, INVALID_COLOUR);
           }
-          setAiResultVisible(true);
-          setPlayerResultVisible(true);
+
           setShowDialog(true);
         }, 2000);
       });
     } else if (timeRemaining <= 2) {
       setTimerColor("red");
     } else if (timeRemaining <= 5) {
-      setTimerColor("orange");
-
       if (hinted) {
         return;
       }
 
       setHinted(true);
 
-      setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) =>
-        drawHint(canvas, context)
-      );
+      setTimerColor("orange");
+
+      setDraw(() => (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => drawHint(context));
     } else {
       setTimerColor("#373737");
     }
-  }, [
-    aiPoints,
-    drawHint,
-    drawTruth,
-    drawPredicted,
-    hinted,
-    running,
-    timeRemaining,
-    isAIPredictionRight,
-  ]);
+  }, [drawHint, drawPredicted, drawTruth, hinted, isAiPredictionRight, running, timeRemaining]);
 
-  function isPlayerRight(canvas: HTMLCanvasElement, mouseX: number, mouseY: number) {
-    const { x, y } = getMousePosition(mouseX, mouseY, canvas);
-    return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
-  }
-
-  function getLeftCubes(canvas: HTMLCanvasElement) {
-    const leftCubes = [];
+  const getLeftCubes = (canvas: HTMLCanvasElement) => {
+    const leftCubes: number[][] = [];
     const size = canvas.width / 10;
-    for (let i = 0; i < 5; i += 1) {
-      const cubeParams = [0, 0, 0, 0];
-      cubeParams[0] = 0;
-      cubeParams[1] = 2 * i * size;
-      cubeParams[2] = size;
-      cubeParams[3] = (2 * i + 1) * size;
-      leftCubes[i] = cubeParams;
+
+    for (let i = 0; i < 5; i++) {
+      const cube = [0, 0, 0, 0];
+
+      cube[0] = 0;
+      cube[1] = 2 * i * size;
+      cube[2] = size;
+      cube[3] = (2 * i + 1) * size;
+      leftCubes[i] = cube;
     }
+
     return leftCubes;
-  }
+  };
 
-  function getRightCubes(canvas: HTMLCanvasElement) {
-    const rightCubes = [];
+  const getRightCubes = (canvas: HTMLCanvasElement) => {
+    const rightCubes: number[][] = [];
     const size = canvas.width / 10;
-    for (let i = 0; i < 5; i += 1) {
-      const cubeParams = [0, 0, 0, 0];
-      cubeParams[0] = canvas.width - size;
-      cubeParams[1] = (2 * i + 1) * size;
-      cubeParams[2] = canvas.width;
-      cubeParams[3] = 2 * (i + 1) * size;
-      rightCubes[i] = cubeParams;
-    }
-    return rightCubes;
-  }
 
-  function runAiSearchAnimation(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) {
+    for (let i = 0; i < 5; i++) {
+      const cube = [0, 0, 0, 0];
+
+      cube[0] = canvas.width - size;
+      cube[1] = (2 * i + 1) * size;
+      cube[2] = canvas.width;
+      cube[3] = 2 * (i + 1) * size;
+      rightCubes[i] = cube;
+    }
+
+    return rightCubes;
+  };
+
+  const drawAiSearchAnimation = (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
     const leftCubes = getLeftCubes(canvas);
     const rightCubes = getRightCubes(canvas);
     const offsetX = canvas.width / 10;
-    // const offsetY = canvas.height / 10;
+
     const interval = setInterval(() => {
       context.clearRect(0, 0, canvas.width, canvas.height);
+
       leftCubes.forEach((cube) => {
         drawRectangle(context, cube, INVALID_COLOUR, 3);
-        // eslint-disable-next-line no-param-reassign
+
         cube[0] += offsetX;
-        // eslint-disable-next-line no-param-reassign
         cube[2] += offsetX;
       });
+
       rightCubes.forEach((cube) => {
-        drawRectangle(context, cube, "blue", 3);
-        // eslint-disable-next-line no-param-reassign
+        drawRectangle(context, cube, TRUE_COLOUR, 3);
+
         cube[0] -= offsetX;
-        // eslint-disable-next-line no-param-reassign
         cube[2] -= offsetX;
       });
     }, 100);
+
     // TODO: Play with the time delay
     setTimeout(() => {
       clearInterval(interval);
     }, 1500);
-  }
+  };
 
+  /**
+   * Maps the mouse position relative to the given canvas
+   *
+   * @param canvas Canvas to map relative to
+   * @param clickX Click coordinate on width
+   * @param clickY Click coordinate on height
+   *
+   * @return Click width and height coordinates, relative to the canvas
+   */
+  const getClickPositionOnCanvas = (canvas: HTMLCanvasElement, clickX: number, clickY: number) => {
+    const rect = canvas.getBoundingClientRect();
+    const widthScale = canvas.width / rect.width;
+    const heightScale = canvas.height / rect.height;
+
+    return {
+      x: (clickX - rect.left) * widthScale,
+      y: (clickY - rect.top) * heightScale,
+    };
+  };
+
+  /**
+   * Called when the canvas is clicked
+   *
+   * @param event Mouse event, used to get click position
+   */
   const onCanvasClick = async (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
-    if (timeRemaining <= 0 || !running) {
+    if (!running) {
       return;
     }
 
     stopTimer();
 
-    const [mouseX, mouseY] = [event.clientX, event.clientY];
+    const [clickX, clickY] = [event.clientX, event.clientY];
 
     setAnimDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-      runAiSearchAnimation(canvas, context);
+      drawAiSearchAnimation(canvas, context);
     });
 
     setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-      drawPlayer(canvas, context, mouseX, mouseY, DEFAULT_COLOUR);
+      const { x, y } = getClickPositionOnCanvas(canvas, clickX, clickY);
+
+      drawPlayerClick(context, x, y, DEFAULT_COLOUR);
+
       setTimeout(() => {
-        drawPredicted(canvas, context, DEFAULT_COLOUR);
+        drawPredicted(context, DEFAULT_COLOUR);
       }, 1000);
 
       setTimeout(() => {
-        drawTruth(canvas, context);
+        drawTruth(context);
       }, 1500);
 
       setTimeout(() => {
-        if (isPlayerRight(canvas, mouseX, mouseY)) {
+        if (isPlayerRight(x, y)) {
           setPlayerPoints((prevState) => prevState + 1);
-          drawPlayer(canvas, context, mouseX, mouseY, VALID_COLOUR);
+          drawPlayerClick(context, x, y, VALID_COLOUR);
           setPlayerCorrect(true);
         } else {
-          drawPlayer(canvas, context, mouseX, mouseY, INVALID_COLOUR);
+          drawPlayerClick(context, x, y, INVALID_COLOUR);
           setPlayerCorrect(false);
         }
-        setPlayerResultVisible(true);
       }, 2000);
 
       setTimeout(() => {
-        if (isAIPredictionRight()) {
+        if (isAiPredictionRight()) {
           setAiPoints((prevState) => prevState + 1);
-          drawPredicted(canvas, context, VALID_COLOUR);
+          drawPredicted(context, VALID_COLOUR);
           setAiCorrect(true);
         } else {
-          drawPredicted(canvas, context, INVALID_COLOUR);
+          drawPredicted(context, INVALID_COLOUR);
           setAiCorrect(false);
         }
-        setAiResultVisible(true);
+
         setShowDialog(true);
       }, 2500);
     });
@@ -564,9 +594,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setShowDialog(false);
     setAiCorrect(false);
     setPlayerCorrect(false);
-    setAiResultVisible(false);
-    setPlayerResultVisible(false);
-    setTimeRemaining(TOTAL_TIME);
     setHinted(false);
     setLoading(true);
 
@@ -575,10 +602,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     await loadJson(fileNumber);
     await loadImage(fileNumber);
 
-    setTimeRemainingText(timeRemaining.toFixed(1));
+    setTimeRemaining(TOTAL_TIME);
     setRunning(true);
     setLoading(false);
-    setTotal((prevState) => prevState + 1);
   };
 
   /**
@@ -588,7 +614,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     await startNewRound();
   };
 
-  const submitScores = async () => {
+  /**
+   * Uploads the score to the database
+   */
+  const uploadScore = async () => {
     const date = new Date();
     const entry = {
       user: username,
@@ -602,52 +631,47 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const docNameForMonthly = `${entry.year}.${entry.month}.${entry.user}`;
     const docNameForAllTime = entry.user;
 
-    async function updateLeaderBoardFirebase() {
-      const dailySnapshot = await db
-        .collection(DbUtils.DAILY_LEADERBOARD)
-        .where("year", "==", entry.year)
-        .where("month", "==", entry.month)
-        .where("day", "==", entry.day)
-        .where("user", "==", username)
-        .where("score", ">", playerPoints)
-        .get();
-      if (dailySnapshot.empty) {
-        await db.collection(DbUtils.DAILY_LEADERBOARD).doc(docNameForDaily).set(entry);
-      }
-      const monthlySnapshot = await db
-        .collection(DbUtils.MONTHLY_LEADERBOARD)
-        .where("year", "==", entry.year)
-        .where("month", "==", entry.month)
-        .where("user", "==", username)
-        .where("score", ">", playerPoints)
-        .get();
-      if (monthlySnapshot.empty) {
-        await db.collection(DbUtils.MONTHLY_LEADERBOARD).doc(docNameForMonthly).set(entry);
-      }
-      const alltimeSnapshot = await db
-        .collection(DbUtils.ALL_TIME_LEADERBOARD)
-        .where("user", "==", username)
-        .where("score", ">", playerPoints)
-        .get();
-      if (alltimeSnapshot.empty) {
-        await db.collection(DbUtils.ALL_TIME_LEADERBOARD).doc(docNameForAllTime).set(entry);
-      }
+    const dailySnapshot = await db
+      .collection(DbUtils.DAILY_LEADERBOARD)
+      .where("year", "==", entry.year)
+      .where("month", "==", entry.month)
+      .where("day", "==", entry.day)
+      .where("user", "==", username)
+      .where("score", ">", playerPoints)
+      .get();
+
+    if (dailySnapshot.empty) {
+      await db.collection(DbUtils.DAILY_LEADERBOARD).doc(docNameForDaily).set(entry);
     }
 
-    await updateLeaderBoardFirebase();
-  };
+    const monthlySnapshot = await db
+      .collection(DbUtils.MONTHLY_LEADERBOARD)
+      .where("year", "==", entry.year)
+      .where("month", "==", entry.month)
+      .where("user", "==", username)
+      .where("score", ">", playerPoints)
+      .get();
 
-  const displayCorrect = (correct: boolean, visible: boolean) => {
-    if (!visible) {
-      return null;
+    if (monthlySnapshot.empty) {
+      await db.collection(DbUtils.MONTHLY_LEADERBOARD).doc(docNameForMonthly).set(entry);
     }
 
-    return (
-      <span style={{ color: correct ? VALID_COLOUR : INVALID_COLOUR }}>
-        {correct ? "Correct!" : "Wrong!"}
-      </span>
-    );
+    const allTimeSnapshot = await db
+      .collection(DbUtils.ALL_TIME_LEADERBOARD)
+      .where("user", "==", username)
+      .where("score", ">", playerPoints)
+      .get();
+
+    if (allTimeSnapshot.empty) {
+      await db.collection(DbUtils.ALL_TIME_LEADERBOARD).doc(docNameForAllTime).set(entry);
+    }
   };
+
+  const displayCorrect = (correct: boolean) => (
+    <span style={{ color: correct ? VALID_COLOUR : INVALID_COLOUR }}>
+      {correct ? "Correct!" : "Wrong!"}
+    </span>
+  );
 
   const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
     setUsername(event.target.value);
@@ -686,7 +710,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           color="primary"
           size="large"
           disabled={running || loading}
-          onClick={submitScores}
+          onClick={uploadScore}
         >
           Submit Score
         </Button>
@@ -715,7 +739,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       <div className={classes.container}>
         <Card className={classes.timerContainer}>
           <Typography className={classes.timerText} variant="h4" style={{ color: timerColor }}>
-            Time remaining: {timeRemainingText}s
+            Time remaining: {timeRemaining.toFixed(1)}s
           </Typography>
 
           <ColoredLinearProgress
@@ -732,6 +756,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
             width={canvasSize}
             height={canvasSize}
           />
+
           <canvas
             className={classes.canvas}
             ref={animCanvasRef}
@@ -742,42 +767,35 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </Card>
       </div>
 
-      <Dialog
-        classes={{ paper: classes.dialogPaper }}
-        open={showDialog}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle className={classes.result} id="alert-dialog-title">
+      <Dialog classes={{ paper: classes.dialogPaper }} open={showDialog}>
+        <DialogTitle className={classes.result} disableTypography>
           <Typography variant="h3">Results</Typography>
         </DialogTitle>
 
         <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            <Typography className={classes.result} variant="h4">
-              You were: {displayCorrect(playerCorrect, playerResultVisible)}
-            </Typography>
+          <Typography className={classes.result} variant="h4">
+            You were: {displayCorrect(playerCorrect)}
+          </Typography>
 
-            <Typography className={classes.result} variant="h4">
-              AI was: {displayCorrect(aiCorrect, aiResultVisible)}
-            </Typography>
+          <Typography className={classes.result} variant="h4">
+            AI was: {displayCorrect(aiCorrect)}
+          </Typography>
 
-            <Typography className={classes.result} variant="h4">
-              Results
-            </Typography>
+          <Typography className={classes.result} variant="h4">
+            Results
+          </Typography>
 
-            <Typography className={classes.result} variant="h4">
-              Correct (you): {playerPoints}
-            </Typography>
+          <Typography className={classes.result} variant="h4">
+            Correct (you): {playerPoints}
+          </Typography>
 
-            <Typography className={classes.result} variant="h4">
-              Correct (AI): {aiPoints}
-            </Typography>
+          <Typography className={classes.result} variant="h4">
+            Correct (AI): {aiPoints}
+          </Typography>
 
-            <Typography className={classes.result} variant="h4">
-              Total Scans: {total}
-            </Typography>
-          </DialogContentText>
+          <Typography className={classes.result} variant="h4">
+            Total Scans: {currentRound}
+          </Typography>
         </DialogContent>
 
         <DialogActions>{dialogAction()}</DialogActions>
