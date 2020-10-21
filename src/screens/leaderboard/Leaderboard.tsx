@@ -25,6 +25,8 @@ const monthNames = [
   "Dec",
 ];
 
+const tableNames = ["daily-scores", "monthly-scores", "alltime-scores"];
+
 const useStyles = makeStyles(() =>
   createStyles({
     appbar: {
@@ -53,31 +55,25 @@ const Leaderboard: React.FC<LeaderboardProps> = () => {
 
   const [scores, setScores] = useState<ScoreType[]>([]);
 
-  async function createLeaderboard(table: string) {
-    const date = new Date();
-    const tableRef = db.collection(table);
-    setScores([]);
+  async function createLeaderboard(tableIndex: number) {
+    const table: string = tableNames[tableIndex];
+    const date: Date = new Date();
     const results: ScoreType[] = [];
-    let snapshot;
 
+    const tableRef = db.collection(table);
+    let snapshot;
     snapshot = tableRef;
 
-    switch (table) {
-      case "daily-scores":
-        snapshot = snapshot
-          .where("year", "==", date.getFullYear())
-          .where("month", "==", monthNames[date.getMonth()])
-          .where("day", "==", date.getDay());
-        break;
-      case "monthly-scores":
-        snapshot = await tableRef
-          .where("year", "==", date.getFullYear())
-          .where("month", "==", monthNames[date.getMonth()]);
-        break;
-      default:
+    if (table !== "alltime-scores") {
+      snapshot = snapshot
+        .where("year", "==", date.getFullYear())
+        .where("month", "==", monthNames[date.getMonth()]);
+      if (table === "daily-scores") {
+        snapshot = snapshot.where("day", "==", date.getDate());
+      }
     }
-    snapshot = await snapshot.orderBy("score", "desc").limit(10).get();
 
+    snapshot = await snapshot.orderBy("score", "desc").limit(10).get();
     snapshot.forEach((doc) => {
       const score: ScoreType = { user: doc.data().user, score: doc.data().score };
       results.push(score);
@@ -87,18 +83,7 @@ const Leaderboard: React.FC<LeaderboardProps> = () => {
 
   const handleChange = (_: React.ChangeEvent<unknown>, newIndex: number) => {
     setCurrentTabIndex(newIndex);
-    let table: string;
-    switch (newIndex) {
-      case 0:
-        table = "daily-scores";
-        break;
-      case 1:
-        table = "monthly-scores";
-        break;
-      default:
-        table = "alltime-scores";
-    }
-    createLeaderboard(table);
+    createLeaderboard(newIndex);
   };
 
   return (
