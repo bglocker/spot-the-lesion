@@ -11,6 +11,9 @@
 # production
 /build
 
+# Files that may come in handy later
+/test
+
 # misc
 .DS_Store
 .env.local

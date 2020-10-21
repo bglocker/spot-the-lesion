@@ -46,10 +46,14 @@ const useStyles = makeStyles(() =>
     canvasContainer: {
       height: "min(81vh, 81vw)",
       width: "min(81vh, 81vw)",
-      display: "flex",
+      display: "grid",
       justifyContent: "center",
       alignItems: "center",
       padding: 8,
+    },
+    canvas: {
+      gridColumnStart: 1,
+      gridRowStart: 1,
     },
     dialogPaper: {
       width: "200vw",
@@ -82,6 +86,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const seenFiles = new Set<number>();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const [canvasSize, setCanvasSize] = useState(
     Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8)
@@ -116,6 +121,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   type DrawType = (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => void;
   const [draw, setDraw] = useState<DrawType | null>(null);
 
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const [animDraw, setAnimDraw] = useState<DrawType>(null);
+
   /**
    * Called on windows resize
    */
@@ -149,6 +158,23 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     draw(canvas, context);
   }, [draw]);
+
+  useEffect(() => {
+    const animCanvas = animCanvasRef.current;
+    if (animCanvas === null) {
+      return;
+    }
+
+    const animContext = animCanvas.getContext("2d");
+    if (animContext === null) {
+      return;
+    }
+
+    if (animDraw === null) {
+      return;
+    }
+    animDraw(animCanvas, animContext);
+  }, [animDraw]);
 
   /**
    * Called each second, while the game is running,
@@ -285,7 +311,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
 
     if (timeRemaining <= 0) {
-      setShowDialog(true);
       stopTimer();
 
       setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
@@ -306,6 +331,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           }
           setAiResultVisible(true);
           setPlayerResultVisible(true);
+          setShowDialog(true);
         }, 2000);
       });
     } else if (timeRemaining <= 2) {
@@ -341,6 +367,62 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
   }
 
+  function getLeftCubes(canvas: HTMLCanvasElement) {
+    const leftCubes = [];
+    const size = canvas.width / 10;
+    for (let i = 0; i < 5; i += 1) {
+      const cubeParams = [0, 0, 0, 0];
+      cubeParams[0] = 0;
+      cubeParams[1] = 2 * i * size;
+      cubeParams[2] = size;
+      cubeParams[3] = (2 * i + 1) * size;
+      leftCubes[i] = cubeParams;
+    }
+    return leftCubes;
+  }
+
+  function getRightCubes(canvas: HTMLCanvasElement) {
+    const rightCubes = [];
+    const size = canvas.width / 10;
+    for (let i = 0; i < 5; i += 1) {
+      const cubeParams = [0, 0, 0, 0];
+      cubeParams[0] = canvas.width - size;
+      cubeParams[1] = (2 * i + 1) * size;
+      cubeParams[2] = canvas.width;
+      cubeParams[3] = 2 * (i + 1) * size;
+      rightCubes[i] = cubeParams;
+    }
+    return rightCubes;
+  }
+
+  function runAiSearchAnimation(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) {
+    const leftCubes = getLeftCubes(canvas);
+    const rightCubes = getRightCubes(canvas);
+    const offsetX = canvas.width / 10;
+    // const offsetY = canvas.height / 10;
+    const interval = setInterval(() => {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      leftCubes.forEach((cube) => {
+        drawRectangle(context, cube, INVALID_COLOUR, 3);
+        // eslint-disable-next-line no-param-reassign
+        cube[0] += offsetX;
+        // eslint-disable-next-line no-param-reassign
+        cube[2] += offsetX;
+      });
+      rightCubes.forEach((cube) => {
+        drawRectangle(context, cube, "blue", 3);
+        // eslint-disable-next-line no-param-reassign
+        cube[0] -= offsetX;
+        // eslint-disable-next-line no-param-reassign
+        cube[2] -= offsetX;
+      });
+    }, 100);
+    // TODO: Play with the time delay
+    setTimeout(() => {
+      clearInterval(interval);
+    }, 1500);
+  }
+
   const onCanvasClick = async (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
     if (timeRemaining <= 0 || !running) {
       return;
@@ -349,6 +431,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     stopTimer();
 
     const [mouseX, mouseY] = [event.clientX, event.clientY];
+
+    setAnimDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+      runAiSearchAnimation(canvas, context);
+    });
 
     setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
       drawPlayer(canvas, context, mouseX, mouseY, DEFAULT_COLOUR);
@@ -382,10 +468,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           setAiCorrect(false);
         }
         setAiResultVisible(true);
+        setShowDialog(true);
       }, 2500);
     });
-
-    setShowDialog(true);
   };
 
   /**
@@ -453,6 +538,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       const image = new Image();
 
       image.onload = () => {
+        setAnimDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+          context.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
         setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
           context.clearRect(0, 0, canvas.width, canvas.height);
           context.drawImage(image, 0, 0, canvas.width, canvas.height);
@@ -637,14 +726,25 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </Card>
 
         <Card className={classes.canvasContainer}>
-          <canvas ref={canvasRef} width={canvasSize} height={canvasSize} onClick={onCanvasClick} />
+          <canvas
+            className={classes.canvas}
+            ref={canvasRef}
+            width={canvasSize}
+            height={canvasSize}
+          />
+          <canvas
+            className={classes.canvas}
+            ref={animCanvasRef}
+            width={canvasSize}
+            height={canvasSize}
+            onClick={onCanvasClick}
+          />
         </Card>
       </div>
 
       <Dialog
         classes={{ paper: classes.dialogPaper }}
         open={showDialog}
-        onClose={() => setShowDialog(false)}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
