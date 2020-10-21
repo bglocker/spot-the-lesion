@@ -2,7 +2,7 @@ import React from "react";
 import { Typography } from "@material-ui/core";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 
-const useStyles = makeStyles(() =>
+const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
       height: (props: Record<string, unknown>) => (props.imageLink !== "" ? "100%" : "50%"),
@@ -15,7 +15,15 @@ const useStyles = makeStyles(() =>
       boxSizing: "border-box",
     },
     text: {
-      fontSize: "2rem",
+      [theme.breakpoints.only("xs")]: {
+        fontSize: "1.25rem",
+      },
+      [theme.breakpoints.only("sm")]: {
+        fontSize: "1.5rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        fontSize: "2rem",
+      },
       textAlign: "center",
       marginBottom: 24,
     },
