@@ -33,12 +33,12 @@ const useStyles = makeStyles(() =>
       justifyContent: "space-evenly",
       alignItems: "center",
     },
-    countdownContainer: {
+    timerContainer: {
       width: "min(81vh, 81vw)",
       margin: 8,
       padding: 8,
     },
-    countdownText: {
+    timerText: {
       marginBottom: 8,
       textAlign: "center",
       fontSize: "1.5rem",
@@ -70,6 +70,12 @@ const TRUE_COLOUR = "blue";
 const NUMBER_OF_ROUNDS = 10;
 const TOTAL_TIME = 10;
 
+const DEFAULT_CANVAS_SIZE = 512;
+
+const MAX_FILE_NUMBER = 100;
+
+type JsonData = { truth: number[]; predicted: number[] };
+
 const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const classes = useStyles();
 
@@ -77,17 +83,20 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const [canvasSize, setCanvasSize] = useState(
+    Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8)
+  );
+
   const [currentRound, setCurrentRound] = useState(0);
   const [showDialog, setShowDialog] = useState(true);
 
   const [loading, setLoading] = useState(false);
   const [running, setRunning] = useState(false);
-  const [clicked, setClicked] = useState(false);
   const [hinted, setHinted] = useState(false);
 
   const [timeRemaining, setTimeRemaining] = useState(TOTAL_TIME);
   const [timeRemainingText, setTimeRemainingText] = useState(TOTAL_TIME.toFixed(1));
-  const [countdownColor, setCountdownColor] = useState("#373737");
+  const [timerColor, setTimerColor] = useState("#373737");
 
   const [playerPoints, setPlayerPoints] = useState(0);
   const [aiPoints, setAiPoints] = useState(0);
@@ -104,8 +113,24 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [playerResultVisible, setPlayerResultVisible] = useState(false);
   const [aiResultVisible, setAiResultVisible] = useState(false);
 
-  type DrawType = ((canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => void) | null;
-  const [draw, setDraw] = useState<DrawType>(null);
+  type DrawType = (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => void;
+  const [draw, setDraw] = useState<DrawType | null>(null);
+
+  /**
+   * Called on windows resize
+   */
+  const onResize = () => {
+    const newWidth = window.innerWidth * 0.8;
+    const newHeight = window.innerHeight * 0.8;
+
+    setCanvasSize(Math.min(newHeight, newWidth));
+  };
+
+  useEffect(() => {
+    window.addEventListener("resize", onResize);
+
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -125,67 +150,66 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     draw(canvas, context);
   }, [draw]);
 
-  useInterval(
-    () => {
-      setTimeRemaining((prevState) => prevState - 0.1);
-      setTimeRemainingText(timeRemaining.toFixed(1));
-    },
-    running ? 100 : null
-  );
-
-  const stopTimer = () => {
-    setRunning(false);
+  /**
+   * Called each second, while the game is running,
+   */
+  const timerTick = () => {
+    setTimeRemaining((prevState) => prevState - 0.1);
+    setTimeRemainingText(timeRemaining.toFixed(1));
   };
 
-  const IsFullWidth = () => {
-    const [size, setSize] = useState(Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8));
-    window.addEventListener("resize", () => {
-      const newWidth = window.innerWidth * 0.8;
-      const newHeight = window.innerHeight * 0.8;
-      setSize(Math.min(newHeight, newWidth));
-    });
-    return size;
+  useInterval(timerTick, running ? 100 : null);
+
+  /**
+   * Stops the timer by stopping the current round.
+   */
+  const stopTimer = () => setRunning(false);
+
+  /**
+   * Given the coordinates of two rectangles, returns the value of their intersection
+   * over their union.
+   *
+   * Used in determining the success of a given AI prediction.
+   *
+   * @param rectA Coordinates for the corners of the first rectangle
+   * @param rectB Coordinates for the corners of the second rectangle
+   *
+   * @return Value of intersection area divided by union area
+   */
+  const getIntersectionOverUnion = (rectA: number[], rectB: number[]): number => {
+    const xA = Math.max(rectA[0], rectB[0]);
+    const xB = Math.min(rectA[2], rectB[2]);
+    const yA = Math.max(rectA[1], rectB[1]);
+    const yB = Math.min(rectA[3], rectB[3]);
+
+    const inter = Math.max(0, xB - xA + 1) * Math.max(0, yB - yA + 1);
+
+    const areaA = (rectA[2] - rectA[0] + 1) * (rectA[3] - rectA[1] + 1);
+    const areaB = (rectB[2] - rectB[0] + 1) * (rectB[3] - rectB[1] + 1);
+
+    const union = areaA + areaB - inter;
+
+    return inter / union;
   };
 
-  const canvasSize = IsFullWidth();
+  function setRect(context: CanvasRenderingContext2D, rect: number[]) {
+    const xBase = rect[0];
+    const xEnd = rect[2];
+    const yBase = rect[1];
+    const yEnd = rect[3];
 
-  const bbIntersectionOverUnion = (boxA: number[], boxB: number[]): number => {
-    const xA = Math.max(boxA[0], boxB[0]);
-    const yA = Math.max(boxA[1], boxB[1]);
-    const xB = Math.min(boxA[2], boxB[2]);
-    const yB = Math.min(boxA[3], boxB[3]);
+    const width = xEnd - xBase;
+    const height = yEnd - yBase;
 
-    const interArea = Math.max(0, xB - xA + 1) * Math.max(0, yB - yA + 1);
-
-    const boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1);
-    const boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1);
-
-    const unionArea = boxAArea + boxBArea - interArea;
-
-    return interArea / unionArea;
-  };
-
-  function setRect(context: CanvasRenderingContext2D, rectBounds: number[]) {
-    const xBase = rectBounds[0];
-    const yBase = rectBounds[1];
-    const xEnd = rectBounds[2];
-    const yEnd = rectBounds[3];
-    const widthRect = xEnd - xBase;
-    const heightRect = yEnd - yBase;
-    context.rect(xBase, yBase, widthRect, heightRect);
+    context.rect(xBase, yBase, width, height);
   }
 
   const drawRectangle = useCallback(
-    (
-      context: CanvasRenderingContext2D,
-      rectBounds: number[],
-      strokeStyle: string,
-      lineWidth: number
-    ) => {
+    (context: CanvasRenderingContext2D, rect: number[], strokeStyle: string, lineWidth: number) => {
       context.strokeStyle = strokeStyle;
       context.lineWidth = lineWidth;
       context.beginPath();
-      setRect(context, rectBounds);
+      setRect(context, rect);
       context.stroke();
     },
     []
@@ -193,7 +217,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const drawTruth = useCallback(
     (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-      // Drawing True Rectangle
       drawRectangle(context, truth, TRUE_COLOUR, 3);
     },
     [truth, drawRectangle]
@@ -201,7 +224,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const drawPredicted = useCallback(
     (_: HTMLCanvasElement, context: CanvasRenderingContext2D, strokeStyle: string) => {
-      // Drawing Predicted Rectangle
       drawRectangle(context, predicted, strokeStyle, 3);
     },
     [predicted, drawRectangle]
@@ -215,7 +237,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       context.beginPath();
       context.strokeStyle = "red";
       context.lineWidth = 2;
-      context.arc(x, y, (100 * canvasSize) / 512, 0, 2 * Math.PI);
+      context.arc(x, y, (100 * canvasSize) / DEFAULT_CANVAS_SIZE, 0, 2 * Math.PI);
       context.stroke();
     },
     [canvasSize, truth]
@@ -254,7 +276,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   );
 
   const isAIPredictionRight = useCallback(() => {
-    return bbIntersectionOverUnion(truth, predicted) > 0.5;
+    return getIntersectionOverUnion(truth, predicted) > 0.5;
   }, [truth, predicted]);
 
   useEffect(() => {
@@ -287,9 +309,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         }, 2000);
       });
     } else if (timeRemaining <= 2) {
-      setCountdownColor("red");
+      setTimerColor("red");
     } else if (timeRemaining <= 5) {
-      setCountdownColor("orange");
+      setTimerColor("orange");
 
       if (hinted) {
         return;
@@ -301,7 +323,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         drawHint(canvas, context)
       );
     } else {
-      setCountdownColor("#373737");
+      setTimerColor("#373737");
     }
   }, [
     aiPoints,
@@ -320,11 +342,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   }
 
   const onCanvasClick = async (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
-    if (timeRemaining <= 0 || clicked || !running) {
+    if (timeRemaining <= 0 || !running) {
       return;
     }
-
-    setClicked(true);
 
     stopTimer();
 
@@ -368,10 +388,15 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setShowDialog(true);
   };
 
+  /**
+   * Returns a random, previously unseen, file number
+   *
+   * @return number of a new file
+   */
   const getNewFileNumber = (): number => {
-    const max = 100;
-    const newFileNumber = Math.round(Math.random() * max);
+    const newFileNumber = Math.round(Math.random() * MAX_FILE_NUMBER);
 
+    /* TODO: handle case where all files have been used */
     if (seenFiles.has(newFileNumber)) {
       return getNewFileNumber();
     }
@@ -381,48 +406,97 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     return newFileNumber;
   };
 
-  const loadNewImage = async () => {
-    stopTimer();
-    setTimeRemaining(TOTAL_TIME);
-    setLoading(true);
+  /**
+   * Maps the coordinates of a given rectangle according to the current canvas size
+   *
+   * @param rect Coordinates for the corners of the rectangle to map
+   */
+  const mapCoordinates = (rect: number[]): number[] =>
+    rect.map((coordinate) => (coordinate * canvasSize) / DEFAULT_CANVAS_SIZE);
 
-    const fileNumber = getNewFileNumber();
+  /**
+   * Returns the path to the json file corresponding to the given fileNumber
+   *
+   * @param fileNumber Number of the file to retrieve
+   */
+  const getJsonPath = (fileNumber: number) =>
+    `${process.env.PUBLIC_URL}/content/annotation/${fileNumber}.json`;
 
-    // Retrieve annotations
-    await fetch(`${process.env.PUBLIC_URL}/content/annotation/${fileNumber}.json`)
-      .then((res) => res.json())
-      .then((data: { truth: number[]; predicted: number[] }) => {
-        setTruth(data.truth.map((pixel) => (pixel * canvasSize) / 512));
-        setPredicted(data.predicted.map((pixel) => (pixel * canvasSize) / 512));
-      });
+  /**
+   * Returns the path to the image file corresponding to the given fileNumber
+   *
+   * @param fileNumber Number of the file to retrieve
+   */
+  const getImagePath = (fileNumber: number) =>
+    `${process.env.PUBLIC_URL}/content/images/${fileNumber}.png`;
 
-    // Build the image
-    const img = new Image();
-    img.src = `${process.env.PUBLIC_URL}/content/images/${fileNumber}.png`;
-    img.onload = () => {
-      setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(img, 0, 0, canvas.width, canvas.height);
-      });
+  /**
+   * Loads the data from the json corresponding to the given fileNumber
+   *
+   * @param fileNumber Number of the json file to load
+   */
+  const loadJson = async (fileNumber: number) => {
+    const response = await fetch(getJsonPath(fileNumber));
+    const data: JsonData = await response.json();
 
-      setClicked(false);
-      setHinted(false);
-      setTimeRemainingText(timeRemaining.toFixed(1));
-      setRunning(true);
-      setLoading(false);
-      setTotal((prevState) => prevState + 1);
-    };
+    setTruth(mapCoordinates(data.truth));
+    setPredicted(mapCoordinates(data.predicted));
   };
 
-  const onStartNextClick = async () => {
+  /**
+   * Loads the image from the file corresponding to the given fileNumber
+   *
+   * @param fileNumber
+   */
+  const loadImage = (fileNumber: number): Promise<void> =>
+    new Promise((resolve, reject) => {
+      const image = new Image();
+
+      image.onload = () => {
+        setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+          context.clearRect(0, 0, canvas.width, canvas.height);
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        });
+
+        resolve();
+      };
+
+      image.onerror = reject;
+
+      /* Set source after onLoad to ensure onLoad gets called (in case the image is cached) */
+      image.src = getImagePath(fileNumber);
+    });
+
+  /**
+   * Starts a new round, loading a new image and its corresponding json data
+   */
+  const startNewRound = async () => {
     setCurrentRound((prevState) => prevState + 1);
     setShowDialog(false);
     setAiCorrect(false);
     setPlayerCorrect(false);
     setAiResultVisible(false);
     setPlayerResultVisible(false);
+    setTimeRemaining(TOTAL_TIME);
+    setHinted(false);
+    setLoading(true);
 
-    await loadNewImage();
+    const fileNumber = getNewFileNumber();
+
+    await loadJson(fileNumber);
+    await loadImage(fileNumber);
+
+    setTimeRemainingText(timeRemaining.toFixed(1));
+    setRunning(true);
+    setLoading(false);
+    setTotal((prevState) => prevState + 1);
+  };
+
+  /**
+   * Called when the Start/Next button is clicked
+   */
+  const onStartNextClick = async () => {
+    await startNewRound();
   };
 
   const submitScores = async () => {
@@ -550,17 +624,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       </AppBar>
 
       <div className={classes.container}>
-        <Card className={classes.countdownContainer}>
-          <Typography
-            className={classes.countdownText}
-            variant="h4"
-            style={{ color: countdownColor }}
-          >
+        <Card className={classes.timerContainer}>
+          <Typography className={classes.timerText} variant="h4" style={{ color: timerColor }}>
             Time remaining: {timeRemainingText}s
           </Typography>
 
           <ColoredLinearProgress
-            barColor={countdownColor}
+            barColor={timerColor}
             variant="determinate"
             value={timeRemaining * 10}
           />
