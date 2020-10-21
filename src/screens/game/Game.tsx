@@ -120,13 +120,21 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
-    const animCanvas = animCanvasRef.current;
-    if (animCanvas === null) {
+    const context = canvas.getContext("2d");
+    if (context === null) {
       return;
     }
 
-    const context = canvas.getContext("2d");
-    if (context === null) {
+    if (draw === null) {
+      return;
+    }
+
+    draw(canvas, context);
+  }, [draw]);
+
+  useEffect(() => {
+    const animCanvas = animCanvasRef.current;
+    if (animCanvas === null) {
       return;
     }
 
@@ -135,23 +143,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
-    if (draw === null) {
-      return;
-    }
-
-    // WARNING: animDraw is null, ends the program
-    // TODO: fix
-    /*
     if (animDraw === null) {
       return;
     }
-     */
-
-    draw(canvas, context);
-    /*
     animDraw(animCanvas, animContext);
-     */
-  }, [draw, animDraw]);
+  }, [animDraw]);
 
   useInterval(
     () => {
@@ -347,6 +343,62 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
   }
 
+  function getLeftCubes(canvas: HTMLCanvasElement) {
+    const leftCubes = [];
+    const size = canvas.width / 10;
+    for (let i = 0; i < 5; i += 1) {
+      const cubeParams = [0, 0, 0, 0];
+      cubeParams[0] = 0;
+      cubeParams[1] = 2 * i * size;
+      cubeParams[2] = size;
+      cubeParams[3] = (2 * i + 1) * size;
+      leftCubes[i] = cubeParams;
+    }
+    return leftCubes;
+  }
+
+  function getRightCubes(canvas: HTMLCanvasElement) {
+    const rightCubes = [];
+    const size = canvas.width / 10;
+    for (let i = 0; i < 5; i += 1) {
+      const cubeParams = [0, 0, 0, 0];
+      cubeParams[0] = canvas.width - size;
+      cubeParams[1] = (2 * i + 1) * size;
+      cubeParams[2] = canvas.width;
+      cubeParams[3] = 2 * (i + 1) * size;
+      rightCubes[i] = cubeParams;
+    }
+    return rightCubes;
+  }
+
+  function runAiSearchAnimation(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) {
+    const leftCubes = getLeftCubes(canvas);
+    const rightCubes = getRightCubes(canvas);
+    const offsetX = canvas.width / 10;
+    // const offsetY = canvas.height / 10;
+    const interval = setInterval(() => {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      leftCubes.forEach((cube) => {
+        drawRectangle(context, cube, INVALID_COLOUR, 3);
+        // eslint-disable-next-line no-param-reassign
+        cube[0] += offsetX;
+        // eslint-disable-next-line no-param-reassign
+        cube[2] += offsetX;
+      });
+      rightCubes.forEach((cube) => {
+        drawRectangle(context, cube, "blue", 3);
+        // eslint-disable-next-line no-param-reassign
+        cube[0] -= offsetX;
+        // eslint-disable-next-line no-param-reassign
+        cube[2] -= offsetX;
+      });
+    }, 100);
+    // TODO: Play with the time delay
+    setTimeout(() => {
+      clearInterval(interval);
+    }, 1500);
+  }
+
   const onCanvasClick = async (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
     if (timeRemaining <= 0 || clicked || !running) {
       return;
@@ -357,6 +409,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     stopTimer();
 
     const [mouseX, mouseY] = [event.clientX, event.clientY];
+
+    setAnimDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+      runAiSearchAnimation(canvas, context);
+    });
 
     setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
       drawPlayer(canvas, context, mouseX, mouseY, DEFAULT_COLOUR);
@@ -427,6 +483,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const img = new Image();
     img.src = `${process.env.PUBLIC_URL}/content/images/${fileNumber}.png`;
     img.onload = () => {
+      setAnimDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+      });
+
       setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -575,13 +635,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         <Card className={classes.canvasContainer}>
           <canvas
             className={classes.canvas}
-            ref={animCanvasRef}
+            ref={canvasRef}
             width={canvasSize}
             height={canvasSize}
           />
           <canvas
             className={classes.canvas}
-            ref={canvasRef}
+            ref={animCanvasRef}
             width={canvasSize}
             height={canvasSize}
             onClick={onCanvasClick}
