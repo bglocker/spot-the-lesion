@@ -9,6 +9,7 @@ import TableRow from "@material-ui/core/TableRow";
 import Paper from "@material-ui/core/Paper";
 
 interface ScoreType {
+  rank: number;
   user: string;
   score: number;
 }
@@ -35,7 +36,7 @@ export default function BasicTable(results: ScoreType[]) {
         <TableBody>
           {results.map((row) => (
             <TableRow key={row.user}>
-              <TableCell align="center">1</TableCell>
+              <TableCell align="center">{row.rank}</TableCell>
               <TableCell align="center" component="th" scope="row">
                 {row.user}
               </TableCell>

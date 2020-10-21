@@ -6,6 +6,7 @@ import { db } from "../../firebase/firebaseApp";
 import BasicTable from "./Table";
 
 interface ScoreType {
+  rank: number;
   user: string;
   score: number;
 }
@@ -59,6 +60,7 @@ const Leaderboard: React.FC<LeaderboardProps> = () => {
     const table: string = tableNames[tableIndex];
     const date: Date = new Date();
     const results: ScoreType[] = [];
+    let rankPosition = 1;
 
     const tableRef = db.collection(table);
     let snapshot;
@@ -75,8 +77,13 @@ const Leaderboard: React.FC<LeaderboardProps> = () => {
 
     snapshot = await snapshot.orderBy("score", "desc").limit(10).get();
     snapshot.forEach((doc) => {
-      const score: ScoreType = { user: doc.data().user, score: doc.data().score };
+      const score: ScoreType = {
+        rank: rankPosition,
+        user: doc.data().user,
+        score: doc.data().score,
+      };
       results.push(score);
+      rankPosition += 1;
     });
     setScores(results);
   }
