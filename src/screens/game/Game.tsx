@@ -551,7 +551,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       <Dialog
         classes={{ paper: classes.dialogPaper }}
         open={showDialog}
-        onClose={() => setShowDialog(false)}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
