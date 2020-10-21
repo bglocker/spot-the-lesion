@@ -262,7 +262,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
 
     if (timeRemaining <= 0) {
-      setShowDialog(true);
       stopTimer();
 
       setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
@@ -283,6 +282,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           }
           setAiResultVisible(true);
           setPlayerResultVisible(true);
+          setShowDialog(true);
         }, 2000);
       });
     } else if (timeRemaining <= 2) {
@@ -361,10 +361,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           setAiCorrect(false);
         }
         setAiResultVisible(true);
+        setShowDialog(true);
       }, 2500);
     });
-
-    setShowDialog(true);
   };
 
   const getNewFileNumber = (): number => {
