@@ -4,29 +4,8 @@ import { createStyles, makeStyles } from "@material-ui/core/styles";
 import TabPanel from "./tabPanel/TabPanel";
 import { db } from "../../firebase/firebaseApp";
 import BasicTable from "./Table";
-
-interface ScoreType {
-  rank: number;
-  user: string;
-  score: number;
-}
-
-const monthNames = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
-const tableNames = ["daily-scores", "monthly-scores", "alltime-scores"];
+import DbUtils from "../../utils/DbUtils";
+import ScoreType from "../../utils/ScoreType";
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -46,18 +25,18 @@ const useStyles = makeStyles(() =>
 );
 
 const Leaderboard: React.FC<LeaderboardProps> = () => {
-  const dailyRef = db.collection("daily-scores");
-  const monthlyRef = db.collection("monthly-scores");
-  const allTimeRef = db.collection("all-time-scores");
+  const dailyRef = db.collection(DbUtils.DAILY_LEADERBOARD);
+  const monthlyRef = db.collection(DbUtils.MONTHLY_LEADERBOARD);
+  const allTimeRef = db.collection(DbUtils.ALL_TIME_LEADERBOARD);
 
   const styles = useStyles();
 
-  const [currentTabIndex, setCurrentTabIndex] = React.useState(-1);
+  const [currentTabIndex, setCurrentTabIndex] = React.useState(0);
 
   const [scores, setScores] = useState<ScoreType[]>([]);
 
   async function createLeaderboard(tableIndex: number) {
-    const table: string = tableNames[tableIndex];
+    const table: string = DbUtils.tableNames[tableIndex];
     const date: Date = new Date();
     const results: ScoreType[] = [];
     let rankPosition = 1;
@@ -66,22 +45,18 @@ const Leaderboard: React.FC<LeaderboardProps> = () => {
     let snapshot;
     snapshot = tableRef;
 
-    if (table !== "alltime-scores") {
+    if (table !== DbUtils.ALL_TIME_LEADERBOARD) {
       snapshot = snapshot
         .where("year", "==", date.getFullYear())
-        .where("month", "==", monthNames[date.getMonth()]);
-      if (table === "daily-scores") {
+        .where("month", "==", DbUtils.monthNames[date.getMonth()]);
+      if (table === DbUtils.DAILY_LEADERBOARD) {
         snapshot = snapshot.where("day", "==", date.getDate());
       }
     }
 
     snapshot = await snapshot.orderBy("score", "desc").limit(10).get();
     snapshot.forEach((doc) => {
-      const score: ScoreType = {
-        rank: rankPosition,
-        user: doc.data().user,
-        score: doc.data().score,
-      };
+      const score: ScoreType = new ScoreType(rankPosition, doc.data().user, doc.data().score);
       results.push(score);
       rankPosition += 1;
     });

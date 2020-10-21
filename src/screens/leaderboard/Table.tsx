@@ -7,12 +7,7 @@ import TableContainer from "@material-ui/core/TableContainer";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Paper from "@material-ui/core/Paper";
-
-interface ScoreType {
-  rank: number;
-  user: string;
-  score: number;
-}
+import ScoreType from "../../utils/ScoreType";
 
 const useStyles = makeStyles({
   table: {
@@ -35,12 +30,12 @@ export default function BasicTable(results: ScoreType[]) {
         </TableHead>
         <TableBody>
           {results.map((row) => (
-            <TableRow key={row.user}>
-              <TableCell align="center">{row.rank}</TableCell>
+            <TableRow key={row.getUser()}>
+              <TableCell align="center">{row.getRank()}</TableCell>
               <TableCell align="center" component="th" scope="row">
-                {row.user}
+                {row.getUser()}
               </TableCell>
-              <TableCell align="center">{row.score}</TableCell>
+              <TableCell align="center">{row.getScore()}</TableCell>
             </TableRow>
           ))}
         </TableBody>

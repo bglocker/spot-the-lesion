@@ -20,6 +20,7 @@ import {
 import BackButtonIcon from "@material-ui/icons/KeyboardBackspace";
 import useInterval from "../../components/useInterval";
 import { db } from "../../firebase/firebaseApp";
+import DbUtils from "../../utils/DbUtils";
 
 const useStyles = makeStyles({
   container: {
@@ -90,26 +91,6 @@ const VALID_COLOUR = "green";
 const INVALID_COLOUR = "red";
 const DEFAULT_COLOUR = "yellow";
 const TRUE_COLOUR = "blue";
-
-// Firebase Collections
-const DAILY_LEADERBOARD = "daily-scores";
-const MONTHLY_LEADERBOARD = "monthly-scores";
-const ALL_TIME_LEADERBOARD = "alltime-scores";
-
-const monthNames = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
 
 const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const classes = useStyles();
@@ -501,7 +482,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       user: username,
       score: playerPoints,
       day: date.getDate(),
-      month: monthNames[date.getMonth()],
+      month: DbUtils.monthNames[date.getMonth()],
       year: date.getFullYear(),
     };
 
@@ -511,7 +492,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     async function updateLeaderBoardFirebase() {
       const dailySnapshot = await db
-        .collection(DAILY_LEADERBOARD)
+        .collection(DbUtils.DAILY_LEADERBOARD)
         .where("year", "==", entry.year)
         .where("month", "==", entry.month)
         .where("day", "==", entry.day)
@@ -519,25 +500,25 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         .where("score", ">", playerPoints)
         .get();
       if (dailySnapshot.empty) {
-        await db.collection(DAILY_LEADERBOARD).doc(docNameForDaily).set(entry);
+        await db.collection(DbUtils.DAILY_LEADERBOARD).doc(docNameForDaily).set(entry);
       }
       const monthlySnapshot = await db
-        .collection(MONTHLY_LEADERBOARD)
+        .collection(DbUtils.MONTHLY_LEADERBOARD)
         .where("year", "==", entry.year)
         .where("month", "==", entry.month)
         .where("user", "==", username)
         .where("score", ">", playerPoints)
         .get();
       if (monthlySnapshot.empty) {
-        await db.collection(MONTHLY_LEADERBOARD).doc(docNameForMonthly).set(entry);
+        await db.collection(DbUtils.MONTHLY_LEADERBOARD).doc(docNameForMonthly).set(entry);
       }
       const alltimeSnapshot = await db
-        .collection(ALL_TIME_LEADERBOARD)
+        .collection(DbUtils.ALL_TIME_LEADERBOARD)
         .where("user", "==", username)
         .where("score", ">", playerPoints)
         .get();
       if (alltimeSnapshot.empty) {
-        await db.collection(ALL_TIME_LEADERBOARD).doc(docNameForAllTime).set(entry);
+        await db.collection(DbUtils.ALL_TIME_LEADERBOARD).doc(docNameForAllTime).set(entry);
       }
     }
 
