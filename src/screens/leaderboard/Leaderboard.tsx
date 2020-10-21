@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { AppBar, Grid, IconButton, Tab, Tabs, Typography, Toolbar } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import TabPanel from "./tabPanel/TabPanel";
 import { db } from "../../firebase/firebaseApp";
+import BasicTable from "./Table";
+import DbUtils from "../../utils/DbUtils";
+import ScoreType from "../../utils/ScoreType";
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -31,13 +34,44 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
 
   const [currentTabIndex, setCurrentTabIndex] = React.useState(0);
 
+  const [scores, setScores] = useState<ScoreType[]>([]);
+
+  const dailyRef = db.collection(DbUtils.DAILY_LEADERBOARD);
+  const monthlyRef = db.collection(DbUtils.MONTHLY_LEADERBOARD);
+  const allTimeRef = db.collection(DbUtils.ALL_TIME_LEADERBOARD);
+
+  async function createLeaderboard(tableIndex: number) {
+    const table: string = DbUtils.tableNames[tableIndex];
+    const date: Date = new Date();
+    const results: ScoreType[] = [];
+    let rankPosition = 1;
+
+    const tableRef = db.collection(table);
+    let snapshot;
+    snapshot = tableRef;
+
+    if (table !== DbUtils.ALL_TIME_LEADERBOARD) {
+      snapshot = snapshot
+        .where("year", "==", date.getFullYear())
+        .where("month", "==", DbUtils.monthNames[date.getMonth()]);
+      if (table === DbUtils.DAILY_LEADERBOARD) {
+        snapshot = snapshot.where("day", "==", date.getDate());
+      }
+    }
+
+    snapshot = await snapshot.orderBy("score", "desc").limit(10).get();
+    snapshot.forEach((doc) => {
+      const score: ScoreType = new ScoreType(rankPosition, doc.data().user, doc.data().score);
+      results.push(score);
+      rankPosition += 1;
+    });
+    setScores(results);
+  }
+
   const onTabChange = (newIndex: number) => {
     setCurrentTabIndex(newIndex);
+    createLeaderboard(newIndex);
   };
-
-  const dailyRef = db.collection("daily-scores");
-  const monthlyRef = db.collection("monthly-scores");
-  const allTimeRef = db.collection("all-time-scores");
 
   return (
     <>
@@ -96,6 +130,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
           <TabPanel currentIndex={currentTabIndex} index={2} dbRef={allTimeRef} />
         </Grid>
       </div>
+
+      {BasicTable(scores)}
     </>
   );
 };
