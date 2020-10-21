@@ -1,55 +1,42 @@
 import React from "react";
 import { AppBar, IconButton, Toolbar, Typography } from "@material-ui/core";
-import BackButtonIcon from "@material-ui/icons/KeyboardBackspace";
-import { makeStyles } from "@material-ui/styles";
+import { makeStyles, createStyles } from "@material-ui/core/styles";
+import { KeyboardBackspace } from "@material-ui/icons";
 
-const useStyles = makeStyles({
-  white: {
-    marginTop: "2vh",
-    backgroundColor: "white",
-    height: "80vh",
-    borderRadius: 25,
-    borderColor: "black",
-    borderWidth: "5px",
-    borderStyle: "solid",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  textContent: {
-    margin: "5%",
-    fontSize: "calc((3vh + 3vw)/2)",
-    textAlign: "center",
-  },
-  maxWidth: {
-    width: "100%",
-  },
-  centerContent: {
-    lineItems: "center",
-  },
-  navbar: {
-    background: "#07575B",
-  },
-});
+const useStyles = makeStyles(() =>
+  createStyles({
+    backButton: {
+      marginRight: 8,
+    },
+    container: {
+      height: "100%",
+    },
+  })
+);
 
 const About: React.FC<AboutProps> = ({ setRoute }: AboutProps) => {
-  const styles = useStyles();
+  const classes = useStyles();
 
   return (
-    <div>
-      <AppBar position="static">
-        <Toolbar className={styles.navbar} variant="dense">
+    <>
+      <AppBar position="sticky">
+        <Toolbar variant="dense">
           <IconButton
+            className={classes.backButton}
             edge="start"
             color="inherit"
-            aria-label="menu"
+            aria-label="Back"
             onClick={() => setRoute("home")}
           >
-            <BackButtonIcon />
+            <KeyboardBackspace />
           </IconButton>
+
           <Typography>Spot the Lesion</Typography>
         </Toolbar>
       </AppBar>
-    </div>
+
+      <div className={classes.container} />
+    </>
   );
 };
 

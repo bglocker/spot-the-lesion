@@ -1,4 +1,4 @@
-export const firebaseConfig = {
+const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: "spot-the-lesion.firebaseapp.com",
   databaseURL: "https://spot-the-lesion.firebaseio.com",
@@ -8,3 +8,5 @@ export const firebaseConfig = {
   appId: "1:131387805123:web:9bdbabe358ffcf04ad4176",
   measurementId: "G-13PZY5QQPK",
 };
+
+export default firebaseConfig;
