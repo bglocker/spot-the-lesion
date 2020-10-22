@@ -810,6 +810,27 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     );
   };
 
+  const hideAnswersOnStart = (round: number) => {
+    if (round > 0) {
+      return (
+        <div>
+          <Typography className={classes.result} variant="h4">
+            You were: {displayCorrect(playerCorrect)}
+          </Typography>
+
+          <Typography className={classes.result} variant="h4">
+            AI was: {displayCorrect(aiCorrect)}
+          </Typography>
+
+          <Typography className={classes.result} variant="h4">
+            Results
+          </Typography>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <>
       <AppBar position="sticky">
@@ -865,18 +886,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </DialogTitle>
 
         <DialogContent>
-          <Typography className={classes.result} variant="h4">
-            You were: {displayCorrect(playerCorrect)}
-          </Typography>
-
-          <Typography className={classes.result} variant="h4">
-            AI was: {displayCorrect(aiCorrect)}
-          </Typography>
-
-          <Typography className={classes.result} variant="h4">
-            Results
-          </Typography>
-
+          {hideAnswersOnStart(currentRound)}
           <Typography className={classes.result} variant="h4">
             Correct (you): {playerPoints}
           </Typography>

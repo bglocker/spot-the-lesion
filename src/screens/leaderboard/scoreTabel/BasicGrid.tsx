@@ -4,8 +4,9 @@ import { makeStyles } from "@material-ui/core/styles";
 
 const useStyles = makeStyles({
   style: {
-    fontSize: "2.5rem",
+    fontSize: "150%",
     fontWeight: "bold",
+    fontFamily: "segoe UI",
   },
 });
 
