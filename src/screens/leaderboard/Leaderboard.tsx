@@ -42,11 +42,25 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
   const monthlyRef = db.collection(DbUtils.MONTHLY_LEADERBOARD);
   const allTimeRef = db.collection(DbUtils.ALL_TIME_LEADERBOARD);
 
+  function selectRowColour(rowIndex: number) {
+    switch (rowIndex) {
+      case 1:
+        return DbUtils.GOLD;
+      case 2:
+        return DbUtils.SILVER;
+      case 3:
+        return DbUtils.BRONZE;
+      default:
+        return DbUtils.DEFAULT_ROW_COLOUR;
+    }
+  }
+
   async function createLeaderboard(tableIndex: number) {
     const table: string = DbUtils.tableNames[tableIndex];
     const date: Date = new Date();
     const results: ScoreType[] = [];
     let rankPosition = 1;
+    let rowColour = "black";
 
     const tableRef = db.collection(table);
     let snapshot;
@@ -63,7 +77,13 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
 
     snapshot = await snapshot.orderBy("score", "desc").limit(10).get();
     snapshot.forEach((doc) => {
-      const score: ScoreType = new ScoreType(rankPosition, doc.data().user, doc.data().score);
+      rowColour = selectRowColour(rankPosition);
+      const score: ScoreType = new ScoreType(
+        rankPosition,
+        doc.data().user,
+        doc.data().score,
+        rowColour
+      );
       results.push(score);
       rankPosition += 1;
     });

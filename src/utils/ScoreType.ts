@@ -5,10 +5,13 @@ export default class ScoreType {
 
   private readonly score: number;
 
-  constructor(rank: number, user: string, score: number) {
+  private readonly colour: string;
+
+  constructor(rank: number, user: string, score: number, colour: string) {
     this.user = user;
     this.rank = rank;
     this.score = score;
+    this.colour = colour;
   }
 
   public getUser(): string {
@@ -21,5 +24,9 @@ export default class ScoreType {
 
   public getScore(): number {
     return this.score;
+  }
+
+  public getColour(): string {
+    return this.colour;
   }
 }

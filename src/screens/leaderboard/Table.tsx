@@ -70,7 +70,11 @@ export default function BasicTable(results: ScoreType[], usedOnce: number) {
         </TableHead>
         <TableBody>
           {results.map((row) => (
-            <TableRow className={classes.tableRow} key={row.getUser()}>
+            <TableRow
+              style={{ backgroundColor: row.getColour() }}
+              className={classes.tableRow}
+              key={row.getUser()}
+            >
               <TableCell className={classes.tableRowCell} align="center">
                 {row.getRank()}
               </TableCell>
