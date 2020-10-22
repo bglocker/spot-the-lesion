@@ -71,7 +71,7 @@ const DEFAULT_COLOUR = "yellow";
 const TRUE_COLOUR = "blue";
 
 const NUMBER_OF_ROUNDS = 10;
-const TOTAL_TIME = 10;
+const TOTAL_TIME_MS = 10000;
 
 const DEFAULT_CANVAS_SIZE = 512;
 
@@ -98,7 +98,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [running, setRunning] = useState(false);
   const [hinted, setHinted] = useState(false);
 
-  const [timeRemaining, setTimeRemaining] = useState(TOTAL_TIME);
+  const [timeRemaining, setTimeRemaining] = useState(TOTAL_TIME_MS);
   const [timerColor, setTimerColor] = useState("#373737");
 
   const [username, setUsername] = useState("");
@@ -169,10 +169,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   }, [animDraw]);
 
   /**
-   * Called each second, while the game is running,
+   * Called every 100 milliseconds, while the game is running,
    */
   const timerTick = () => {
-    setTimeRemaining((prevState) => prevState - 0.1);
+    setTimeRemaining((prevState) => prevState - 100);
   };
 
   useInterval(timerTick, running ? 100 : null);
@@ -346,9 +346,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           setShowDialog(true);
         }, 2000);
       });
-    } else if (timeRemaining <= 2) {
+    } else if (timeRemaining <= 2000) {
       setTimerColor("red");
-    } else if (timeRemaining <= 5) {
+    } else if (timeRemaining <= 5000) {
       if (hinted) {
         return;
       }
@@ -602,7 +602,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     await loadJson(fileNumber);
     await loadImage(fileNumber);
 
-    setTimeRemaining(TOTAL_TIME);
+    setTimeRemaining(TOTAL_TIME_MS);
     setRunning(true);
     setLoading(false);
   };
@@ -739,13 +739,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       <div className={classes.container}>
         <Card className={classes.timerContainer}>
           <Typography className={classes.timerText} variant="h4" style={{ color: timerColor }}>
-            Time remaining: {timeRemaining.toFixed(1)}s
+            Time remaining: {(timeRemaining / 1000).toFixed(1)}s
           </Typography>
 
           <ColoredLinearProgress
             barColor={timerColor}
             variant="determinate"
-            value={timeRemaining * 10}
+            value={timeRemaining / 100}
           />
         </Card>
 
