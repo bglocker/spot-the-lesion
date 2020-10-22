@@ -7,6 +7,7 @@ import { db } from "../../firebase/firebaseApp";
 import BasicTable from "./Table";
 import DbUtils from "../../utils/DbUtils";
 import ScoreType from "../../utils/ScoreType";
+import BasicGrid from "./BasicGrid";
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -32,7 +33,7 @@ const useStyles = makeStyles(() =>
 const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps) => {
   const classes = useStyles();
 
-  const [currentTabIndex, setCurrentTabIndex] = React.useState(0);
+  const [currentTabIndex, setCurrentTabIndex] = React.useState(-1);
 
   const [scores, setScores] = useState<ScoreType[]>([]);
 
@@ -128,8 +129,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
 
         <TabPanel currentIndex={currentTabIndex} index={2} dbRef={allTimeRef} />
       </Grid>
-
-      {BasicTable(scores)}
+      {BasicGrid(currentTabIndex)}
+      {BasicTable(scores, currentTabIndex)}
     </>
   );
 };

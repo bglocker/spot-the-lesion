@@ -12,20 +12,43 @@ import ScoreType from "../../utils/ScoreType";
 const useStyles = makeStyles({
   table: {
     minWidth: 650,
+    backgroundColor: "#C4DFE6",
+  },
+  tableHead: {
+    backgroundColor: "#07575B",
+  },
+  table2: {
+    marginTop: 20,
+  },
+  tableCell: {
+    color: "white",
+    fontSize: "1.5rem",
+  },
+  style: {
+    fontSize: "1.5rem",
+    fontWeight: "bold",
   },
 });
 
-export default function BasicTable(results: ScoreType[]) {
+export default function BasicTable(results: ScoreType[], currentTabIndex: number) {
   const classes = useStyles();
-
+  if (currentTabIndex === -1) {
+    return null;
+  }
   return (
-    <TableContainer component={Paper}>
+    <TableContainer className={classes.table2} component={Paper}>
       <Table className={classes.table} aria-label="simple table">
-        <TableHead>
+        <TableHead className={classes.tableHead}>
           <TableRow>
-            <TableCell align="center">Rank</TableCell>
-            <TableCell align="center">Username</TableCell>
-            <TableCell align="center">Score</TableCell>
+            <TableCell className={classes.tableCell} align="center">
+              RANK
+            </TableCell>
+            <TableCell className={classes.tableCell} align="center">
+              USERNAME
+            </TableCell>
+            <TableCell className={classes.tableCell} align="center">
+              SCORE
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
