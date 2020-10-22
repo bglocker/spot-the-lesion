@@ -802,7 +802,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           color="primary"
           size="large"
           disabled={running || loading}
-          onClick={uploadScore}
+          onClick={() => {
+            uploadScore();
+            setRoute("home");
+          }}
         >
           Submit Score
         </Button>
