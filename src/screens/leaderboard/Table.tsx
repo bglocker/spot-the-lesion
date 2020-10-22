@@ -26,10 +26,13 @@ const useStyles = makeStyles({
   tableCell: {
     color: "white",
     fontSize: "150%",
+    fontFamily: "segoe UI",
+    fontWeight: "bold",
   },
   style: {
     fontSize: "150%",
     fontWeight: "bold",
+    fontFamily: "segoe UI",
   },
   tableRow: {
     borderColor: "#003B46",
@@ -38,6 +41,9 @@ const useStyles = makeStyles({
   },
   tableRowCell: {
     fontSize: "150%",
+    fontFamily: "segoe UI",
+    fontWeight: "bold",
+    textTransform: "uppercase",
   },
 });
 
