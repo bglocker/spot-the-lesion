@@ -117,6 +117,20 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [animDraw, setAnimDraw] = useState<DrawType | null>(null);
 
   /**
+   * Called every 100 milliseconds, while the game is running,
+   */
+  const timerTick = () => {
+    setTimeRemaining((prevState) => prevState - 100);
+  };
+
+  useInterval(timerTick, running ? 100 : null);
+
+  /**
+   * Stops the timer by stopping the current round.
+   */
+  const stopTimer = () => setRunning(false);
+
+  /**
    * Called on windows resize
    */
   const onResize = () => {
@@ -169,18 +183,222 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   }, [animDraw]);
 
   /**
-   * Called every 100 milliseconds, while the game is running,
+   * Draws a rectangle
+   *
+   * @param context     Context to draw the rectangle on
+   * @param rect        Coordinates for the corners of the rectangle to draw
+   * @param strokeStyle Style for drawing the rectangle
+   * @param lineWidth   Width of the rectangle lines
    */
-  const timerTick = () => {
-    setTimeRemaining((prevState) => prevState - 100);
-  };
+  const drawRectangle = useCallback(
+    (context: CanvasRenderingContext2D, rect: number[], strokeStyle: string, lineWidth: number) => {
+      const xBase = rect[0];
+      const xEnd = rect[2];
+      const yBase = rect[1];
+      const yEnd = rect[3];
 
-  useInterval(timerTick, running ? 100 : null);
+      const width = xEnd - xBase;
+      const height = yEnd - yBase;
+
+      context.strokeStyle = strokeStyle;
+      context.lineWidth = lineWidth;
+      context.beginPath();
+      context.rect(xBase, yBase, width, height);
+      context.stroke();
+    },
+    []
+  );
 
   /**
-   * Stops the timer by stopping the current round.
+   * Draws a cross
+   *
+   * @param context     Context to draw the cross on
+   * @param x           Width coordinate
+   * @param y           Height coordinate
+   * @param strokeStyle Style for drawing the cross
    */
-  const stopTimer = () => setRunning(false);
+  const drawCross = useCallback(
+    (
+      context: CanvasRenderingContext2D,
+      x: number,
+      y: number,
+      size: number,
+      strokeStyle: string
+    ) => {
+      context.strokeStyle = strokeStyle;
+      context.beginPath();
+      context.moveTo(x - size, y - size);
+      context.lineTo(x + size, y + size);
+      context.moveTo(x + size, y - size);
+      context.lineTo(x - size, y + size);
+      context.stroke();
+    },
+    []
+  );
+
+  /**
+   * Draws a circle
+   *
+   * @param context     Context to draw the circle on
+   * @param x           Width coordinate
+   * @param y           Height coordinate
+   * @param radius      Circle radius
+   * @param width       Width of the circle line
+   * @param strokeStyle Style for drawing the circle
+   */
+  const drawCircle = useCallback(
+    (
+      context: CanvasRenderingContext2D,
+      x: number,
+      y: number,
+      radius: number,
+      width: number,
+      strokeStyle: string
+    ) => {
+      context.strokeStyle = strokeStyle;
+      context.lineWidth = width;
+      context.beginPath();
+      context.arc(x, y, (radius * canvasSize) / DEFAULT_CANVAS_SIZE, 0, 2 * Math.PI);
+      context.stroke();
+    },
+    [canvasSize]
+  );
+
+  /**
+   * Returns an array of cube coordinates, filling a side of a given canvas,
+   * with gaps between every 2 cubes
+   *
+   * @param canvas   Canvas to fill with cubes. Used for width value
+   * @param numCubes Number of cubes to return (on one side)
+   * @param cubeSide Length of a cube side
+   * @param left     Whether to generate cubes for the left or right side of canvas
+   *
+   * @return Array of cube corner coordinates
+   */
+  const getCubes = useCallback(
+    (canvas: HTMLCanvasElement, numCubes: number, cubeSide: number, left: boolean) => {
+      const cubes: number[][] = [];
+
+      for (let i = 0; i < numCubes; i++) {
+        const cube: number[] = [];
+
+        cube[0] = left ? 0 : canvas.width - cubeSide;
+        cube[1] = left ? 2 * i * cubeSide : (2 * i + 1) * cubeSide;
+        cube[2] = cube[0] + cubeSide;
+        cube[3] = cube[1] + cubeSide;
+
+        cubes[i] = cube;
+      }
+
+      return cubes;
+    },
+    []
+  );
+
+  /**
+   * Draw an AI search animation, rendering cubes on both sides of the canvas,
+   * moving towards their opposite side
+   *
+   * @param canvas  Canvas to draw the animation on. Used for width value
+   * @param context Context to draw the animation on
+   */
+  const drawAiSearchAnimation = useCallback(
+    (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+      const animationTime = 1000;
+      const numCubes = 5;
+      const cubeSide = canvas.width / (numCubes * 2);
+      const leftCubes = getCubes(canvas, numCubes, cubeSide, true);
+      const rightCubes = getCubes(canvas, numCubes, cubeSide, false);
+
+      /* Draw cubes in initial position */
+      leftCubes.forEach((cube) => drawRectangle(context, cube, INVALID_COLOUR, 3));
+      rightCubes.forEach((cube) => drawRectangle(context, cube, TRUE_COLOUR, 3));
+
+      const intervalId = window.setInterval(() => {
+        /* Clear previous cubes */
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        /* Advance left cubes */
+        leftCubes.forEach((cube) => {
+          cube[0] += cubeSide;
+          cube[2] += cubeSide;
+
+          drawRectangle(context, cube, INVALID_COLOUR, 3);
+        });
+
+        /* Advance right cubes */
+        rightCubes.forEach((cube) => {
+          cube[0] -= cubeSide;
+          cube[2] -= cubeSide;
+
+          drawRectangle(context, cube, TRUE_COLOUR, 3);
+        });
+      }, animationTime / (numCubes * 2));
+
+      setTimeout(() => {
+        clearInterval(intervalId);
+
+        /* Clear whole canvas */
+        context.clearRect(0, 0, canvas.width, canvas.height);
+      }, animationTime);
+    },
+    [drawRectangle, getCubes]
+  );
+
+  /**
+   * Draws the truth rectangle
+   *
+   * @param context Context to draw the rectangle on
+   */
+  const drawTruth = useCallback(
+    (context: CanvasRenderingContext2D) => {
+      drawRectangle(context, truth, TRUE_COLOUR, 3);
+    },
+    [truth, drawRectangle]
+  );
+
+  /**
+   * Draws the predicted rectangle
+   *
+   * @param context     Context to draw the rectangle on
+   * @param strokeStyle Style for drawing the rectangle
+   */
+  const drawPredicted = useCallback(
+    (context: CanvasRenderingContext2D, strokeStyle: string) => {
+      drawRectangle(context, predicted, strokeStyle, 3);
+    },
+    [predicted, drawRectangle]
+  );
+
+  /**
+   * Draws the hint circle
+   *
+   * @param context Context to draw the circle on
+   */
+  const drawHint = useCallback(
+    (context: CanvasRenderingContext2D) => {
+      const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
+      const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
+
+      drawCircle(context, x, y, 100, 2, INVALID_COLOUR);
+    },
+    [drawCircle, truth]
+  );
+
+  /**
+   * Draws the player click cross
+   *
+   * @param context     Context to draw the cross on
+   * @param x           Width coordinate
+   * @param y           Height coordinate
+   * @param strokeStyle Style for drawing the cross
+   */
+  const drawPlayerClick = useCallback(
+    (context: CanvasRenderingContext2D, x: number, y: number, strokeStyle: string) => {
+      drawCross(context, x, y, 5, strokeStyle);
+    },
+    [drawCross]
+  );
 
   /**
    * Given the coordinates of two rectangles, returns the ratio of their intersection
@@ -209,92 +427,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     return inter / union;
   };
 
-  const drawRectangle = useCallback(
-    (context: CanvasRenderingContext2D, rect: number[], strokeStyle: string, lineWidth: number) => {
-      const xBase = rect[0];
-      const xEnd = rect[2];
-      const yBase = rect[1];
-      const yEnd = rect[3];
-
-      const width = xEnd - xBase;
-      const height = yEnd - yBase;
-
-      context.strokeStyle = strokeStyle;
-      context.lineWidth = lineWidth;
-      context.beginPath();
-      context.rect(xBase, yBase, width, height);
-      context.stroke();
-    },
-    []
-  );
-
-  const drawCross = (
-    context: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    size: number,
-    strokeStyle: string
-  ) => {
-    context.strokeStyle = strokeStyle;
-    context.beginPath();
-    context.moveTo(x - size, y - size);
-    context.lineTo(x + size, y + size);
-    context.moveTo(x + size, y - size);
-    context.lineTo(x - size, y + size);
-    context.stroke();
-  };
-
-  const drawCircle = useCallback(
-    (
-      context: CanvasRenderingContext2D,
-      x: number,
-      y: number,
-      radius: number,
-      width: number,
-      strokeStyle: string
-    ) => {
-      context.strokeStyle = strokeStyle;
-      context.lineWidth = width;
-      context.beginPath();
-      context.arc(x, y, (radius * canvasSize) / DEFAULT_CANVAS_SIZE, 0, 2 * Math.PI);
-      context.stroke();
-    },
-    [canvasSize]
-  );
-
-  const drawTruth = useCallback(
-    (context: CanvasRenderingContext2D) => {
-      drawRectangle(context, truth, TRUE_COLOUR, 3);
-    },
-    [truth, drawRectangle]
-  );
-
-  const drawPredicted = useCallback(
-    (context: CanvasRenderingContext2D, strokeStyle: string) => {
-      drawRectangle(context, predicted, strokeStyle, 3);
-    },
-    [predicted, drawRectangle]
-  );
-
-  const drawHint = useCallback(
-    (context: CanvasRenderingContext2D) => {
-      const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
-      const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
-
-      drawCircle(context, x, y, 100, 2, INVALID_COLOUR);
-    },
-    [drawCircle, truth]
-  );
-
-  const drawPlayerClick = (
-    context: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    playerColour: string
-  ) => {
-    drawCross(context, x, y, 5, playerColour);
-  };
-
   /**
    * Determines whether the AI prediction was successful, by checking that
    * the ratio of the intersection over the union of the predicted and truth rectangles
@@ -315,8 +447,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    *
    * @return The success value
    */
-  const isPlayerRight = (x: number, y: number) =>
-    truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
+  const isPlayerRight = useCallback(
+    (x: number, y: number) => {
+      return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
+    },
+    [truth]
+  );
 
   useEffect(() => {
     if (!running) {
@@ -326,12 +462,18 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     if (timeRemaining <= 0) {
       stopTimer();
 
+      setAnimDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+        drawAiSearchAnimation(canvas, context);
+      });
+
       setDraw(() => (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-        drawPredicted(context, DEFAULT_COLOUR);
+        setTimeout(() => {
+          drawPredicted(context, DEFAULT_COLOUR);
+        }, 1000);
 
         setTimeout(() => {
           drawTruth(context);
-        }, 1000);
+        }, 1500);
 
         setTimeout(() => {
           if (isAiPredictionRight()) {
@@ -344,7 +486,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           }
 
           setShowDialog(true);
-        }, 2000);
+        }, 2500);
       });
     } else if (timeRemaining <= 2000) {
       setTimerColor("red");
@@ -361,70 +503,16 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     } else {
       setTimerColor("#373737");
     }
-  }, [drawHint, drawPredicted, drawTruth, hinted, isAiPredictionRight, running, timeRemaining]);
-
-  const getLeftCubes = (canvas: HTMLCanvasElement) => {
-    const leftCubes: number[][] = [];
-    const size = canvas.width / 10;
-
-    for (let i = 0; i < 5; i++) {
-      const cube = [0, 0, 0, 0];
-
-      cube[0] = 0;
-      cube[1] = 2 * i * size;
-      cube[2] = size;
-      cube[3] = (2 * i + 1) * size;
-      leftCubes[i] = cube;
-    }
-
-    return leftCubes;
-  };
-
-  const getRightCubes = (canvas: HTMLCanvasElement) => {
-    const rightCubes: number[][] = [];
-    const size = canvas.width / 10;
-
-    for (let i = 0; i < 5; i++) {
-      const cube = [0, 0, 0, 0];
-
-      cube[0] = canvas.width - size;
-      cube[1] = (2 * i + 1) * size;
-      cube[2] = canvas.width;
-      cube[3] = 2 * (i + 1) * size;
-      rightCubes[i] = cube;
-    }
-
-    return rightCubes;
-  };
-
-  const drawAiSearchAnimation = (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-    const leftCubes = getLeftCubes(canvas);
-    const rightCubes = getRightCubes(canvas);
-    const offsetX = canvas.width / 10;
-
-    const interval = setInterval(() => {
-      context.clearRect(0, 0, canvas.width, canvas.height);
-
-      leftCubes.forEach((cube) => {
-        drawRectangle(context, cube, INVALID_COLOUR, 3);
-
-        cube[0] += offsetX;
-        cube[2] += offsetX;
-      });
-
-      rightCubes.forEach((cube) => {
-        drawRectangle(context, cube, TRUE_COLOUR, 3);
-
-        cube[0] -= offsetX;
-        cube[2] -= offsetX;
-      });
-    }, 100);
-
-    // TODO: Play with the time delay
-    setTimeout(() => {
-      clearInterval(interval);
-    }, 1500);
-  };
+  }, [
+    drawAiSearchAnimation,
+    drawHint,
+    drawPredicted,
+    drawTruth,
+    hinted,
+    isAiPredictionRight,
+    running,
+    timeRemaining,
+  ]);
 
   /**
    * Maps the mouse position relative to the given canvas
@@ -435,16 +523,19 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    *
    * @return Click width and height coordinates, relative to the canvas
    */
-  const getClickPositionOnCanvas = (canvas: HTMLCanvasElement, clickX: number, clickY: number) => {
-    const rect = canvas.getBoundingClientRect();
-    const widthScale = canvas.width / rect.width;
-    const heightScale = canvas.height / rect.height;
+  const getClickPositionOnCanvas = useCallback(
+    (canvas: HTMLCanvasElement, clickX: number, clickY: number) => {
+      const rect = canvas.getBoundingClientRect();
+      const widthScale = canvas.width / rect.width;
+      const heightScale = canvas.height / rect.height;
 
-    return {
-      x: (clickX - rect.left) * widthScale,
-      y: (clickY - rect.top) * heightScale,
-    };
-  };
+      return {
+        x: (clickX - rect.left) * widthScale,
+        y: (clickY - rect.top) * heightScale,
+      };
+    },
+    []
+  );
 
   /**
    * Called when the canvas is clicked
@@ -460,9 +551,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     const [clickX, clickY] = [event.clientX, event.clientY];
 
-    setAnimDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-      drawAiSearchAnimation(canvas, context);
-    });
+    setAnimDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) =>
+      drawAiSearchAnimation(canvas, context)
+    );
 
     setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
       const { x, y } = getClickPositionOnCanvas(canvas, clickX, clickY);
@@ -522,14 +613,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   /**
-   * Maps the coordinates of a given rectangle according to the current canvas size
-   *
-   * @param rect Coordinates for the corners of the rectangle to map
-   */
-  const mapCoordinates = (rect: number[]): number[] =>
-    rect.map((coordinate) => (coordinate * canvasSize) / DEFAULT_CANVAS_SIZE);
-
-  /**
    * Returns the path to the json file corresponding to the given fileNumber
    *
    * @param fileNumber Number of the file to retrieve
@@ -544,6 +627,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    */
   const getImagePath = (fileNumber: number) =>
     `${process.env.PUBLIC_URL}/content/images/${fileNumber}.png`;
+
+  /**
+   * Maps the coordinates of a given rectangle according to the current canvas size
+   *
+   * @param rect Coordinates for the corners of the rectangle to map
+   */
+  const mapCoordinates = (rect: number[]): number[] =>
+    rect.map((coordinate) => (coordinate * canvasSize) / DEFAULT_CANVAS_SIZE);
 
   /**
    * Loads the data from the json corresponding to the given fileNumber
@@ -568,9 +659,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       const image = new Image();
 
       image.onload = () => {
-        setAnimDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-          context.clearRect(0, 0, canvas.width, canvas.height);
-        });
+        setAnimDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) =>
+          context.clearRect(0, 0, canvas.width, canvas.height)
+        );
 
         setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
           context.clearRect(0, 0, canvas.width, canvas.height);
