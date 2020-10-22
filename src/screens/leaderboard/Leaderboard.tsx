@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { AppBar, Grid, IconButton, Tab, Tabs, Typography, Toolbar } from "@material-ui/core";
+import { AppBar, IconButton, Tab, Tabs, Typography, Toolbar } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
-import TabPanel from "./tabPanel/TabPanel";
 import { db } from "../../firebase/firebaseApp";
 import BasicTable from "./scoreTabel/BasicTable";
 import DbUtils from "../../utils/DbUtils";
@@ -37,10 +36,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
   const [usedOnce, setUsedOnce] = React.useState(0);
 
   const [scores, setScores] = useState<ScoreType[]>([]);
-
-  const dailyRef = db.collection(DbUtils.DAILY_LEADERBOARD);
-  const monthlyRef = db.collection(DbUtils.MONTHLY_LEADERBOARD);
-  const allTimeRef = db.collection(DbUtils.ALL_TIME_LEADERBOARD);
 
   function selectRowColour(rowIndex: number) {
     switch (rowIndex) {
@@ -148,14 +143,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
           />
         </Tabs>
       </AppBar>
-
-      <Grid container justify="center">
-        <TabPanel currentIndex={currentTabIndex} index={0} dbRef={dailyRef} />
-
-        <TabPanel currentIndex={currentTabIndex} index={1} dbRef={monthlyRef} />
-
-        <TabPanel currentIndex={currentTabIndex} index={2} dbRef={allTimeRef} />
-      </Grid>
       {BasicGrid(usedOnce)}
       {BasicTable(scores, usedOnce)}
     </>
