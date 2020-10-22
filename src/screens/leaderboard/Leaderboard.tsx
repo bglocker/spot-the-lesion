@@ -61,6 +61,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
     const results: ScoreType[] = [];
     let rankPosition = 1;
     let rowColour = "black";
+    let medal = true;
 
     const tableRef = db.collection(table);
     let snapshot;
@@ -77,12 +78,16 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
 
     snapshot = await snapshot.orderBy("score", "desc").limit(10).get();
     snapshot.forEach((doc) => {
+      if (rankPosition > 3) {
+        medal = false;
+      }
       rowColour = selectRowColour(rankPosition);
       const score: ScoreType = new ScoreType(
         rankPosition,
         doc.data().user,
         doc.data().score,
-        rowColour
+        rowColour,
+        medal
       );
       results.push(score);
       rankPosition += 1;

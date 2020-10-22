@@ -7,11 +7,14 @@ export default class ScoreType {
 
   private readonly colour: string;
 
-  constructor(rank: number, user: string, score: number, colour: string) {
+  private readonly medal: boolean;
+
+  constructor(rank: number, user: string, score: number, colour: string, medal: boolean) {
     this.user = user;
     this.rank = rank;
     this.score = score;
     this.colour = colour;
+    this.medal = medal;
   }
 
   public getUser(): string {
@@ -28,5 +31,9 @@ export default class ScoreType {
 
   public getColour(): string {
     return this.colour;
+  }
+
+  public getMedal(): boolean {
+    return this.medal;
   }
 }

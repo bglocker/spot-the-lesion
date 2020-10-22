@@ -7,11 +7,11 @@ import TableContainer from "@material-ui/core/TableContainer";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Paper from "@material-ui/core/Paper";
+import { FaMedal } from "react-icons/fa";
 import ScoreType from "../../utils/ScoreType";
 
 const useStyles = makeStyles({
   table: {
-    minWidth: 650,
     backgroundColor: "#C4DFE6",
     borderStyle: "solid",
     borderWidth: "thick",
@@ -20,8 +20,10 @@ const useStyles = makeStyles({
   tableHead: {
     backgroundColor: "#07575B",
   },
-  table2: {
-    marginTop: 20,
+  tableContainer: {
+    marginTop: 50,
+    width: "70%",
+    alignSelf: "center",
   },
   tableCell: {
     color: "white",
@@ -43,9 +45,12 @@ const useStyles = makeStyles({
     fontSize: "150%",
     fontFamily: "segoe UI",
     fontWeight: "bold",
-    textTransform: "uppercase",
   },
 });
+
+const showMedal = (medal: boolean) => {
+  return medal ? <FaMedal /> : null;
+};
 
 export default function BasicTable(results: ScoreType[], usedOnce: number) {
   const classes = useStyles();
@@ -53,7 +58,7 @@ export default function BasicTable(results: ScoreType[], usedOnce: number) {
     return null;
   }
   return (
-    <TableContainer className={classes.table2} component={Paper}>
+    <TableContainer className={classes.tableContainer} component={Paper}>
       <Table className={classes.table} aria-label="simple table">
         <TableHead className={classes.tableHead}>
           <TableRow>
@@ -79,7 +84,7 @@ export default function BasicTable(results: ScoreType[], usedOnce: number) {
                 {row.getRank()}
               </TableCell>
               <TableCell className={classes.tableRowCell} align="center" component="th" scope="row">
-                {row.getUser()}
+                {showMedal(row.getMedal())} {row.getUser()}
               </TableCell>
               <TableCell className={classes.tableRowCell} align="center">
                 {row.getScore()}
