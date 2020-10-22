@@ -13,6 +13,9 @@ const useStyles = makeStyles({
   table: {
     minWidth: 650,
     backgroundColor: "#C4DFE6",
+    borderStyle: "solid",
+    borderWidth: "thick",
+    borderColor: "#003B46",
   },
   tableHead: {
     backgroundColor: "#07575B",
@@ -22,11 +25,19 @@ const useStyles = makeStyles({
   },
   tableCell: {
     color: "white",
-    fontSize: "1.5rem",
+    fontSize: "150%",
   },
   style: {
-    fontSize: "1.5rem",
+    fontSize: "150%",
     fontWeight: "bold",
+  },
+  tableRow: {
+    borderColor: "#003B46",
+    borderWidth: "medium",
+    borderStyle: "solid",
+  },
+  tableRowCell: {
+    fontSize: "150%",
   },
 });
 
@@ -53,12 +64,16 @@ export default function BasicTable(results: ScoreType[], currentTabIndex: number
         </TableHead>
         <TableBody>
           {results.map((row) => (
-            <TableRow key={row.getUser()}>
-              <TableCell align="center">{row.getRank()}</TableCell>
-              <TableCell align="center" component="th" scope="row">
+            <TableRow className={classes.tableRow} key={row.getUser()}>
+              <TableCell className={classes.tableRowCell} align="center">
+                {row.getRank()}
+              </TableCell>
+              <TableCell className={classes.tableRowCell} align="center" component="th" scope="row">
                 {row.getUser()}
               </TableCell>
-              <TableCell align="center">{row.getScore()}</TableCell>
+              <TableCell className={classes.tableRowCell} align="center">
+                {row.getScore()}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
