@@ -41,9 +41,9 @@ const useStyles = makeStyles({
   },
 });
 
-export default function BasicTable(results: ScoreType[], currentTabIndex: number) {
+export default function BasicTable(results: ScoreType[], usedOnce: number) {
   const classes = useStyles();
-  if (currentTabIndex === -1) {
+  if (usedOnce === 0) {
     return null;
   }
   return (

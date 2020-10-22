@@ -33,7 +33,8 @@ const useStyles = makeStyles(() =>
 const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps) => {
   const classes = useStyles();
 
-  const [currentTabIndex, setCurrentTabIndex] = React.useState(-1);
+  const [currentTabIndex, setCurrentTabIndex] = React.useState(0);
+  const [usedOnce, setUsedOnce] = React.useState(0);
 
   const [scores, setScores] = useState<ScoreType[]>([]);
 
@@ -71,6 +72,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
 
   const onTabChange = (newIndex: number) => {
     setCurrentTabIndex(newIndex);
+    setUsedOnce(1);
     createLeaderboard(newIndex);
   };
 
@@ -129,8 +131,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
 
         <TabPanel currentIndex={currentTabIndex} index={2} dbRef={allTimeRef} />
       </Grid>
-      {BasicGrid(currentTabIndex)}
-      {BasicTable(scores, currentTabIndex)}
+      {BasicGrid(usedOnce)}
+      {BasicTable(scores, usedOnce)}
     </>
   );
 };

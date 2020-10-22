@@ -9,9 +9,9 @@ const useStyles = makeStyles({
   },
 });
 
-export default function BasicGrid(currentTabIndex: number) {
+export default function BasicGrid(usedOnce: number) {
   const classes = useStyles();
-  if (currentTabIndex === -1) {
+  if (usedOnce === 0) {
     return (
       <Grid container justify="center">
         <Typography className={classes.style}>SELECT A CATEGORY</Typography>
