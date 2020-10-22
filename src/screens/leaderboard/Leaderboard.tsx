@@ -121,15 +121,13 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
         </Tabs>
       </AppBar>
 
-      <div className={classes.container}>
-        <Grid container justify="center">
-          <TabPanel currentIndex={currentTabIndex} index={0} dbRef={dailyRef} />
+      <Grid container justify="center">
+        <TabPanel currentIndex={currentTabIndex} index={0} dbRef={dailyRef} />
 
-          <TabPanel currentIndex={currentTabIndex} index={1} dbRef={monthlyRef} />
+        <TabPanel currentIndex={currentTabIndex} index={1} dbRef={monthlyRef} />
 
-          <TabPanel currentIndex={currentTabIndex} index={2} dbRef={allTimeRef} />
-        </Grid>
-      </div>
+        <TabPanel currentIndex={currentTabIndex} index={2} dbRef={allTimeRef} />
+      </Grid>
 
       {BasicTable(scores)}
     </>
