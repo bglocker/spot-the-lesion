@@ -10,9 +10,10 @@ const useStyles = makeStyles({
   },
 });
 
-export default function BasicGrid(usedOnce: number) {
+const TableGrid: React.FC<TableGridProps> = ({ firstTimeOpened }: TableGridProps) => {
   const classes = useStyles();
-  if (usedOnce === 0) {
+
+  if (firstTimeOpened) {
     return (
       <Grid container justify="center">
         <Typography className={classes.style}>SELECT A CATEGORY</Typography>
@@ -20,4 +21,6 @@ export default function BasicGrid(usedOnce: number) {
     );
   }
   return null;
-}
+};
+
+export default TableGrid;

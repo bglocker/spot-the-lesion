@@ -6,7 +6,7 @@ import { db } from "../../firebase/firebaseApp";
 import BasicTable from "./scoreTabel/BasicTable";
 import DbUtils from "../../utils/DbUtils";
 import ScoreType from "../../utils/ScoreType";
-import BasicGrid from "./scoreTabel/BasicGrid";
+import BasicGrid from "./scoreTabel/tableGrid/TableGrid";
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -33,7 +33,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
   const classes = useStyles();
 
   const [currentTabIndex, setCurrentTabIndex] = React.useState(0);
-  const [usedOnce, setUsedOnce] = React.useState(0);
+  const [firstTimeOpened, setFirstTimeOpened] = React.useState(true);
 
   const [scores, setScores] = useState<ScoreType[]>([]);
 
@@ -90,10 +90,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
     setScores(results);
   }
 
-  const onTabChange = (newIndex: number) => {
+  const onTabChange = async (newIndex: number) => {
     setCurrentTabIndex(newIndex);
-    setUsedOnce(1);
-    createLeaderboard(newIndex);
+    setFirstTimeOpened(false);
+    await createLeaderboard(newIndex);
   };
 
   return (
@@ -143,8 +143,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
           />
         </Tabs>
       </AppBar>
-      {BasicGrid(usedOnce)}
-      {BasicTable(scores, usedOnce)}
+      <BasicGrid firstTimeOpened={firstTimeOpened} />
+      <BasicTable firstTimeOpened={firstTimeOpened} scores={scores} />
     </>
   );
 };

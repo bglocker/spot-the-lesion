@@ -9,7 +9,6 @@ import TableRow from "@material-ui/core/TableRow";
 import Paper from "@material-ui/core/Paper";
 import { FaMedal } from "react-icons/fa";
 import { createStyles } from "@material-ui/styles";
-import ScoreType from "../../../utils/ScoreType";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -79,11 +78,13 @@ const showMedal = (medal: boolean) => {
   return medal ? <FaMedal /> : null;
 };
 
-export default function BasicTable(results: ScoreType[], usedOnce: number) {
+const BasicTable: React.FC<BasicTableProps> = ({ firstTimeOpened, scores }: BasicTableProps) => {
   const classes = useStyles();
-  if (usedOnce === 0) {
+
+  if (firstTimeOpened) {
     return null;
   }
+
   return (
     <TableContainer className={classes.tableContainer} component={Paper}>
       <Table className={classes.table} aria-label="simple table">
@@ -101,7 +102,7 @@ export default function BasicTable(results: ScoreType[], usedOnce: number) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {results.map((row) => (
+          {scores.map((row) => (
             <TableRow
               style={{ backgroundColor: row.getColour() }}
               className={classes.tableRow}
@@ -122,4 +123,6 @@ export default function BasicTable(results: ScoreType[], usedOnce: number) {
       </Table>
     </TableContainer>
   );
-}
+};
+
+export default BasicTable;
