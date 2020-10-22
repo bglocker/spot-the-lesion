@@ -4,10 +4,10 @@ import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import TabPanel from "./tabPanel/TabPanel";
 import { db } from "../../firebase/firebaseApp";
-import BasicTable from "./Table";
+import BasicTable from "./scoreTabel/BasicTable";
 import DbUtils from "../../utils/DbUtils";
 import ScoreType from "../../utils/ScoreType";
-import BasicGrid from "./BasicGrid";
+import BasicGrid from "./scoreTabel/BasicGrid";
 
 const useStyles = makeStyles(() =>
   createStyles({

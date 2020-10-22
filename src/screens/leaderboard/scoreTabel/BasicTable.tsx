@@ -8,45 +8,72 @@ import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Paper from "@material-ui/core/Paper";
 import { FaMedal } from "react-icons/fa";
-import ScoreType from "../../utils/ScoreType";
+import { createStyles } from "@material-ui/styles";
+import ScoreType from "../../../utils/ScoreType";
 
-const useStyles = makeStyles({
-  table: {
-    backgroundColor: "#C4DFE6",
-    borderStyle: "solid",
-    borderWidth: "thick",
-    borderColor: "#003B46",
-  },
-  tableHead: {
-    backgroundColor: "#07575B",
-  },
-  tableContainer: {
-    marginTop: 50,
-    width: "70%",
-    alignSelf: "center",
-  },
-  tableCell: {
-    color: "white",
-    fontSize: "150%",
-    fontFamily: "segoe UI",
-    fontWeight: "bold",
-  },
-  style: {
-    fontSize: "150%",
-    fontWeight: "bold",
-    fontFamily: "segoe UI",
-  },
-  tableRow: {
-    borderColor: "#003B46",
-    borderWidth: "medium",
-    borderStyle: "solid",
-  },
-  tableRowCell: {
-    fontSize: "150%",
-    fontFamily: "segoe UI",
-    fontWeight: "bold",
-  },
-});
+const useStyles = makeStyles((theme) =>
+  createStyles({
+    table: {
+      backgroundColor: "#C4DFE6",
+      borderStyle: "solid",
+      borderWidth: "thick",
+      borderColor: "#003B46",
+    },
+    tableHead: {
+      backgroundColor: "#07575B",
+    },
+    tableContainer: {
+      marginTop: 50,
+      width: "70%",
+      alignSelf: "center",
+    },
+    tableCell: {
+      [theme.breakpoints.only("xs")]: {
+        fontSize: "60%",
+      },
+      [theme.breakpoints.only("sm")]: {
+        fontSize: "110%",
+      },
+      [theme.breakpoints.up("md")]: {
+        fontSize: "150%",
+      },
+      color: "white",
+      fontFamily: "segoe UI",
+      fontWeight: "bold",
+    },
+    style: {
+      [theme.breakpoints.only("xs")]: {
+        fontSize: "60%",
+      },
+      [theme.breakpoints.only("sm")]: {
+        fontSize: "110%",
+      },
+      [theme.breakpoints.up("md")]: {
+        fontSize: "150%",
+      },
+      fontWeight: "bold",
+      fontFamily: "segoe UI",
+    },
+    tableRow: {
+      borderColor: "#003B46",
+      borderWidth: "medium",
+      borderStyle: "solid",
+    },
+    tableRowCell: {
+      [theme.breakpoints.only("xs")]: {
+        fontSize: "60%",
+      },
+      [theme.breakpoints.only("sm")]: {
+        fontSize: "110%",
+      },
+      [theme.breakpoints.up("md")]: {
+        fontSize: "150%",
+      },
+      fontFamily: "segoe UI",
+      fontWeight: "bold",
+    },
+  })
+);
 
 const showMedal = (medal: boolean) => {
   return medal ? <FaMedal /> : null;

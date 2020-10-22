@@ -96,6 +96,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [currentRound, setCurrentRound] = useState(0);
   const [loading, setLoading] = useState(false);
   const [running, setRunning] = useState(false);
+
   const [hinted, setHinted] = useState(false);
 
   const [timeRemaining, setTimeRemaining] = useState(TOTAL_TIME_MS);
