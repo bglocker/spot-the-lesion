@@ -88,7 +88,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const animCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const [canvasSize, setCanvasSize] = useState(
-    Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8)
+    Math.floor(Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8))
   );
 
   const [showDialog, setShowDialog] = useState(true);
@@ -137,7 +137,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const newWidth = window.innerWidth * 0.8;
     const newHeight = window.innerHeight * 0.8;
 
-    setCanvasSize(Math.min(newHeight, newWidth));
+    setCanvasSize(Math.floor(Math.min(newHeight, newWidth)));
   };
 
   useEffect(() => {
