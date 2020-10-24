@@ -1,74 +1,64 @@
 import React, { useState } from "react";
-import { AppBar, IconButton, Toolbar, Typography } from "@material-ui/core";
-import { createStyles, makeStyles } from "@material-ui/core/styles";
-import BackButtonIcon from "@material-ui/icons/KeyboardBackspace";
+import { makeStyles, createStyles, createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
+import colors from "./res/colors";
 import Home from "./screens/home/Home";
 import Game from "./screens/game/Game";
 import Tutorial from "./screens/tutorial/Tutorial";
 import About from "./screens/about/About";
 import Credits from "./screens/credits/Credits";
+import Leaderboard from "./screens/leaderboard/Leaderboard";
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    navbar: {
-      background: "#07575B",
+const theme = createMuiTheme({
+  palette: {
+    primary: {
+      main: colors.primary,
     },
-    menuButton: {
-      marginRight: theme.spacing(2),
+  },
+});
+
+const useStyles = makeStyles(() =>
+  createStyles({
+    container: {
+      height: "100vh",
+      display: "flex",
+      flexDirection: "column",
+      backgroundColor: "#63A2AB",
     },
   })
 );
 
 const App: React.FC = () => {
-  const styles = useStyles();
+  const classes = useStyles();
 
   const [route, setRoute] = useState<Route>("home");
-  const [backButton, setBackButton] = useState(false);
 
   let currentScreen: React.ReactNode;
   switch (route) {
     default: // fall-through
     case "home":
-      currentScreen = <Home setRoute={setRoute} setBackButton={setBackButton} />;
+      currentScreen = <Home setRoute={setRoute} />;
       break;
     case "game":
-      currentScreen = <Game setRoute={setRoute} setBackButton={setBackButton} />;
+      currentScreen = <Game setRoute={setRoute} />;
       break;
-    case "tutorial1":
-      currentScreen = <Tutorial setRoute={setRoute} setBackButton={setBackButton} />;
+    case "leaderboard":
+      currentScreen = <Leaderboard setRoute={setRoute} />;
+      break;
+    case "tutorial":
+      currentScreen = <Tutorial setRoute={setRoute} />;
       break;
     case "about":
-      currentScreen = <About setRoute={setRoute} setBackButton={setBackButton} />;
+      currentScreen = <About setRoute={setRoute} />;
       break;
     case "credits":
-      currentScreen = <Credits setRoute={setRoute} setBackButton={setBackButton} />;
+      currentScreen = <Credits setRoute={setRoute} />;
       break;
   }
 
-  const returnHome = () => {
-    setRoute("home");
-  };
-
   return (
-    <div>
-      <AppBar position="static">
-        <Toolbar className={styles.navbar} variant="dense">
-          {backButton && (
-            <IconButton
-              className={styles.menuButton}
-              edge="start"
-              color="inherit"
-              aria-label="menu"
-              onClick={returnHome}
-            >
-              <BackButtonIcon />
-            </IconButton>
-          )}
-          <Typography>Spot the Lesion</Typography>
-        </Toolbar>
-      </AppBar>
-      {currentScreen}
-    </div>
+    <ThemeProvider theme={theme}>
+      <div className={classes.container}>{currentScreen}</div>
+    </ThemeProvider>
   );
 };
 

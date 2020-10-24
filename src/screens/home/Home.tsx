@@ -1,116 +1,144 @@
-import React, { useEffect, useState } from "react";
-import { Button, ButtonGroup, Container, Grid } from "@material-ui/core";
-import { makeStyles, createStyles } from "@material-ui/core/styles";
-import logo from "./images/logo.gif";
-import scan from "./images/ct-scan.png";
-import brain from "./images/brain.png";
+import React from "react";
+import {
+  AppBar,
+  Button,
+  ButtonGroup,
+  Container,
+  Toolbar,
+  Typography,
+  Theme,
+} from "@material-ui/core";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
+import logo from "../../res/images/home/logo.gif";
+import scan from "../../res/images/home/ct-scan.png";
+import brain from "../../res/images/home/brain.png";
 
-const useStyles = makeStyles((theme) =>
+const useStyles = makeStyles((theme: Theme) =>
   createStyles({
-    button: {
-      background: "#07575B",
-      borderRadius: 20,
-      borderColor: "black",
-      borderWidth: 4,
-      color: "white",
-      fontFamily: "segoe UI",
-      fontWeight: "bold",
-      marginTop: "3vh",
-      fontSize: 22,
-      width: 300,
-      margin: theme.spacing(2),
-    },
     container: {
-      width: "100vw",
+      height: "100%",
       display: "flex",
       flexDirection: "column",
-      justifyContent: "center",
+      justifyContent: "space-evenly",
       alignItems: "center",
     },
     logo: {
-      marginTop: "1vh",
-      width: "auto",
-      height: "360px",
+      marginTop: 16,
+      marginBottom: 24,
+      [theme.breakpoints.down("xs")]: {
+        height: 200,
+      },
+      [theme.breakpoints.up("sm")]: {
+        height: 300,
+      },
     },
-    visible: {
-      width: "250px",
-      height: "auto",
-      display: "block",
+    iconsAndButtonsContainer: {
+      width: "100%",
+      display: "flex",
+      justifyContent: "space-evenly",
+      alignItems: "center",
     },
-    invisible: {
-      display: "none",
+    image: {
+      width: 250,
+      [theme.breakpoints.down("sm")]: {
+        display: "none",
+      },
+      [theme.breakpoints.up("md")]: {
+        display: "inline-block",
+      },
+    },
+    button: {
+      margin: 8,
+      borderRadius: 20,
+      [theme.breakpoints.only("xs")]: {
+        width: 250,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.only("sm")]: {
+        width: 300,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        width: 320,
+        fontSize: "1.25rem",
+      },
     },
   })
 );
 
-const Home: React.FC<HomeProps> = ({ setRoute, setBackButton }: HomeProps) => {
-  const styles = useStyles();
-  const minWidth = 1360;
-  const [fullWidth, setFullWidth] = useState(window.innerWidth > minWidth);
-
-  useEffect(() => {
-    window.addEventListener(
-      "resize",
-      () => {
-        const newFullWidth: boolean = window.innerWidth > minWidth;
-        setFullWidth(newFullWidth);
-      },
-      false
-    );
-  }, [fullWidth]);
-
-  setBackButton(false);
+const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
+  const classes = useStyles();
 
   return (
-    <Container className={styles.container}>
-      <img className={styles.logo} src={logo} alt="Spot the Lesion Logo" />
-      <Grid container direction="row" justify="space-evenly" alignItems="center">
-        <img
-          className={fullWidth ? styles.visible : styles.invisible}
-          src={scan}
-          alt="Scanner.png"
-        />
-        <ButtonGroup orientation="vertical">
-          <Button
-            variant="contained"
-            size="large"
-            className={styles.button}
-            onClick={() => setRoute("game")}
-          >
-            Play
-          </Button>
-          <Button
-            variant="contained"
-            size="large"
-            className={styles.button}
-            onClick={() => setRoute("tutorial1")}
-          >
-            How to Play
-          </Button>
-          <Button
-            variant="contained"
-            size="large"
-            className={styles.button}
-            onClick={() => setRoute("about")}
-          >
-            About CT Scans
-          </Button>
-          <Button
-            variant="contained"
-            size="large"
-            className={styles.button}
-            onClick={() => setRoute("credits")}
-          >
-            Credits
-          </Button>
-        </ButtonGroup>
-        <img
-          className={fullWidth ? styles.visible : styles.invisible}
-          src={brain}
-          alt="Brain.png"
-        />
-      </Grid>
-    </Container>
+    <>
+      <AppBar position="sticky">
+        <Toolbar variant="dense">
+          <Typography>Spot the Lesion</Typography>
+        </Toolbar>
+      </AppBar>
+
+      <Container className={classes.container}>
+        <img className={classes.logo} src={logo} alt="Spot the Lesion Logo" />
+
+        <div className={classes.iconsAndButtonsContainer}>
+          <img className={classes.image} src={scan} alt="Scanner" />
+
+          <ButtonGroup orientation="vertical">
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={() => setRoute("game")}
+            >
+              Play
+            </Button>
+
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={() => setRoute("leaderboard")}
+            >
+              Leaderboard
+            </Button>
+
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={() => setRoute("tutorial")}
+            >
+              How to Play
+            </Button>
+
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={() => setRoute("about")}
+            >
+              About CT Scans
+            </Button>
+
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={() => setRoute("credits")}
+            >
+              Credits
+            </Button>
+          </ButtonGroup>
+
+          <img className={classes.image} src={brain} alt="Brain" />
+        </div>
+      </Container>
+    </>
   );
 };
 

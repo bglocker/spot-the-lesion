@@ -11,6 +11,9 @@
 # production
 /build
 
+# Files that may come in handy later
+/test
+
 # misc
 .DS_Store
 .env.local
@@ -47,3 +50,6 @@ yarn-error.log*
 
 # JIRA plugin
 atlassian-ide-plugin.xml
+
+# Protect API keys
+.env

@@ -1,65 +1,53 @@
 import React from "react";
-import { Grid, Typography } from "@material-ui/core";
-import { makeStyles } from "@material-ui/styles";
+import { Typography } from "@material-ui/core";
+import { makeStyles, createStyles } from "@material-ui/core/styles";
 
-const useStyles = makeStyles(() => ({
-  root: {
-    flexGrow: 1,
-  },
-  image: {
-    margin: "3%",
-    maxWidth: "50%",
-    maxHeight: "40%",
-  },
-  textContent: {
-    margin: "5%",
-    fontSize: "calc((3vh + 3vw)/2)",
-    textAlign: "center",
-  },
-  maxWidth: {
-    width: "100%",
-  },
-  centerContent: {
-    display: "flex",
-    justifyContent: "center",
-  },
-}));
+const useStyles = makeStyles((theme) =>
+  createStyles({
+    container: {
+      height: (props: Record<string, unknown>) => (props.imageLink !== "" ? "100%" : "50%"),
+      width: "100%",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 24,
+      boxSizing: "border-box",
+    },
+    text: {
+      [theme.breakpoints.only("xs")]: {
+        fontSize: "1.25rem",
+      },
+      [theme.breakpoints.only("sm")]: {
+        fontSize: "1.5rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        fontSize: "2rem",
+      },
+      textAlign: "center",
+      marginBottom: 24,
+    },
+    image: {
+      display: (props: Record<string, unknown>) =>
+        props.imageLink !== "" ? "inline-block" : "none",
+      maxWidth: "75%",
+      maxHeight: "75%",
+    },
+  })
+);
 
 const TutorialCard: React.FC<TutorialCardProps> = ({
   textContent,
   imageLink,
 }: TutorialCardProps) => {
-  const styles = useStyles();
+  const classes = useStyles({ imageLink });
+
   return (
-    <Grid container spacing={1}>
-      <Grid container item xs={12} spacing={3}>
-        <Typography className={`${styles.textContent} ${styles.maxWidth} ${styles.centerContent}`}>
-          {textContent}
-        </Typography>
-      </Grid>
-      {imageLink[0] !== "" ? (
-        <Grid container item xs={12} spacing={3}>
-          <div className={`${styles.maxWidth} ${styles.centerContent}`}>
-            <img
-              className={`${styles.image} ${styles.centerContent}`}
-              src={imageLink[0]}
-              alt={imageLink[0]}
-            />
-            {imageLink[1] !== "" ? (
-              <img
-                className={`${styles.image} ${styles.centerContent}`}
-                src={imageLink[1]}
-                alt={imageLink[1]}
-              />
-            ) : (
-              ""
-            )}
-          </div>
-        </Grid>
-      ) : (
-        ""
-      )}
-    </Grid>
+    <div className={classes.container}>
+      <Typography className={classes.text}>{textContent}</Typography>
+
+      <img className={classes.image} src={imageLink} alt={imageLink} />
+    </div>
   );
 };
 
