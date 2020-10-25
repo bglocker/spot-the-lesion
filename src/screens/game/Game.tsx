@@ -11,7 +11,7 @@ import {
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
-import { Alert } from "@material-ui/lab";
+import { useSnackbar } from "notistack";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import useInterval from "../../components/useInterval";
 import { db } from "../../firebase/firebaseApp";
@@ -197,11 +197,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [playerCorrect, setPlayerCorrect] = useState(false);
   const [aiCorrect, setAiCorrect] = useState(false);
 
-  const [alert, setAlert] = useState(false);
-
   type DrawType = (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => void;
   const [draw, setDraw] = useState<DrawType | null>(null);
   const [animDraw, setAnimDraw] = useState<DrawType | null>(null);
+
+  /* TODO: check if upload to databse fails to give different message */
+  const { enqueueSnackbar } = useSnackbar();
 
   /**
    * Called every 100 milliseconds, while the game is running,
@@ -802,6 +803,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     if (username === "") {
       return;
     }
+
     const date = new Date();
     const entry = {
       user: username,
@@ -868,23 +870,15 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   const onSubmitScore = async () => {
-    setAlert(true);
     setSubmitEnabled(false);
     await uploadScore();
     setTimeout(() => {
       setRoute("home");
     }, 2000);
+    enqueueSnackbar("Score successfully submitted!");
   };
 
-  const displayAlert = () => {
-    return alert ? (
-      <Alert variant="filled" severity="success">
-        Score submitted!
-      </Alert>
-    ) : null;
-  };
-
-  const dialogAction = () => {
+  const enableNextClick = () => {
     if (currentRound < NUMBER_OF_ROUNDS || running || loading) {
       return (
         <LoadingButton
@@ -1015,8 +1009,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               </Typography>
             </div>
 
-            {dialogAction()}
-            {displayAlert()}
+            {enableNextClick()}
           </Card>
         </div>
       </div>
