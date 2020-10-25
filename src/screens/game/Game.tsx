@@ -9,8 +9,6 @@ import {
   Typography,
 } from "@material-ui/core";
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
-import { Alert } from "@material-ui/lab";
-import { makeStyles, createStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
@@ -160,7 +158,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [currentRound, setCurrentRound] = useState(0);
   const [loading, setLoading] = useState(false);
   const [running, setRunning] = useState(false);
-  const [usernamePresent, setUsernamePresent] = useState(false);
+  // const [usernamePresent, setUsernamePresent] = useState(false);
 
   const [hinted, setHinted] = useState(false);
 
@@ -836,10 +834,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.value !== "") {
-      setUsernamePresent(true);
+      // setUsernamePresent(true);
     }
     if (event.target.value === "") {
-      setUsernamePresent(false);
+      // setUsernamePresent(false);
     }
     setUsername(event.target.value);
   };
