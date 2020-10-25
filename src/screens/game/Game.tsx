@@ -822,11 +822,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
   };
 
-  const displayCorrect = (correct: boolean) => (
-    <span style={{ color: correct ? VALID_COLOUR : INVALID_COLOUR }}>
-      {correct ? "Correct!" : "Wrong!"}
-    </span>
-  );
+  const displayCorrect = (correct: boolean) =>
+    currentRound > 0 && !running && !loading ? (
+      <span style={{ color: correct ? VALID_COLOUR : INVALID_COLOUR }}>
+        {correct ? "(+ 1)" : "(+ 0)"}
+      </span>
+    ) : (
+      ""
+    );
 
   const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
     setUsername(event.target.value);
@@ -949,11 +952,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               </Typography>
 
               <Typography className={classes.result} variant="h6">
-                Correct (you): {playerPoints}
+                Correct (you): {playerPoints} {displayCorrect(playerCorrect)}
               </Typography>
 
               <Typography className={classes.result} variant="h6">
-                Correct (AI): {aiPoints}
+                Correct (AI): {aiPoints} {displayCorrect(aiCorrect)}
               </Typography>
             </div>
 
