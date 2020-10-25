@@ -96,6 +96,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [currentRound, setCurrentRound] = useState(0);
   const [loading, setLoading] = useState(false);
   const [running, setRunning] = useState(false);
+  const [usernamePresent, setUsernamePresent] = useState(false);
 
   const [hinted, setHinted] = useState(false);
 
@@ -710,6 +711,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Uploads the score to the database
    */
   const uploadScore = async () => {
+    if (username === "") {
+      return;
+    }
     const date = new Date();
     const entry = {
       user: username,
@@ -766,6 +770,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   );
 
   const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.value !== "") {
+      setUsernamePresent(true);
+    }
+    if (event.target.value === "") {
+      setUsernamePresent(false);
+    }
     setUsername(event.target.value);
   };
 
@@ -791,7 +801,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </TwitterShareButton>
 
         <TextField
-          label="Username"
+          label="Enter username"
           variant="outlined"
           value={username}
           onChange={onChangeUsername}
@@ -801,7 +811,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           variant="contained"
           color="primary"
           size="large"
-          disabled={running || loading}
+          disabled={running || loading || !usernamePresent}
           onClick={() => {
             uploadScore();
             setRoute("home");
