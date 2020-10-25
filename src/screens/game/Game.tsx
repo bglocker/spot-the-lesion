@@ -11,6 +11,7 @@ import {
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
+import { Alert } from "@material-ui/lab";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import useInterval from "../../components/useInterval";
 import { db } from "../../firebase/firebaseApp";
@@ -178,7 +179,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [currentRound, setCurrentRound] = useState(0);
   const [loading, setLoading] = useState(false);
   const [running, setRunning] = useState(false);
-  // const [usernamePresent, setUsernamePresent] = useState(false);
+  const [submitEnabled, setSubmitEnabled] = useState(false);
 
   const [hinted, setHinted] = useState(false);
 
@@ -195,6 +196,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [playerCorrect, setPlayerCorrect] = useState(false);
   const [aiCorrect, setAiCorrect] = useState(false);
+
+  const [alert, setAlert] = useState(false);
 
   type DrawType = (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => void;
   const [draw, setDraw] = useState<DrawType | null>(null);
@@ -656,7 +659,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       setTimeout(() => {
         if (isPlayerRight(x, y)) {
-          setPlayerPoints((prevState) => prevState + 1);
+          const timeRate = timeRemaining / 1000;
+          const increaseRate = hinted ? timeRate * 10 : timeRate * 20;
+          setPlayerPoints((prevState) => prevState + increaseRate);
           drawPlayerClick(context, x, y, VALID_COLOUR);
           setPlayerCorrect(true);
         } else {
@@ -854,17 +859,29 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.value !== "") {
-      // setUsernamePresent(true);
+      setSubmitEnabled(true);
     }
     if (event.target.value === "") {
-      // setUsernamePresent(false);
+      setSubmitEnabled(false);
     }
     setUsername(event.target.value);
   };
 
   const onSubmitScore = async () => {
+    setAlert(true);
+    setSubmitEnabled(false);
     await uploadScore();
-    setRoute("leaderboard");
+    setTimeout(() => {
+      setRoute("home");
+    }, 2000);
+  };
+
+  const displayAlert = () => {
+    return alert ? (
+      <Alert variant="filled" severity="success">
+        Score submitted!
+      </Alert>
+    ) : null;
   };
 
   const dialogAction = () => {
@@ -899,7 +916,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           variant="contained"
           color="primary"
           size="large"
-          disabled={running || loading}
+          disabled={running || loading || !submitEnabled}
           onClick={onSubmitScore}
         >
           Submit Score
@@ -999,6 +1016,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
             </div>
 
             {dialogAction()}
+            {displayAlert()}
           </Card>
         </div>
       </div>
