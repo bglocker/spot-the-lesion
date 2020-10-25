@@ -99,6 +99,26 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: 8,
     },
     canvas: {
+      [theme.breakpoints.only("xs")]: {
+        height: 300,
+        width: 300,
+      },
+      [theme.breakpoints.only("sm")]: {
+        height: 450,
+        width: 450,
+      },
+      [theme.breakpoints.only("md")]: {
+        height: 550,
+        width: 550,
+      },
+      [theme.breakpoints.only("lg")]: {
+        height: 650,
+        width: 650,
+      },
+      [theme.breakpoints.only("xl")]: {
+        height: 750,
+        width: 750,
+      },
       gridColumnStart: 1,
       gridRowStart: 1,
     },
