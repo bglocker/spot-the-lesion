@@ -12,6 +12,7 @@ import {
   Toolbar,
   Typography,
 } from "@material-ui/core";
+import { Alert } from "@material-ui/lab";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
@@ -779,6 +780,16 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setUsername(event.target.value);
   };
 
+  const [alert, setAlert] = useState(false);
+
+  const displayAlert = () => {
+    return alert ? (
+      <Alert variant="filled" severity="success">
+        Score submitted!
+      </Alert>
+    ) : null;
+  };
+
   const dialogAction = () => {
     if (currentRound < NUMBER_OF_ROUNDS) {
       return (
@@ -814,7 +825,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           disabled={running || loading || !usernamePresent}
           onClick={() => {
             uploadScore();
-            setRoute("home");
+            setUsernamePresent(false);
+            setAlert(true);
+            setTimeout(() => {
+              setRoute("home");
+            }, 2000);
           }}
         >
           Submit Score
@@ -892,7 +907,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           />
         </Card>
       </div>
-
       <Dialog classes={{ paper: classes.dialogPaper }} open={showDialog}>
         <DialogTitle className={classes.result} disableTypography>
           <Typography variant="h3">Results</Typography>
@@ -914,6 +928,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </DialogContent>
 
         <DialogActions>{dialogAction()}</DialogActions>
+
+        {displayAlert()}
       </Dialog>
     </>
   );
