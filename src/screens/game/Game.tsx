@@ -3,15 +3,12 @@ import {
   AppBar,
   Button,
   Card,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   IconButton,
   TextField,
   Toolbar,
   Typography,
 } from "@material-ui/core";
+import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import { Alert } from "@material-ui/lab";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
@@ -22,19 +19,53 @@ import { db } from "../../firebase/firebaseApp";
 import LoadingButton from "../../components/LoadingButton";
 import DbUtils from "../../utils/DbUtils";
 
-const useStyles = makeStyles(() =>
+const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     backButton: {
       marginRight: 8,
     },
     container: {
+      height: "100%",
+      display: "flex",
+      justifyContent: "space-evenly",
+      alignItems: "center",
+      [theme.breakpoints.down("sm")]: {
+        flexDirection: "column",
+      },
+      [theme.breakpoints.up("md")]: {
+        flexDirection: "row",
+      },
+    },
+    emptyDiv: {
+      [theme.breakpoints.down("sm")]: {
+        flex: 0,
+      },
+      [theme.breakpoints.up("md")]: {
+        flex: 1,
+      },
+    },
+    timerCanvasContainer: {
       display: "flex",
       flexDirection: "column",
       justifyContent: "space-evenly",
       alignItems: "center",
     },
     timerContainer: {
-      width: "min(81vh, 81vw)",
+      [theme.breakpoints.only("xs")]: {
+        width: 300,
+      },
+      [theme.breakpoints.only("sm")]: {
+        width: 450,
+      },
+      [theme.breakpoints.only("md")]: {
+        width: 550,
+      },
+      [theme.breakpoints.only("lg")]: {
+        width: 650,
+      },
+      [theme.breakpoints.only("xl")]: {
+        width: 750,
+      },
       margin: 8,
       padding: 8,
     },
@@ -44,8 +75,26 @@ const useStyles = makeStyles(() =>
       fontSize: "1.5rem",
     },
     canvasContainer: {
-      height: "min(81vh, 81vw)",
-      width: "min(81vh, 81vw)",
+      [theme.breakpoints.only("xs")]: {
+        height: 300,
+        width: 300,
+      },
+      [theme.breakpoints.only("sm")]: {
+        height: 450,
+        width: 450,
+      },
+      [theme.breakpoints.only("md")]: {
+        height: 550,
+        width: 550,
+      },
+      [theme.breakpoints.only("lg")]: {
+        height: 650,
+        width: 650,
+      },
+      [theme.breakpoints.only("xl")]: {
+        height: 750,
+        width: 750,
+      },
       display: "grid",
       justifyContent: "center",
       alignItems: "center",
@@ -55,8 +104,24 @@ const useStyles = makeStyles(() =>
       gridColumnStart: 1,
       gridRowStart: 1,
     },
-    dialogPaper: {
-      width: "200vw",
+    sideContainer: {
+      [theme.breakpoints.down("sm")]: {
+        justifyContent: "center",
+      },
+      [theme.breakpoints.up("md")]: {
+        flex: 1,
+        height: "100%",
+        justifyContent: "flex-end",
+        alignItems: "center",
+      },
+      display: "flex",
+    },
+    sideCard: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "flex-end",
+      margin: 8,
+      padding: 8,
     },
     result: {
       marginTop: 8,
@@ -91,8 +156,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [canvasSize, setCanvasSize] = useState(
     Math.floor(Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8))
   );
-
-  const [showDialog, setShowDialog] = useState(true);
 
   const [currentRound, setCurrentRound] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -463,6 +526,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
 
     if (timeRemaining <= 0) {
+      setLoading(true);
       stopTimer();
 
       setAnimDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
@@ -488,7 +552,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
             setAiCorrect(false);
           }
 
-          setShowDialog(true);
+          setLoading(false);
         }, 2500);
       });
     } else if (timeRemaining <= 2000) {
@@ -550,6 +614,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
+    setLoading(true);
     stopTimer();
 
     const [clickX, clickY] = [event.clientX, event.clientY];
@@ -592,7 +657,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           setAiCorrect(false);
         }
 
-        setShowDialog(true);
+        setLoading(false);
       }, 2500);
     });
   };
@@ -684,12 +749,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Starts a new round, loading a new image and its corresponding json data
    */
   const startNewRound = async () => {
+    setLoading(true);
+    setHinted(false);
     setCurrentRound((prevState) => prevState + 1);
-    setShowDialog(false);
     setAiCorrect(false);
     setPlayerCorrect(false);
-    setHinted(false);
-    setLoading(true);
 
     const fileNumber = getNewFileNumber();
 
@@ -780,18 +844,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setUsername(event.target.value);
   };
 
-  const [alert, setAlert] = useState(false);
-
-  const displayAlert = () => {
-    return alert ? (
-      <Alert variant="filled" severity="success">
-        Score submitted!
-      </Alert>
-    ) : null;
+  const onSubmitScore = async () => {
+    await uploadScore();
+    setRoute("leaderboard");
   };
 
   const dialogAction = () => {
-    if (currentRound < NUMBER_OF_ROUNDS) {
+    if (currentRound < NUMBER_OF_ROUNDS || running || loading) {
       return (
         <LoadingButton
           loading={loading}
@@ -812,7 +871,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </TwitterShareButton>
 
         <TextField
-          label="Enter username"
+          label="Username"
           variant="outlined"
           value={username}
           onChange={onChangeUsername}
@@ -822,15 +881,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           variant="contained"
           color="primary"
           size="large"
-          disabled={running || loading || !usernamePresent}
-          onClick={() => {
-            uploadScore();
-            setUsernamePresent(false);
-            setAlert(true);
-            setTimeout(() => {
-              setRoute("home");
-            }, 2000);
-          }}
+          disabled={running || loading}
+          onClick={onSubmitScore}
         >
           Submit Score
         </Button>
@@ -838,6 +890,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     );
   };
 
+  // @ts-ignore
   const hideAnswersOnStart = (round: number) => {
     if (round > 0) {
       return (
@@ -878,59 +931,48 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       </AppBar>
 
       <div className={classes.container}>
-        <Card className={classes.timerContainer}>
-          <Typography className={classes.timerText} variant="h4" style={{ color: timerColor }}>
-            Time remaining: {(timeRemaining / 1000).toFixed(1)}s
-          </Typography>
+        <div className={classes.emptyDiv} />
 
-          <ColoredLinearProgress
-            barColor={timerColor}
-            variant="determinate"
-            value={timeRemaining / 100}
-          />
-        </Card>
+        <div className={classes.timerCanvasContainer}>
+          <Card className={classes.timerContainer}>
+            <Typography className={classes.timerText} variant="h4" style={{ color: timerColor }}>
+              Time remaining: {(timeRemaining / 1000).toFixed(1)}s
+            </Typography>
 
-        <Card className={classes.canvasContainer}>
-          <canvas
-            className={classes.canvas}
-            ref={canvasRef}
-            width={canvasSize}
-            height={canvasSize}
-          />
+            <ColoredLinearProgress
+              barColor={timerColor}
+              variant="determinate"
+              value={timeRemaining / 100}
+            />
+          </Card>
 
-          <canvas
-            className={classes.canvas}
-            ref={animCanvasRef}
-            width={canvasSize}
-            height={canvasSize}
-            onClick={onCanvasClick}
-          />
-        </Card>
+          <Card className={classes.canvasContainer}>
+            <canvas className={classes.canvas} ref={canvasRef} />
+
+            <canvas className={classes.canvas} ref={animCanvasRef} onClick={onCanvasClick} />
+          </Card>
+        </div>
+
+        <div className={classes.sideContainer}>
+          <Card className={classes.sideCard}>
+            <div>
+              <Typography className={classes.result} variant="h5">
+                Results
+              </Typography>
+
+              <Typography className={classes.result} variant="h6">
+                Correct (you): {playerPoints}
+              </Typography>
+
+              <Typography className={classes.result} variant="h6">
+                Correct (AI): {aiPoints}
+              </Typography>
+            </div>
+
+            {dialogAction()}
+          </Card>
+        </div>
       </div>
-      <Dialog classes={{ paper: classes.dialogPaper }} open={showDialog}>
-        <DialogTitle className={classes.result} disableTypography>
-          <Typography variant="h3">Results</Typography>
-        </DialogTitle>
-
-        <DialogContent>
-          {hideAnswersOnStart(currentRound)}
-          <Typography className={classes.result} variant="h4">
-            Correct (you): {playerPoints}
-          </Typography>
-
-          <Typography className={classes.result} variant="h4">
-            Correct (AI): {aiPoints}
-          </Typography>
-
-          <Typography className={classes.result} variant="h4">
-            Total Scans: {currentRound}
-          </Typography>
-        </DialogContent>
-
-        <DialogActions>{dialogAction()}</DialogActions>
-
-        {displayAlert()}
-      </Dialog>
     </>
   );
 };
