@@ -888,7 +888,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     );
   };
 
-  // @ts-ignore
   const hideAnswersOnStart = (round: number) => {
     if (round > 0) {
       return (
@@ -945,13 +944,25 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           </Card>
 
           <Card className={classes.canvasContainer}>
-            <canvas className={classes.canvas} ref={canvasRef} />
+            <canvas
+              className={classes.canvas}
+              width={canvasSize}
+              height={canvasSize}
+              ref={canvasRef}
+            />
 
-            <canvas className={classes.canvas} ref={animCanvasRef} onClick={onCanvasClick} />
+            <canvas
+              className={classes.canvas}
+              width={canvasSize}
+              height={canvasSize}
+              ref={animCanvasRef}
+              onClick={onCanvasClick}
+            />
           </Card>
         </div>
 
         <div className={classes.sideContainer}>
+          {hideAnswersOnStart(currentRound)}
           <Card className={classes.sideCard}>
             <div>
               <Typography className={classes.result} variant="h5">
