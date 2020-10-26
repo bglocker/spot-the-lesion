@@ -887,6 +887,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           onChange={onChangeUsername}
         />
 
+        <Typography>Your final score is: {playerScore}</Typography>
+
         <Button
           variant="contained"
           color="primary"
@@ -981,7 +983,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               </Typography>
 
               <Typography className={classes.result} variant="h6">
-                Correct (you): {playerScore}
+                Correct (you): {playerCorrectAnswers}
               </Typography>
 
               <Typography className={classes.result} variant="h6">
