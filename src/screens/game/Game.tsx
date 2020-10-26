@@ -12,7 +12,7 @@ import {
   Toolbar,
   Typography,
 } from "@material-ui/core";
-import { makeStyles, createStyles } from "@material-ui/core/styles";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
@@ -265,6 +265,25 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     [canvasSize]
   );
 
+  const getCube = useCallback((baseCornerX: number, baseCornerY: number, cubeSide: number) => {
+    const cube: number[] = [];
+
+    cube[0] = baseCornerX;
+    cube[1] = baseCornerY;
+    cube[2] = cube[0] + cubeSide;
+    cube[3] = cube[1] + cubeSide;
+    return cube;
+  }, []);
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const getCornerCube = useCallback(
+    (cubeSide: number) => {
+      return getCube(0, 0, cubeSide);
+    },
+    [getCube]
+  );
+
   /**
    * Returns an array of cube coordinates, filling a side of a given canvas,
    * with gaps between every 2 cubes
@@ -276,24 +295,21 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    *
    * @return Array of cube corner coordinates
    */
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const getCubes = useCallback(
     (canvas: HTMLCanvasElement, numCubes: number, cubeSide: number, left: boolean) => {
       const cubes: number[][] = [];
 
       for (let i = 0; i < numCubes; i++) {
-        const cube: number[] = [];
-
-        cube[0] = left ? 0 : canvas.width - cubeSide;
-        cube[1] = left ? 2 * i * cubeSide : (2 * i + 1) * cubeSide;
-        cube[2] = cube[0] + cubeSide;
-        cube[3] = cube[1] + cubeSide;
-
-        cubes[i] = cube;
+        const baseCornerX = left ? 0 : canvas.width - cubeSide;
+        const baseCornerY = left ? 2 * i * cubeSide : (2 * i + 1) * cubeSide;
+        cubes[i] = getCube(baseCornerX, baseCornerY, cubeSide);
       }
 
       return cubes;
     },
-    []
+    [getCube]
   );
 
   /**
@@ -305,36 +321,28 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    */
   const drawAiSearchAnimation = useCallback(
     (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-      const animationTime = 1000;
+      const animationTime = 5000;
       const numCubes = 5;
       const cubeSide = canvas.width / (numCubes * 2);
-      const leftCubes = getCubes(canvas, numCubes, cubeSide, true);
-      const rightCubes = getCubes(canvas, numCubes, cubeSide, false);
+      let cube = getCornerCube(cubeSide);
 
       /* Draw cubes in initial position */
-      leftCubes.forEach((cube) => drawRectangle(context, cube, INVALID_COLOUR, 3));
-      rightCubes.forEach((cube) => drawRectangle(context, cube, TRUE_COLOUR, 3));
+      drawRectangle(context, cube, INVALID_COLOUR, 3);
 
       const intervalId = window.setInterval(() => {
         /* Clear previous cubes */
         context.clearRect(0, 0, canvas.width, canvas.height);
 
         /* Advance left cubes */
-        leftCubes.forEach((cube) => {
-          cube[0] += cubeSide;
-          cube[2] += cubeSide;
+        cube[0] += cubeSide;
+        cube[2] += cubeSide;
 
-          drawRectangle(context, cube, INVALID_COLOUR, 3);
-        });
+        drawRectangle(context, cube, VALID_COLOUR, 3);
 
-        /* Advance right cubes */
-        rightCubes.forEach((cube) => {
-          cube[0] -= cubeSide;
-          cube[2] -= cubeSide;
-
-          drawRectangle(context, cube, TRUE_COLOUR, 3);
-        });
-      }, animationTime / (numCubes * 2));
+        if (cube[2] > canvas.width) {
+          cube = getCube(0, cube[1] + cubeSide, cubeSide);
+        }
+      }, animationTime / 100);
 
       setTimeout(() => {
         clearInterval(intervalId);
@@ -343,7 +351,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         context.clearRect(0, 0, canvas.width, canvas.height);
       }, animationTime);
     },
-    [drawRectangle, getCubes]
+    [drawRectangle, getCornerCube, getCube]
   );
 
   /**
