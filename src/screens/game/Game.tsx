@@ -141,6 +141,7 @@ const NUMBER_OF_ROUNDS = 10;
 const TOTAL_TIME_MS = 10000;
 
 const DEFAULT_CANVAS_SIZE = 512;
+const MAX_CANVAS_SIZE = 750;
 
 const MAX_FILE_NUMBER = 100;
 
@@ -154,18 +155,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [context, canvasRef] = useCanvasContext();
   const [animContext, animCanvasRef] = useCanvasContext();
 
-  const [canvasSize, setCanvasSize] = useState(750);
-
   const [currentRound, setCurrentRound] = useState(0);
   const [loading, setLoading] = useState(false);
   const [running, setRunning] = useState(false);
-
   const [hinted, setHinted] = useState(false);
 
   const [timeRemaining, setTimeRemaining] = useState(TOTAL_TIME_MS);
   const [timerColor, setTimerColor] = useState("#373737");
-
-  const [username, setUsername] = useState("");
 
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
@@ -175,6 +171,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [playerCorrect, setPlayerCorrect] = useState(false);
   const [aiCorrect, setAiCorrect] = useState(false);
+
+  const [username, setUsername] = useState("");
 
   /**
    * Called every 100 milliseconds, while the game is running,
@@ -191,20 +189,18 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const stopTimer = () => setRunning(false);
 
   /**
-   * Called on windows resize
+   * Maps a given value to the current canvas scale
+   *
+   * @param x Value to map
+   *
+   * @return Given value, mapped to the canvas scale
    */
-  const onResize = () => {
-    const newWidth = window.innerWidth * 0.8;
-    const newHeight = window.innerHeight * 0.8;
-
-    setCanvasSize(Math.floor(Math.min(newHeight, newWidth)));
-  };
-
-  useEffect(() => {
-    window.addEventListener("resize", onResize);
-
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
+  const mapToCanvasScale = useCallback(
+    (x: number) => {
+      return (x * context.canvas.width) / DEFAULT_CANVAS_SIZE;
+    },
+    [context]
+  );
 
   /**
    * Draws a rectangle
@@ -276,10 +272,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       ctx.strokeStyle = strokeStyle;
       ctx.lineWidth = width;
       ctx.beginPath();
-      ctx.arc(x, y, (radius * canvasSize) / DEFAULT_CANVAS_SIZE, 0, 2 * Math.PI);
+      ctx.arc(x, y, radius, 0, 2 * Math.PI);
       ctx.stroke();
     },
-    [canvasSize]
+    []
   );
 
   /**
@@ -389,9 +385,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const drawHint = useCallback(() => {
     const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
     const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
+    const radius = 100;
 
-    drawCircle(context, x, y, 100, 2, INVALID_COLOUR);
-  }, [context, drawCircle, truth]);
+    drawCircle(context, x, y, mapToCanvasScale(radius), 2, INVALID_COLOUR);
+  }, [context, drawCircle, mapToCanvasScale, truth]);
 
   /**
    * Draws the player click cross
@@ -620,12 +617,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     `${process.env.PUBLIC_URL}/content/images/${fileNumber}.png`;
 
   /**
-   * Maps the coordinates of a given rectangle according to the current canvas size
+   * Maps the coordinates of a given rectangle to the current canvas scale
    *
    * @param rect Coordinates for the corners of the rectangle to map
+   *
+   * @return Given rectangle coordinates, mapped to the canvas scale
    */
-  const mapCoordinates = (rect: number[]): number[] =>
-    rect.map((coordinate) => (coordinate * canvasSize) / DEFAULT_CANVAS_SIZE);
+  const mapCoordinates = (rect: number[]) => rect.map(mapToCanvasScale);
 
   /**
    * Loads the data from the json corresponding to the given fileNumber
@@ -841,15 +839,15 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
             <canvas
               className={classes.canvas}
               ref={canvasRef}
-              width={canvasSize}
-              height={canvasSize}
+              width={MAX_CANVAS_SIZE}
+              height={MAX_CANVAS_SIZE}
             />
 
             <canvas
               className={classes.canvas}
               ref={animCanvasRef}
-              width={canvasSize}
-              height={canvasSize}
+              width={MAX_CANVAS_SIZE}
+              height={MAX_CANVAS_SIZE}
               onClick={onCanvasClick}
             />
           </Card>
