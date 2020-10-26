@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
+import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 import {
   AppBar,
   Button,
@@ -18,6 +18,7 @@ import useInterval from "../../components/useInterval";
 import { db } from "../../firebase/firebaseApp";
 import LoadingButton from "../../components/LoadingButton";
 import DbUtils from "../../utils/DbUtils";
+import useCanvasContext from "../../components/useCanvasContext";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -155,8 +156,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const seenFiles = new Set<number>();
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [context, canvasRef] = useCanvasContext();
+  const [animContext, animCanvasRef] = useCanvasContext();
 
   const [canvasSize, setCanvasSize] = useState(750);
 
@@ -179,10 +180,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [playerCorrect, setPlayerCorrect] = useState(false);
   const [aiCorrect, setAiCorrect] = useState(false);
-
-  type DrawType = (context: CanvasRenderingContext2D) => void;
-  const [draw, setDraw] = useState<DrawType | null>(null);
-  const [animDraw, setAnimDraw] = useState<DrawType | null>(null);
 
   /**
    * Called every 100 milliseconds, while the game is running,
@@ -214,52 +211,16 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (canvas === null) {
-      return;
-    }
-
-    const context = canvas.getContext("2d");
-    if (context === null) {
-      return;
-    }
-
-    if (draw === null) {
-      return;
-    }
-
-    draw(context);
-  }, [draw]);
-
-  useEffect(() => {
-    const animCanvas = animCanvasRef.current;
-    if (animCanvas === null) {
-      return;
-    }
-
-    const animContext = animCanvas.getContext("2d");
-    if (animContext === null) {
-      return;
-    }
-
-    if (animDraw === null) {
-      return;
-    }
-
-    animDraw(animContext);
-  }, [animDraw]);
-
   /**
    * Draws a rectangle
    *
-   * @param context     Context to draw the rectangle on
+   * @param ctx         Context to draw the rectangle on
    * @param rect        Coordinates for the corners of the rectangle to draw
    * @param strokeStyle Style for drawing the rectangle
    * @param lineWidth   Width of the rectangle lines
    */
   const drawRectangle = useCallback(
-    (context: CanvasRenderingContext2D, rect: number[], strokeStyle: string, lineWidth: number) => {
+    (ctx: CanvasRenderingContext2D, rect: number[], strokeStyle: string, lineWidth: number) => {
       const xBase = rect[0];
       const xEnd = rect[2];
       const yBase = rect[1];
@@ -268,11 +229,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       const width = xEnd - xBase;
       const height = yEnd - yBase;
 
-      context.strokeStyle = strokeStyle;
-      context.lineWidth = lineWidth;
-      context.beginPath();
-      context.rect(xBase, yBase, width, height);
-      context.stroke();
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = lineWidth;
+      ctx.beginPath();
+      ctx.rect(xBase, yBase, width, height);
+      ctx.stroke();
     },
     []
   );
@@ -280,26 +241,20 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   /**
    * Draws a cross
    *
-   * @param context     Context to draw the cross on
+   * @param ctx         Context to draw the cross on
    * @param x           Width coordinate
    * @param y           Height coordinate
    * @param strokeStyle Style for drawing the cross
    */
   const drawCross = useCallback(
-    (
-      context: CanvasRenderingContext2D,
-      x: number,
-      y: number,
-      size: number,
-      strokeStyle: string
-    ) => {
-      context.strokeStyle = strokeStyle;
-      context.beginPath();
-      context.moveTo(x - size, y - size);
-      context.lineTo(x + size, y + size);
-      context.moveTo(x + size, y - size);
-      context.lineTo(x - size, y + size);
-      context.stroke();
+    (ctx: CanvasRenderingContext2D, x: number, y: number, size: number, strokeStyle: string) => {
+      ctx.strokeStyle = strokeStyle;
+      ctx.beginPath();
+      ctx.moveTo(x - size, y - size);
+      ctx.lineTo(x + size, y + size);
+      ctx.moveTo(x + size, y - size);
+      ctx.lineTo(x - size, y + size);
+      ctx.stroke();
     },
     []
   );
@@ -307,7 +262,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   /**
    * Draws a circle
    *
-   * @param context     Context to draw the circle on
+   * @param ctx         Context to draw the circle on
    * @param x           Width coordinate
    * @param y           Height coordinate
    * @param radius      Circle radius
@@ -316,18 +271,18 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    */
   const drawCircle = useCallback(
     (
-      context: CanvasRenderingContext2D,
+      ctx: CanvasRenderingContext2D,
       x: number,
       y: number,
       radius: number,
       width: number,
       strokeStyle: string
     ) => {
-      context.strokeStyle = strokeStyle;
-      context.lineWidth = width;
-      context.beginPath();
-      context.arc(x, y, (radius * canvasSize) / DEFAULT_CANVAS_SIZE, 0, 2 * Math.PI);
-      context.stroke();
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.arc(x, y, (radius * canvasSize) / DEFAULT_CANVAS_SIZE, 0, 2 * Math.PI);
+      ctx.stroke();
     },
     [canvasSize]
   );
@@ -336,20 +291,21 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Returns an array of cube coordinates, filling a side of a given canvas,
    * with gaps between every 2 cubes
    *
-   * @param numCubes Number of cubes to return (on one side)
-   * @param cubeSide Length of a cube side
-   * @param left     Whether to generate cubes for the left or right side of canvas
+   * @param canvasWidth Width of the canvas, used to position cubes on the right side
+   * @param numCubes    Number of cubes to return (on one side)
+   * @param cubeSide    Length of a cube side
+   * @param left        Whether to generate cubes for the left or right side of canvas
    *
    * @return Array of cube corner coordinates
    */
   const getCubes = useCallback(
-    (context: CanvasRenderingContext2D, numCubes: number, cubeSide: number, left: boolean) => {
+    (canvasWidth: number, numCubes: number, cubeSide: number, left: boolean) => {
       const cubes: number[][] = [];
 
       for (let i = 0; i < numCubes; i++) {
         const cube: number[] = [];
 
-        cube[0] = left ? 0 : context.canvas.width - cubeSide;
+        cube[0] = left ? 0 : canvasWidth - cubeSide;
         cube[1] = left ? 2 * i * cubeSide : (2 * i + 1) * cubeSide;
         cube[2] = cube[0] + cubeSide;
         cube[3] = cube[1] + cubeSide;
@@ -363,108 +319,95 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   );
 
   /**
+   * Clears the animation canvas
+   */
+  const clearAnimCanvas = useCallback(() => {
+    animContext.clearRect(0, 0, animContext.canvas.width, animContext.canvas.height);
+  }, [animContext]);
+
+  /**
    * Draw an AI search animation, rendering cubes on both sides of the canvas,
    * moving towards their opposite side
-   *
-   * @param context Context to draw the animation on
    */
-  const drawAiSearchAnimation = useCallback(
-    (context: CanvasRenderingContext2D) => {
-      const animationTime = 1000;
-      const numCubes = 5;
-      const cubeSide = context.canvas.width / (numCubes * 2);
-      const leftCubes = getCubes(context, numCubes, cubeSide, true);
-      const rightCubes = getCubes(context, numCubes, cubeSide, false);
+  const drawAiSearchAnimation = useCallback(() => {
+    const animationTime = 1000;
+    const numCubes = 5;
 
-      /* Draw cubes in initial position */
-      leftCubes.forEach((cube) => drawRectangle(context, cube, INVALID_COLOUR, 3));
-      rightCubes.forEach((cube) => drawRectangle(context, cube, TRUE_COLOUR, 3));
+    const canvasWidth = animContext.canvas.width;
+    const cubeSide = canvasWidth / (numCubes * 2);
+    const leftCubes = getCubes(canvasWidth, numCubes, cubeSide, true);
+    const rightCubes = getCubes(canvasWidth, numCubes, cubeSide, false);
 
-      const intervalId = window.setInterval(() => {
-        /* Clear previous cubes */
-        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+    /* Draw cubes in initial position */
+    leftCubes.forEach((cube) => drawRectangle(animContext, cube, INVALID_COLOUR, 3));
+    rightCubes.forEach((cube) => drawRectangle(animContext, cube, TRUE_COLOUR, 3));
 
-        /* Advance left cubes */
-        leftCubes.forEach((cube) => {
-          cube[0] += cubeSide;
-          cube[2] += cubeSide;
+    const intervalId = window.setInterval(() => {
+      /* Clear previous cubes */
+      clearAnimCanvas();
 
-          drawRectangle(context, cube, INVALID_COLOUR, 3);
-        });
+      /* Advance left cubes */
+      leftCubes.forEach((cube) => {
+        cube[0] += cubeSide;
+        cube[2] += cubeSide;
 
-        /* Advance right cubes */
-        rightCubes.forEach((cube) => {
-          cube[0] -= cubeSide;
-          cube[2] -= cubeSide;
+        drawRectangle(animContext, cube, INVALID_COLOUR, 3);
+      });
 
-          drawRectangle(context, cube, TRUE_COLOUR, 3);
-        });
-      }, animationTime / (numCubes * 2));
+      /* Advance right cubes */
+      rightCubes.forEach((cube) => {
+        cube[0] -= cubeSide;
+        cube[2] -= cubeSide;
 
-      setTimeout(() => {
-        clearInterval(intervalId);
+        drawRectangle(animContext, cube, TRUE_COLOUR, 3);
+      });
+    }, animationTime / (numCubes * 2));
 
-        /* Clear whole canvas */
-        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-      }, animationTime);
-    },
-    [drawRectangle, getCubes]
-  );
+    setTimeout(() => {
+      clearInterval(intervalId);
+
+      clearAnimCanvas();
+    }, animationTime);
+  }, [animContext, clearAnimCanvas, drawRectangle, getCubes]);
 
   /**
    * Draws the truth rectangle
-   *
-   * @param context Context to draw the rectangle on
    */
-  const drawTruth = useCallback(
-    (context: CanvasRenderingContext2D) => {
-      drawRectangle(context, truth, TRUE_COLOUR, 3);
-    },
-    [truth, drawRectangle]
-  );
+  const drawTruth = useCallback(() => {
+    drawRectangle(context, truth, TRUE_COLOUR, 3);
+  }, [context, drawRectangle, truth]);
 
   /**
    * Draws the predicted rectangle
-   *
-   * @param context     Context to draw the rectangle on
    * @param strokeStyle Style for drawing the rectangle
    */
   const drawPredicted = useCallback(
-    (context: CanvasRenderingContext2D, strokeStyle: string) => {
+    (strokeStyle: string) => {
       drawRectangle(context, predicted, strokeStyle, 3);
     },
-    [predicted, drawRectangle]
+    [context, drawRectangle, predicted]
   );
 
   /**
    * Draws the hint circle
-   *
-   * @param context Context to draw the circle on
    */
-  const drawHint = useCallback(
-    (context: CanvasRenderingContext2D) => {
-      const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
-      const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
+  const drawHint = useCallback(() => {
+    const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
+    const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
 
-      drawCircle(context, x, y, 100, 2, INVALID_COLOUR);
-    },
-    [drawCircle, truth]
-  );
+    drawCircle(context, x, y, 100, 2, INVALID_COLOUR);
+  }, [context, drawCircle, truth]);
 
   /**
    * Draws the player click cross
    *
-   * @param context     Context to draw the cross on
    * @param x           Width coordinate
    * @param y           Height coordinate
    * @param strokeStyle Style for drawing the cross
    */
-  const drawPlayerClick = useCallback(
-    (context: CanvasRenderingContext2D, x: number, y: number, strokeStyle: string) => {
-      drawCross(context, x, y, 5, strokeStyle);
-    },
-    [drawCross]
-  );
+  const drawPlayerClick = (x: number, y: number, strokeStyle: string) => {
+    drawCross(context, x, y, 5, strokeStyle);
+  };
 
   /**
    * Given the coordinates of two rectangles, returns the ratio of their intersection
@@ -513,12 +456,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    *
    * @return The success value
    */
-  const isPlayerRight = useCallback(
-    (x: number, y: number) => {
-      return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
-    },
-    [truth]
-  );
+  const isPlayerRight = (x: number, y: number) => {
+    return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
+  };
 
   useEffect(() => {
     if (!running) {
@@ -529,32 +469,28 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       setLoading(true);
       stopTimer();
 
-      setAnimDraw(() => (context: CanvasRenderingContext2D) => {
-        drawAiSearchAnimation(context);
-      });
+      drawAiSearchAnimation();
 
-      setDraw(() => (context: CanvasRenderingContext2D) => {
-        setTimeout(() => {
-          drawPredicted(context, DEFAULT_COLOUR);
-        }, 1000);
+      setTimeout(() => {
+        drawPredicted(DEFAULT_COLOUR);
+      }, 1000);
 
-        setTimeout(() => {
-          drawTruth(context);
-        }, 1500);
+      setTimeout(() => {
+        drawTruth();
+      }, 1500);
 
-        setTimeout(() => {
-          if (isAiPredictionRight()) {
-            setAiPoints((prevState) => prevState + 1);
-            drawPredicted(context, VALID_COLOUR);
-            setAiCorrect(true);
-          } else {
-            drawPredicted(context, INVALID_COLOUR);
-            setAiCorrect(false);
-          }
+      setTimeout(() => {
+        if (isAiPredictionRight()) {
+          setAiPoints((prevState) => prevState + 1);
+          drawPredicted(VALID_COLOUR);
+          setAiCorrect(true);
+        } else {
+          drawPredicted(INVALID_COLOUR);
+          setAiCorrect(false);
+        }
 
-          setLoading(false);
-        }, 2500);
-      });
+        setLoading(false);
+      }, 2500);
     } else if (timeRemaining <= 2000) {
       setTimerColor("red");
     } else if (timeRemaining <= 5000) {
@@ -566,7 +502,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       setTimerColor("orange");
 
-      setDraw(() => (context: CanvasRenderingContext2D) => drawHint(context));
+      drawHint();
     } else {
       setTimerColor("#373737");
     }
@@ -584,25 +520,21 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   /**
    * Maps the mouse position relative to the given canvas
    *
-   * @param canvas Canvas to map relative to
    * @param clickX Click coordinate on width
    * @param clickY Click coordinate on height
    *
    * @return Click width and height coordinates, relative to the canvas
    */
-  const getClickPositionOnCanvas = useCallback(
-    (context: CanvasRenderingContext2D, clickX: number, clickY: number) => {
-      const rect = context.canvas.getBoundingClientRect();
-      const widthScale = context.canvas.width / rect.width;
-      const heightScale = context.canvas.height / rect.height;
+  const getClickPositionOnCanvas = (clickX: number, clickY: number) => {
+    const rect = context.canvas.getBoundingClientRect();
+    const widthScale = context.canvas.width / rect.width;
+    const heightScale = context.canvas.height / rect.height;
 
-      return {
-        x: (clickX - rect.left) * widthScale,
-        y: (clickY - rect.top) * heightScale,
-      };
-    },
-    []
-  );
+    return {
+      x: (clickX - rect.left) * widthScale,
+      y: (clickY - rect.top) * heightScale,
+    };
+  };
 
   /**
    * Called when the canvas is clicked
@@ -619,45 +551,43 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     const [clickX, clickY] = [event.clientX, event.clientY];
 
-    setAnimDraw(() => (context: CanvasRenderingContext2D) => drawAiSearchAnimation(context));
+    drawAiSearchAnimation();
 
-    setDraw(() => (context: CanvasRenderingContext2D) => {
-      const { x, y } = getClickPositionOnCanvas(context, clickX, clickY);
+    const { x, y } = getClickPositionOnCanvas(clickX, clickY);
 
-      drawPlayerClick(context, x, y, DEFAULT_COLOUR);
+    drawPlayerClick(x, y, DEFAULT_COLOUR);
 
-      setTimeout(() => {
-        drawPredicted(context, DEFAULT_COLOUR);
-      }, 1000);
+    setTimeout(() => {
+      drawPredicted(DEFAULT_COLOUR);
+    }, 1000);
 
-      setTimeout(() => {
-        drawTruth(context);
-      }, 1500);
+    setTimeout(() => {
+      drawTruth();
+    }, 1500);
 
-      setTimeout(() => {
-        if (isPlayerRight(x, y)) {
-          setPlayerPoints((prevState) => prevState + 1);
-          drawPlayerClick(context, x, y, VALID_COLOUR);
-          setPlayerCorrect(true);
-        } else {
-          drawPlayerClick(context, x, y, INVALID_COLOUR);
-          setPlayerCorrect(false);
-        }
-      }, 2000);
+    setTimeout(() => {
+      if (isPlayerRight(x, y)) {
+        setPlayerPoints((prevState) => prevState + 1);
+        drawPlayerClick(x, y, VALID_COLOUR);
+        setPlayerCorrect(true);
+      } else {
+        drawPlayerClick(x, y, INVALID_COLOUR);
+        setPlayerCorrect(false);
+      }
+    }, 2000);
 
-      setTimeout(() => {
-        if (isAiPredictionRight()) {
-          setAiPoints((prevState) => prevState + 1);
-          drawPredicted(context, VALID_COLOUR);
-          setAiCorrect(true);
-        } else {
-          drawPredicted(context, INVALID_COLOUR);
-          setAiCorrect(false);
-        }
+    setTimeout(() => {
+      if (isAiPredictionRight()) {
+        setAiPoints((prevState) => prevState + 1);
+        drawPredicted(VALID_COLOUR);
+        setAiCorrect(true);
+      } else {
+        drawPredicted(INVALID_COLOUR);
+        setAiCorrect(false);
+      }
 
-        setLoading(false);
-      }, 2500);
-    });
+      setLoading(false);
+    }, 2500);
   };
 
   /**
@@ -725,14 +655,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       const image = new Image();
 
       image.onload = () => {
-        setAnimDraw(() => (context: CanvasRenderingContext2D) =>
-          context.clearRect(0, 0, context.canvas.width, context.canvas.height)
-        );
+        clearAnimCanvas();
 
-        setDraw(() => (context: CanvasRenderingContext2D) => {
-          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-          context.drawImage(image, 0, 0, context.canvas.width, context.canvas.height);
-        });
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+        context.drawImage(image, 0, 0, context.canvas.width, context.canvas.height);
 
         resolve();
       };
@@ -882,28 +808,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </Button>
       </>
     );
-  };
-
-  // @ts-ignore
-  const hideAnswersOnStart = (round: number) => {
-    if (round > 0) {
-      return (
-        <div>
-          <Typography className={classes.result} variant="h5">
-            You were: {displayCorrect(playerCorrect)}
-          </Typography>
-
-          <Typography className={classes.result} variant="h5">
-            AI was: {displayCorrect(aiCorrect)}
-          </Typography>
-
-          <Typography className={classes.result} variant="h5">
-            Results
-          </Typography>
-        </div>
-      );
-    }
-    return null;
   };
 
   return (

@@ -49,6 +49,7 @@
     "@typescript-eslint/no-unused-vars": "off",
     "semi": "off",
     "@typescript-eslint/semi": "error",
+    "@typescript-eslint/no-non-null-assertion": "off",
     "quotes": [ "error", "double" ],
     "prettier/prettier": [ "error", { "endOfLine": "auto" } ],
     "react/prefer-stateless-function": "error",
