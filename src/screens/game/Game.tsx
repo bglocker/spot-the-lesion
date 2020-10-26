@@ -169,11 +169,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
 
-  const [playerPoints, setPlayerPoints] = useState(0);
-  const [aiPoints, setAiPoints] = useState(0);
+  const [playerScore, setPlayerScore] = useState(0);
+  const [aiCorrectAnswers, setAiCorrectAnswers] = useState(0);
+  const [playerCorrectAnswers, setPlayerCorrectAnswers] = useState(0);
 
-  const [playerCorrect, setPlayerCorrect] = useState(false);
-  const [aiCorrect, setAiCorrect] = useState(false);
+  const [isPlayerCorrect, setIsPlayerCorrect] = useState(false);
+  const [isAiCorrect, setIsAiCorrect] = useState(false);
 
   type DrawType = (context: CanvasRenderingContext2D) => void;
   const [draw, setDraw] = useState<DrawType | null>(null);
@@ -542,12 +543,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
         setTimeout(() => {
           if (isAiPredictionRight()) {
-            setAiPoints((prevState) => prevState + 1);
+            setAiCorrectAnswers((prevState) => prevState + 1);
             drawPredicted(context, VALID_COLOUR);
-            setAiCorrect(true);
+            setIsAiCorrect(true);
           } else {
             drawPredicted(context, INVALID_COLOUR);
-            setAiCorrect(false);
+            setIsAiCorrect(false);
           }
 
           setLoading(false);
@@ -636,23 +637,24 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         if (isPlayerRight(x, y)) {
           const timeRate = timeRemaining / 1000;
           const increaseRate = hinted ? timeRate * 10 : timeRate * 20;
-          setPlayerPoints((prevState) => prevState + increaseRate);
+          setPlayerCorrectAnswers((prevState) => prevState + 1);
+          setPlayerScore((prevState) => prevState + increaseRate);
           drawPlayerClick(context, x, y, VALID_COLOUR);
-          setPlayerCorrect(true);
+          setIsPlayerCorrect(true);
         } else {
           drawPlayerClick(context, x, y, INVALID_COLOUR);
-          setPlayerCorrect(false);
+          setIsPlayerCorrect(false);
         }
       }, 2000);
 
       setTimeout(() => {
         if (isAiPredictionRight()) {
-          setAiPoints((prevState) => prevState + 1);
+          setAiCorrectAnswers((prevState) => prevState + 1);
           drawPredicted(context, VALID_COLOUR);
-          setAiCorrect(true);
+          setIsAiCorrect(true);
         } else {
           drawPredicted(context, INVALID_COLOUR);
-          setAiCorrect(false);
+          setIsAiCorrect(false);
         }
 
         setLoading(false);
@@ -750,8 +752,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setLoading(true);
     setHinted(false);
     setCurrentRound((prevState) => prevState + 1);
-    setAiCorrect(false);
-    setPlayerCorrect(false);
+    setIsAiCorrect(false);
+    setIsPlayerCorrect(false);
 
     const fileNumber = getNewFileNumber();
 
@@ -781,7 +783,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const date = new Date();
     const entry = {
       user: username,
-      score: playerPoints,
+      score: playerScore,
+      correctPlayerAnswers: playerCorrectAnswers,
+      correctAiAnswers: aiCorrectAnswers,
       day: date.getDate(),
       month: DbUtils.monthNames[date.getMonth()],
       year: date.getFullYear(),
@@ -797,7 +801,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       .where("month", "==", entry.month)
       .where("day", "==", entry.day)
       .where("user", "==", username)
-      .where("score", ">", playerPoints)
+      .where("score", ">", playerScore)
       .get();
 
     if (dailySnapshot.empty) {
@@ -809,7 +813,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       .where("year", "==", entry.year)
       .where("month", "==", entry.month)
       .where("user", "==", username)
-      .where("score", ">", playerPoints)
+      .where("score", ">", playerScore)
       .get();
 
     if (monthlySnapshot.empty) {
@@ -819,7 +823,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const allTimeSnapshot = await db
       .collection(DbUtils.ALL_TIME_LEADERBOARD)
       .where("user", "==", username)
-      .where("score", ">", playerPoints)
+      .where("score", ">", playerScore)
       .get();
 
     if (allTimeSnapshot.empty) {
@@ -871,7 +875,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       <>
         <TwitterShareButton
           url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
-          title={`I got ${playerPoints} points in Spot-the-Lesion! Can you beat my score?`}
+          title={`I got ${playerScore} points in Spot-the-Lesion! Can you beat my score?`}
         >
           <TwitterIcon size="50px" round />
         </TwitterShareButton>
@@ -894,6 +898,27 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </Button>
       </>
     );
+  };
+
+  const hideAnswersOnStart = (round: number) => {
+    if (round > 0) {
+      return (
+        <div>
+          <Typography className={classes.result} variant="h4">
+            You were: {displayCorrect(isPlayerCorrect)}
+          </Typography>
+
+          <Typography className={classes.result} variant="h4">
+            AI was: {displayCorrect(isAiCorrect)}
+          </Typography>
+
+          <Typography className={classes.result} variant="h4">
+            Results
+          </Typography>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -956,11 +981,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               </Typography>
 
               <Typography className={classes.result} variant="h6">
-                Correct (you): {playerPoints} {displayCorrect(playerCorrect)}
+                Correct (you): {playerScore}
               </Typography>
 
               <Typography className={classes.result} variant="h6">
-                Correct (AI): {aiPoints} {displayCorrect(aiCorrect)}
+                Correct (AI): {aiCorrectAnswers}
               </Typography>
             </div>
 
