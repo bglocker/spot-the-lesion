@@ -3,6 +3,7 @@ import {
   AppBar,
   Button,
   Card,
+  Dialog,
   IconButton,
   TextField,
   Toolbar,
@@ -12,6 +13,9 @@ import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
+import CloseIcon from "@material-ui/icons/Close";
+import { Map, ImageOverlay } from "react-leaflet";
+import L, { LatLngBoundsLiteral } from "leaflet";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import useInterval from "../../components/useInterval";
 import { db } from "../../firebase/firebaseApp";
@@ -179,6 +183,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   type DrawType = (context: CanvasRenderingContext2D) => void;
   const [draw, setDraw] = useState<DrawType | null>(null);
   const [animDraw, setAnimDraw] = useState<DrawType | null>(null);
+
+  /**
+   * The heatmap dialog box information
+   */
+  const [heatmapDialogOpen, setHeatmapDialogOpen] = useState(false);
 
   /* TODO: check if upload to databse fails to give different message */
   const { enqueueSnackbar } = useSnackbar();
@@ -831,15 +840,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
   };
 
-  // const displayCorrect = (correct: boolean) =>
-  //   currentRound > 0 && !running && !loading ? (
-  //     <span style={{ color: correct ? VALID_COLOUR : INVALID_COLOUR }}>
-  //       {correct ? "(+ 1)" : "(+ 0)"}
-  //     </span>
-  //   ) : (
-  //     ""
-  //   );
-
   const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.value !== "") {
       setSubmitEnabled(true);
@@ -902,26 +902,18 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     );
   };
 
-  // const hideAnswersOnStart = (round: number) => {
-  //   if (round > 0) {
-  //     return (
-  //       <div>
-  //         <Typography className={classes.result} variant="h4">
-  //           You were: {displayCorrect(isPlayerCorrect)}
-  //         </Typography>
-  //
-  //         <Typography className={classes.result} variant="h4">
-  //           AI was: {displayCorrect(isAiCorrect)}
-  //         </Typography>
-  //
-  //         <Typography className={classes.result} variant="h4">
-  //           Results
-  //         </Typography>
-  //       </div>
-  //     );
-  //   }
-  //   return null;
-  // };
+  const bounds: LatLngBoundsLiteral = [
+    [100, 0],
+    [0, 100],
+  ];
+
+  const openHeatmap = () => {
+    setHeatmapDialogOpen(true);
+  };
+
+  const closeHeatmap = () => {
+    setHeatmapDialogOpen(false);
+  };
 
   return (
     <>
@@ -991,9 +983,25 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               </Typography>
             </div>
 
+            <Button variant="contained" color="primary" size="large" onClick={openHeatmap}>
+              See the heatmap
+            </Button>
             {enableNextClick()}
           </Card>
         </div>
+
+        <Dialog fullScreen open={heatmapDialogOpen} onClose={openHeatmap}>
+          <AppBar position="sticky">
+            <Toolbar variant="dense">
+              <IconButton edge="start" color="inherit" onClick={closeHeatmap} aria-label="close">
+                <CloseIcon />
+              </IconButton>
+            </Toolbar>
+          </AppBar>
+          <Map crs={L.CRS.Simple} bounds={bounds}>
+            <ImageOverlay bounds={bounds} url={`${process.env.PUBLIC_URL}/content/images/0.png`} />
+          </Map>
+        </Dialog>
       </div>
     </>
   );
