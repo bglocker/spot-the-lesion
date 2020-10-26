@@ -173,8 +173,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [aiCorrectAnswers, setAiCorrectAnswers] = useState(0);
   const [playerCorrectAnswers, setPlayerCorrectAnswers] = useState(0);
 
-  const [isPlayerCorrect, setIsPlayerCorrect] = useState(false);
-  const [isAiCorrect, setIsAiCorrect] = useState(false);
+  // const [isPlayerCorrect, setIsPlayerCorrect] = useState(false);
+  // const [isAiCorrect, setIsAiCorrect] = useState(false);
 
   type DrawType = (context: CanvasRenderingContext2D) => void;
   const [draw, setDraw] = useState<DrawType | null>(null);
@@ -545,10 +545,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           if (isAiPredictionRight()) {
             setAiCorrectAnswers((prevState) => prevState + 1);
             drawPredicted(context, VALID_COLOUR);
-            setIsAiCorrect(true);
+            // setIsAiCorrect(true);
           } else {
             drawPredicted(context, INVALID_COLOUR);
-            setIsAiCorrect(false);
+            // setIsAiCorrect(false);
           }
 
           setLoading(false);
@@ -640,10 +640,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           setPlayerCorrectAnswers((prevState) => prevState + 1);
           setPlayerScore((prevState) => prevState + increaseRate);
           drawPlayerClick(context, x, y, VALID_COLOUR);
-          setIsPlayerCorrect(true);
+          // setIsPlayerCorrect(true);
         } else {
           drawPlayerClick(context, x, y, INVALID_COLOUR);
-          setIsPlayerCorrect(false);
+          // setIsPlayerCorrect(false);
         }
       }, 2000);
 
@@ -651,10 +651,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         if (isAiPredictionRight()) {
           setAiCorrectAnswers((prevState) => prevState + 1);
           drawPredicted(context, VALID_COLOUR);
-          setIsAiCorrect(true);
+          // setIsAiCorrect(true);
         } else {
           drawPredicted(context, INVALID_COLOUR);
-          setIsAiCorrect(false);
+          // setIsAiCorrect(false);
         }
 
         setLoading(false);
@@ -752,8 +752,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setLoading(true);
     setHinted(false);
     setCurrentRound((prevState) => prevState + 1);
-    setIsAiCorrect(false);
-    setIsPlayerCorrect(false);
+    // setIsAiCorrect(false);
+    // setIsPlayerCorrect(false);
 
     const fileNumber = getNewFileNumber();
 
@@ -831,14 +831,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
   };
 
-  const displayCorrect = (correct: boolean) =>
-    currentRound > 0 && !running && !loading ? (
-      <span style={{ color: correct ? VALID_COLOUR : INVALID_COLOUR }}>
-        {correct ? "(+ 1)" : "(+ 0)"}
-      </span>
-    ) : (
-      ""
-    );
+  // const displayCorrect = (correct: boolean) =>
+  //   currentRound > 0 && !running && !loading ? (
+  //     <span style={{ color: correct ? VALID_COLOUR : INVALID_COLOUR }}>
+  //       {correct ? "(+ 1)" : "(+ 0)"}
+  //     </span>
+  //   ) : (
+  //     ""
+  //   );
 
   const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.value !== "") {
@@ -900,26 +900,26 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     );
   };
 
-  const hideAnswersOnStart = (round: number) => {
-    if (round > 0) {
-      return (
-        <div>
-          <Typography className={classes.result} variant="h4">
-            You were: {displayCorrect(isPlayerCorrect)}
-          </Typography>
-
-          <Typography className={classes.result} variant="h4">
-            AI was: {displayCorrect(isAiCorrect)}
-          </Typography>
-
-          <Typography className={classes.result} variant="h4">
-            Results
-          </Typography>
-        </div>
-      );
-    }
-    return null;
-  };
+  // const hideAnswersOnStart = (round: number) => {
+  //   if (round > 0) {
+  //     return (
+  //       <div>
+  //         <Typography className={classes.result} variant="h4">
+  //           You were: {displayCorrect(isPlayerCorrect)}
+  //         </Typography>
+  //
+  //         <Typography className={classes.result} variant="h4">
+  //           AI was: {displayCorrect(isAiCorrect)}
+  //         </Typography>
+  //
+  //         <Typography className={classes.result} variant="h4">
+  //           Results
+  //         </Typography>
+  //       </div>
+  //     );
+  //   }
+  //   return null;
+  // };
 
   return (
     <>
