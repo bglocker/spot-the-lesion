@@ -16,6 +16,7 @@ import useInterval from "../../components/useInterval";
 import { db } from "../../firebase/firebaseApp";
 import LoadingButton from "../../components/LoadingButton";
 import DbUtils from "../../utils/DbUtils";
+import useCanvasContext from "../../components/useCanvasContext";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -150,8 +151,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const seenFiles = new Set<number>();
 
-  const [context, setContext] = useState<CanvasRenderingContext2D>(null!);
-  const [animContext, setAnimContext] = useState<CanvasRenderingContext2D>(null!);
+  const [context, canvasRef] = useCanvasContext();
+  const [animContext, animCanvasRef] = useCanvasContext();
 
   const [canvasSize, setCanvasSize] = useState(750);
 
@@ -203,26 +204,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     window.addEventListener("resize", onResize);
 
     return () => window.removeEventListener("resize", onResize);
-  }, []);
-
-  /* Callback ref for setting canvas context */
-  const canvasRef = useCallback((canvas: HTMLCanvasElement) => {
-    /* Called with null on unmount */
-    if (canvas === null) {
-      return;
-    }
-
-    setContext(canvas.getContext("2d")!);
-  }, []);
-
-  /* Callback ref for setting animation canvas context */
-  const animCanvasRef = useCallback((animCanvas: HTMLCanvasElement) => {
-    /* Called with null on unmount */
-    if (animCanvas === null) {
-      return;
-    }
-
-    setAnimContext(animCanvas.getContext("2d")!);
   }, []);
 
   /**
