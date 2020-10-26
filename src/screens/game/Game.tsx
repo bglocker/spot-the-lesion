@@ -328,6 +328,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * moving towards their opposite side
    */
   const drawAiSearchAnimation = useCallback(() => {
+    enqueueSnackbar("The system is thinking...");
+
     const animationTime = 5000;
     const numCubes = 5;
 
@@ -359,7 +361,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         clearAnimCanvas();
       }
     }, animationTime / 100);
-  }, [animContext, clearAnimCanvas, drawRectangle, getCornerCube, getCube]);
+  }, [animContext, clearAnimCanvas, drawRectangle, enqueueSnackbar, getCornerCube, getCube]);
 
   /**
    * Draws the truth rectangle
@@ -452,6 +454,29 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
   };
 
+  /**
+   * Sets a timeout for animation that shows whether the AI prediction was right or wrong
+   */
+  const drawAIAnswerCheckAnimation = useCallback(() => {
+    setTimeout(() => {
+      if (isAiPredictionRight()) {
+        const scoreObtained = Math.round(
+          getIntersectionOverUnion(truth, predicted) * AI_SCORE_INCREASE_RATE
+        );
+
+        setAiScore((prevState) => prevState + scoreObtained);
+        setAiCorrectAnswers((prevState) => prevState + 1);
+        drawPredicted(VALID_COLOUR);
+        setAiCorrect(true);
+      } else {
+        drawPredicted(INVALID_COLOUR);
+        setAiCorrect(false);
+      }
+
+      setLoading(false);
+    }, AI_ANIMATION_TIME + 1500);
+  }, [drawPredicted, isAiPredictionRight, predicted, truth]);
+
   useEffect(() => {
     if (!running) {
       return;
@@ -471,23 +496,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         drawTruth();
       }, AI_ANIMATION_TIME + 500);
 
-      setTimeout(() => {
-        if (isAiPredictionRight()) {
-          const scoreObtained = Math.round(
-            getIntersectionOverUnion(truth, predicted) * AI_SCORE_INCREASE_RATE
-          );
-
-          setAiScore((prevState) => prevState + scoreObtained);
-          setAiCorrectAnswers((prevState) => prevState + 1);
-          drawPredicted(VALID_COLOUR);
-          setAiCorrect(true);
-        } else {
-          drawPredicted(INVALID_COLOUR);
-          setAiCorrect(false);
-        }
-
-        setLoading(false);
-      }, AI_ANIMATION_TIME + 1500);
+      drawAIAnswerCheckAnimation();
     } else if (timeRemaining <= 2000) {
       setTimerColor("red");
     } else if (timeRemaining <= 5000) {
@@ -515,6 +524,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     truth,
     predicted,
     aiCorrectAnswers,
+    drawAIAnswerCheckAnimation,
   ]);
 
   /**
@@ -566,6 +576,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }, AI_ANIMATION_TIME + 500);
 
     setTimeout(() => {
+      enqueueSnackbar("Checking results...");
       if (isPlayerRight(x, y)) {
         const timeRate = timeRemaining / 1000;
         const increaseRate = hinted ? timeRate * 10 : timeRate * 20;
@@ -580,23 +591,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       }
     }, AI_ANIMATION_TIME + 1000);
 
-    setTimeout(() => {
-      if (isAiPredictionRight()) {
-        const scoreObtained = Math.round(
-          getIntersectionOverUnion(truth, predicted) * AI_SCORE_INCREASE_RATE
-        );
-
-        setAiScore((prevState) => prevState + scoreObtained);
-        setAiCorrectAnswers((prevState) => prevState + 1);
-        drawPredicted(VALID_COLOUR);
-        setAiCorrect(true);
-      } else {
-        drawPredicted(INVALID_COLOUR);
-        setAiCorrect(false);
-      }
-
-      setLoading(false);
-    }, AI_ANIMATION_TIME + 1500);
+    drawAIAnswerCheckAnimation();
   };
 
   /**
@@ -953,10 +948,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
               <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
             </div>
-
-            <Button variant="contained" color="primary" size="large" onClick={openHeatmap}>
-              See the heatmap
-            </Button>
           </Card>
         </div>
 
