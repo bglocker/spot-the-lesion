@@ -21,9 +21,7 @@ import { db } from "../../firebase/firebaseApp";
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     backButton: {
-      [theme.breakpoints.up("md")]: {
-        margin: 8,
-      },
+      marginRight: 8,
     },
     container: {
       height: "100%",
