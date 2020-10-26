@@ -317,34 +317,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   );
 
   /**
-   * Returns an array of cube coordinates, filling a side of a given canvas,
-   * with gaps between every 2 cubes
-   *
-   * @param canvasWidth Width of the canvas, used to position cubes on the right side
-   * @param numCubes    Number of cubes to return (on one side)
-   * @param cubeSide    Length of a cube side
-   * @param left        Whether to generate cubes for the left or right side of canvas
-   *
-   * @return Array of cube corner coordinates
-   */
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const getCubes = useCallback(
-    (canvasWidth: number, numCubes: number, cubeSide: number, left: boolean) => {
-      const cubes: number[][] = [];
-
-      for (let i = 0; i < numCubes; i++) {
-        const baseCornerX = left ? 0 : canvasWidth - cubeSide;
-        const baseCornerY = left ? 2 * i * cubeSide : (2 * i + 1) * cubeSide;
-        cubes[i] = getCube(baseCornerX, baseCornerY, cubeSide);
-      }
-
-      return cubes;
-    },
-    [getCube]
-  );
-
-  /**
    * Clears the animation canvas
    */
   const clearAnimCanvas = useCallback(() => {
@@ -356,40 +328,38 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * moving towards their opposite side
    */
   const drawAiSearchAnimation = useCallback(() => {
-      const animationTime = 5000;
-      const numCubes = 5;
+    const animationTime = 5000;
+    const numCubes = 5;
 
-      const canvasWidth = animContext.canvas.width;
-      const canvasHeight = animContext.canvas.height;
-      const cubeSide = canvasWidth / (numCubes * 2);
-      let cube = getCornerCube(cubeSide);
+    const canvasWidth = animContext.canvas.width;
+    const canvasHeight = animContext.canvas.height;
+    const cubeSide = canvasWidth / (numCubes * 2);
+    let cube = getCornerCube(cubeSide);
 
-      /* Draw cubes in initial position */
-      drawRectangle(context, cube, INVALID_COLOUR, 3);
+    /* Draw cubes in initial position */
+    drawRectangle(animContext, cube, INVALID_COLOUR, 3);
 
     const intervalId = window.setInterval(() => {
       /* Clear previous cubes */
       clearAnimCanvas();
 
-        /* Advance cube to right */
-        cube[0] += cubeSide;
-        cube[2] += cubeSide;
+      /* Advance cube to right */
+      cube[0] += cubeSide;
+      cube[2] += cubeSide;
 
-        drawRectangle(context, cube, VALID_COLOUR, 3);
+      drawRectangle(animContext, cube, VALID_COLOUR, 3);
 
-        /* When cube gets to right-most bound, advance cube below & restart */
-        if (cube[2] > canvasWidth) {
-          cube = getCube(-cubeSide, cube[1] + cubeSide, cubeSide);
-        }
-        /* When cube gets out of lower bound, end animation */
-        if (cube[1] > canvasHeight) {
-          clearInterval(intervalId);
-          clearAnimCanvas();
-        }
-      }, animationTime / 100);
-    },
-    [drawRectangle, getCornerCube, getCube]
-  );
+      /* When cube gets to right-most bound, advance cube below & restart */
+      if (cube[2] > canvasWidth) {
+        cube = getCube(-cubeSide, cube[1] + cubeSide, cubeSide);
+      }
+      /* When cube gets out of lower bound, end animation */
+      if (cube[1] > canvasHeight) {
+        clearInterval(intervalId);
+        clearAnimCanvas();
+      }
+    }, animationTime / 100);
+  }, [animContext, clearAnimCanvas, drawRectangle, getCornerCube, getCube]);
 
   /**
    * Draws the truth rectangle
