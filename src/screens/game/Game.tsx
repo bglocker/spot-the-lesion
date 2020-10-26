@@ -141,6 +141,7 @@ const TRUE_COLOUR = "blue";
 
 const NUMBER_OF_ROUNDS = 10;
 const TOTAL_TIME_MS = 10000;
+const AI_SCORE_INCREASE_RATE = 75;
 
 const DEFAULT_CANVAS_SIZE = 512;
 
@@ -173,7 +174,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
 
+  const [aiScore, setAiScore] = useState(0);
   const [playerScore, setPlayerScore] = useState(0);
+
   const [aiCorrectAnswers, setAiCorrectAnswers] = useState(0);
   const [playerCorrectAnswers, setPlayerCorrectAnswers] = useState(0);
 
@@ -552,6 +555,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
         setTimeout(() => {
           if (isAiPredictionRight()) {
+            const scoreObtained = Math.round(
+              getIntersectionOverUnion(truth, predicted) * AI_SCORE_INCREASE_RATE
+            );
+            setAiScore((prevState) => prevState + scoreObtained);
             setAiCorrectAnswers((prevState) => prevState + 1);
             drawPredicted(context, VALID_COLOUR);
             // setIsAiCorrect(true);
@@ -587,6 +594,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     isAiPredictionRight,
     running,
     timeRemaining,
+    truth,
+    predicted,
+    aiCorrectAnswers,
   ]);
 
   /**
@@ -658,6 +668,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       setTimeout(() => {
         if (isAiPredictionRight()) {
+          const scoreObtained = Math.round(
+            getIntersectionOverUnion(truth, predicted) * AI_SCORE_INCREASE_RATE
+          );
+          setAiScore((prevState) => prevState + scoreObtained);
           setAiCorrectAnswers((prevState) => prevState + 1);
           drawPredicted(context, VALID_COLOUR);
           // setIsAiCorrect(true);
@@ -793,8 +807,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const entry = {
       user: username,
       score: playerScore,
-      correctPlayerAnswers: playerCorrectAnswers,
-      correctAiAnswers: aiCorrectAnswers,
+      ai_score: aiScore,
+      correct_player_answers: playerCorrectAnswers,
+      correct_ai_answers: aiCorrectAnswers,
       day: date.getDate(),
       month: DbUtils.monthNames[date.getMonth()],
       year: date.getFullYear(),
@@ -859,6 +874,29 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     enqueueSnackbar("Score successfully submitted!");
   };
 
+  const decideWinner = () => {
+    if (playerScore > aiScore) {
+      return (
+        <Typography className={classes.result} variant="h6" style={{ color: VALID_COLOUR }}>
+          You Won !
+        </Typography>
+      );
+    }
+    if (aiScore > playerScore) {
+      return (
+        <Typography className={classes.result} variant="h6" style={{ color: INVALID_COLOUR }}>
+          AI won !
+        </Typography>
+      );
+    }
+    // Otherwise it was a draw
+    return (
+      <Typography className={classes.result} variant="h6" style={{ color: DEFAULT_COLOUR }}>
+        It was a draw !
+      </Typography>
+    );
+  };
+
   const enableNextClick = () => {
     if (currentRound < NUMBER_OF_ROUNDS || running || loading) {
       return (
@@ -887,7 +925,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           onChange={onChangeUsername}
         />
 
-        <Typography>Your final score is: {playerScore}</Typography>
+        {decideWinner()}
 
         <Button
           variant="contained"
@@ -975,11 +1013,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               </Typography>
 
               <Typography className={classes.result} variant="h6">
-                Correct (you): {playerCorrectAnswers}
+                Score (AI): {aiScore}
               </Typography>
 
               <Typography className={classes.result} variant="h6">
-                Correct (AI): {aiCorrectAnswers}
+                Score (Player): {playerScore}
               </Typography>
             </div>
 
