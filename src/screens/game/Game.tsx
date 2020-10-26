@@ -10,6 +10,8 @@ import {
 } from "@material-ui/core";
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
+import CheckIcon from "@material-ui/icons/Check";
+import ClearIcon from "@material-ui/icons/Clear";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import useInterval from "../../components/useInterval";
@@ -21,7 +23,9 @@ import useCanvasContext from "../../components/useCanvasContext";
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     backButton: {
-      marginRight: 8,
+      [theme.breakpoints.up("md")]: {
+        margin: 8,
+      },
     },
     container: {
       height: "100%",
@@ -50,20 +54,13 @@ const useStyles = makeStyles((theme: Theme) =>
       alignItems: "center",
     },
     timerContainer: {
-      [theme.breakpoints.only("xs")]: {
-        width: 300,
+      [theme.breakpoints.down("sm")]: {
+        width: "80vw",
+        maxWidth: "65vh",
       },
-      [theme.breakpoints.only("sm")]: {
-        width: 450,
-      },
-      [theme.breakpoints.only("md")]: {
-        width: 550,
-      },
-      [theme.breakpoints.only("lg")]: {
-        width: 650,
-      },
-      [theme.breakpoints.only("xl")]: {
-        width: 750,
+      [theme.breakpoints.up("md")]: {
+        width: "70vh",
+        maxWidth: "70vw",
       },
       margin: 8,
       padding: 8,
@@ -74,25 +71,17 @@ const useStyles = makeStyles((theme: Theme) =>
       fontSize: "1.5rem",
     },
     canvasContainer: {
-      [theme.breakpoints.only("xs")]: {
-        height: 300,
-        width: 300,
+      [theme.breakpoints.down("sm")]: {
+        height: "80vw",
+        width: "80vw",
+        maxWidth: "65vh",
+        maxHeight: "65vh",
       },
-      [theme.breakpoints.only("sm")]: {
-        height: 450,
-        width: 450,
-      },
-      [theme.breakpoints.only("md")]: {
-        height: 550,
-        width: 550,
-      },
-      [theme.breakpoints.only("lg")]: {
-        height: 650,
-        width: 650,
-      },
-      [theme.breakpoints.only("xl")]: {
-        height: 750,
-        width: 750,
+      [theme.breakpoints.up("md")]: {
+        height: "70vh",
+        width: "70vh",
+        maxWidth: "70vw",
+        maxHeight: "70vw",
       },
       display: "grid",
       justifyContent: "center",
@@ -102,8 +91,8 @@ const useStyles = makeStyles((theme: Theme) =>
     canvas: {
       gridColumnStart: 1,
       gridRowStart: 1,
-      width: "100%",
       height: "100%",
+      width: "100%",
     },
     sideContainer: {
       [theme.breakpoints.down("sm")]: {
@@ -118,16 +107,32 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
     },
     sideCard: {
+      [theme.breakpoints.down("sm")]: {
+        width: "80vw",
+        maxWidth: "65vh",
+      },
+      minWidth: "20vw",
       display: "flex",
-      flexDirection: "column",
-      alignItems: "flex-end",
+      flexDirection: "row",
+      alignItems: "center",
+      alignContent: "center",
       margin: 8,
       padding: 8,
     },
     result: {
-      marginTop: 8,
-      marginBottom: 8,
+      [theme.breakpoints.down("sm")]: {
+        fontSize: 20,
+      },
+      [theme.breakpoints.up("md")]: {
+        marginTop: 8,
+        marginBottom: 8,
+        fontSize: 34,
+      },
       textAlign: "center",
+    },
+    weirdFlexButOk: {
+      flex: 1,
+      flexDirection: "column",
     },
   })
 );
@@ -742,14 +747,16 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
   };
 
-  const displayCorrect = (correct: boolean) =>
-    currentRound > 0 && !running && !loading ? (
-      <span style={{ color: correct ? VALID_COLOUR : INVALID_COLOUR }}>
-        {correct ? "(+ 1)" : "(+ 0)"}
-      </span>
-    ) : (
-      ""
-    );
+  const displayCorrect = (correct: boolean) => {
+    if (currentRound > 0 && !running && !loading) {
+      return correct ? (
+        <CheckIcon style={{ fill: "green", width: 100 }} />
+      ) : (
+        <ClearIcon style={{ fill: "red", width: 100 }} />
+      );
+    }
+    return "";
+  };
 
   const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
     setUsername(event.target.value);
@@ -767,7 +774,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           loading={loading}
           buttonDisabled={running || loading}
           onButtonClick={onStartNextClick}
-          buttonText={currentRound === 0 ? "Start" : "Next"}
+          buttonText={currentRound === 0 ? "Start" : ".Next."}
         />
       );
     }
@@ -855,21 +862,26 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
         <div className={classes.sideContainer}>
           <Card className={classes.sideCard}>
-            <div>
-              <Typography className={classes.result} variant="h5">
-                Results
+            <div className={classes.weirdFlexButOk}>
+              <Typography className={classes.result} variant="h4">
+                You
               </Typography>
-
-              <Typography className={classes.result} variant="h6">
-                Correct (you): {playerPoints} {displayCorrect(playerCorrect)}
-              </Typography>
-
-              <Typography className={classes.result} variant="h6">
-                Correct (AI): {aiPoints} {displayCorrect(aiCorrect)}
-              </Typography>
+              <div className={classes.result}>{displayCorrect(playerCorrect)}</div>
             </div>
 
-            {dialogAction()}
+            <div className={classes.weirdFlexButOk}>
+              <Typography className={classes.result} variant="h4">
+                {playerPoints} vs {aiPoints}
+              </Typography>
+              <div className={classes.result}>{dialogAction()}</div>
+            </div>
+
+            <div className={classes.weirdFlexButOk}>
+              <Typography className={classes.result} variant="h4">
+                AI
+              </Typography>
+              <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
+            </div>
           </Card>
         </div>
       </div>
