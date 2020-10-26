@@ -101,6 +101,8 @@ const useStyles = makeStyles((theme: Theme) =>
     canvas: {
       gridColumnStart: 1,
       gridRowStart: 1,
+      width: "100%",
+      height: "100%",
     },
     sideContainer: {
       [theme.breakpoints.down("sm")]: {
