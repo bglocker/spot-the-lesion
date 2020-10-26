@@ -1,39 +1,67 @@
-import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
+import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 import {
   AppBar,
   Button,
   Card,
   Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   IconButton,
   TextField,
   Toolbar,
   Typography,
 } from "@material-ui/core";
-import { makeStyles, createStyles } from "@material-ui/core/styles";
-import { KeyboardBackspace } from "@material-ui/icons";
+import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
+import { KeyboardBackspace, Check, Clear, Close } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
+import { useSnackbar } from "notistack";
+import { Map, ImageOverlay } from "react-leaflet";
+import L, { LatLngBoundsLiteral } from "leaflet";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import useInterval from "../../components/useInterval";
-import { db } from "../../firebase/firebaseApp";
+import useCanvasContext from "../../components/useCanvasContext";
 import LoadingButton from "../../components/LoadingButton";
 import DbUtils from "../../utils/DbUtils";
+import { db } from "../../firebase/firebaseApp";
 
-const useStyles = makeStyles(() =>
+const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     backButton: {
       marginRight: 8,
     },
     container: {
+      height: "100%",
+      display: "flex",
+      justifyContent: "space-evenly",
+      alignItems: "center",
+      [theme.breakpoints.down("sm")]: {
+        flexDirection: "column",
+      },
+      [theme.breakpoints.up("md")]: {
+        flexDirection: "row",
+      },
+    },
+    emptyDiv: {
+      [theme.breakpoints.down("sm")]: {
+        flex: 0,
+      },
+      [theme.breakpoints.up("md")]: {
+        flex: 1,
+      },
+    },
+    timerCanvasContainer: {
       display: "flex",
       flexDirection: "column",
       justifyContent: "space-evenly",
       alignItems: "center",
     },
     timerContainer: {
-      width: "min(81vh, 81vw)",
+      [theme.breakpoints.down("sm")]: {
+        width: "80vw",
+        maxWidth: "65vh",
+      },
+      [theme.breakpoints.up("md")]: {
+        width: "70vh",
+        maxWidth: "70vw",
+      },
       margin: 8,
       padding: 8,
     },
@@ -43,8 +71,18 @@ const useStyles = makeStyles(() =>
       fontSize: "1.5rem",
     },
     canvasContainer: {
-      height: "min(81vh, 81vw)",
-      width: "min(81vh, 81vw)",
+      [theme.breakpoints.down("sm")]: {
+        height: "80vw",
+        width: "80vw",
+        maxWidth: "65vh",
+        maxHeight: "65vh",
+      },
+      [theme.breakpoints.up("md")]: {
+        height: "70vh",
+        width: "70vh",
+        maxWidth: "70vw",
+        maxHeight: "70vw",
+      },
       display: "grid",
       justifyContent: "center",
       alignItems: "center",
@@ -53,14 +91,48 @@ const useStyles = makeStyles(() =>
     canvas: {
       gridColumnStart: 1,
       gridRowStart: 1,
+      height: "100%",
+      width: "100%",
     },
-    dialogPaper: {
-      width: "200vw",
+    sideContainer: {
+      [theme.breakpoints.down("sm")]: {
+        justifyContent: "center",
+      },
+      [theme.breakpoints.up("md")]: {
+        flex: 1,
+        height: "100%",
+        justifyContent: "flex-end",
+        alignItems: "center",
+      },
+      display: "flex",
+    },
+    sideCard: {
+      [theme.breakpoints.down("sm")]: {
+        width: "80vw",
+        maxWidth: "65vh",
+      },
+      minWidth: "20vw",
+      display: "flex",
+      flexDirection: "row",
+      alignItems: "center",
+      alignContent: "center",
+      margin: 8,
+      padding: 8,
     },
     result: {
-      marginTop: 8,
-      marginBottom: 8,
+      [theme.breakpoints.down("sm")]: {
+        fontSize: 20,
+      },
+      [theme.breakpoints.up("md")]: {
+        marginTop: 8,
+        marginBottom: 8,
+        fontSize: 34,
+      },
       textAlign: "center",
+    },
+    flexButton: {
+      flex: 1,
+      flexDirection: "column",
     },
   })
 );
@@ -72,10 +144,13 @@ const TRUE_COLOUR = "blue";
 
 const NUMBER_OF_ROUNDS = 10;
 const TOTAL_TIME_MS = 10000;
+const AI_SCORE_INCREASE_RATE = 75;
 
 const DEFAULT_CANVAS_SIZE = 512;
+const MAX_CANVAS_SIZE = 750;
 
 const MAX_FILE_NUMBER = 100;
+const AI_ANIMATION_TIME = 5000;
 
 type JsonData = { truth: number[]; predicted: number[] };
 
@@ -84,38 +159,39 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const seenFiles = new Set<number>();
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animCanvasRef = useRef<HTMLCanvasElement>(null);
-
-  const [canvasSize, setCanvasSize] = useState(
-    Math.floor(Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8))
-  );
-
-  const [showDialog, setShowDialog] = useState(true);
+  const [context, canvasRef] = useCanvasContext();
+  const [animContext, animCanvasRef] = useCanvasContext();
 
   const [currentRound, setCurrentRound] = useState(0);
   const [loading, setLoading] = useState(false);
   const [running, setRunning] = useState(false);
-
   const [hinted, setHinted] = useState(false);
+  const [submitEnabled, setSubmitEnabled] = useState(false);
 
   const [timeRemaining, setTimeRemaining] = useState(TOTAL_TIME_MS);
   const [timerColor, setTimerColor] = useState("#373737");
 
-  const [username, setUsername] = useState("");
-
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
 
-  const [playerPoints, setPlayerPoints] = useState(0);
-  const [aiPoints, setAiPoints] = useState(0);
+  const [playerScore, setPlayerScore] = useState(0);
+  const [aiScore, setAiScore] = useState(0);
 
   const [playerCorrect, setPlayerCorrect] = useState(false);
   const [aiCorrect, setAiCorrect] = useState(false);
 
-  type DrawType = (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => void;
-  const [draw, setDraw] = useState<DrawType | null>(null);
-  const [animDraw, setAnimDraw] = useState<DrawType | null>(null);
+  const [aiCorrectAnswers, setAiCorrectAnswers] = useState(0);
+  const [playerCorrectAnswers, setPlayerCorrectAnswers] = useState(0);
+
+  const [username, setUsername] = useState("");
+
+  /**
+   * The heatmap dialog box information
+   */
+  const [heatmapDialogOpen, setHeatmapDialogOpen] = useState(false);
+
+  /* TODO: check if upload to database fails to give different message */
+  const { enqueueSnackbar } = useSnackbar();
 
   /**
    * Called every 100 milliseconds, while the game is running,
@@ -132,67 +208,29 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const stopTimer = () => setRunning(false);
 
   /**
-   * Called on windows resize
+   * Maps a given value to the current canvas scale
+   *
+   * @param x Value to map
+   *
+   * @return Given value, mapped to the canvas scale
    */
-  const onResize = () => {
-    const newWidth = window.innerWidth * 0.8;
-    const newHeight = window.innerHeight * 0.8;
-
-    setCanvasSize(Math.floor(Math.min(newHeight, newWidth)));
-  };
-
-  useEffect(() => {
-    window.addEventListener("resize", onResize);
-
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (canvas === null) {
-      return;
-    }
-
-    const context = canvas.getContext("2d");
-    if (context === null) {
-      return;
-    }
-
-    if (draw === null) {
-      return;
-    }
-
-    draw(canvas, context);
-  }, [draw]);
-
-  useEffect(() => {
-    const animCanvas = animCanvasRef.current;
-    if (animCanvas === null) {
-      return;
-    }
-
-    const animContext = animCanvas.getContext("2d");
-    if (animContext === null) {
-      return;
-    }
-
-    if (animDraw === null) {
-      return;
-    }
-
-    animDraw(animCanvas, animContext);
-  }, [animDraw]);
+  const mapToCanvasScale = useCallback(
+    (x: number) => {
+      return (x * context.canvas.width) / DEFAULT_CANVAS_SIZE;
+    },
+    [context]
+  );
 
   /**
    * Draws a rectangle
    *
-   * @param context     Context to draw the rectangle on
+   * @param ctx         Context to draw the rectangle on
    * @param rect        Coordinates for the corners of the rectangle to draw
    * @param strokeStyle Style for drawing the rectangle
    * @param lineWidth   Width of the rectangle lines
    */
   const drawRectangle = useCallback(
-    (context: CanvasRenderingContext2D, rect: number[], strokeStyle: string, lineWidth: number) => {
+    (ctx: CanvasRenderingContext2D, rect: number[], strokeStyle: string, lineWidth: number) => {
       const xBase = rect[0];
       const xEnd = rect[2];
       const yBase = rect[1];
@@ -201,11 +239,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       const width = xEnd - xBase;
       const height = yEnd - yBase;
 
-      context.strokeStyle = strokeStyle;
-      context.lineWidth = lineWidth;
-      context.beginPath();
-      context.rect(xBase, yBase, width, height);
-      context.stroke();
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = lineWidth;
+      ctx.beginPath();
+      ctx.rect(xBase, yBase, width, height);
+      ctx.stroke();
     },
     []
   );
@@ -213,26 +251,20 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   /**
    * Draws a cross
    *
-   * @param context     Context to draw the cross on
+   * @param ctx         Context to draw the cross on
    * @param x           Width coordinate
    * @param y           Height coordinate
    * @param strokeStyle Style for drawing the cross
    */
   const drawCross = useCallback(
-    (
-      context: CanvasRenderingContext2D,
-      x: number,
-      y: number,
-      size: number,
-      strokeStyle: string
-    ) => {
-      context.strokeStyle = strokeStyle;
-      context.beginPath();
-      context.moveTo(x - size, y - size);
-      context.lineTo(x + size, y + size);
-      context.moveTo(x + size, y - size);
-      context.lineTo(x - size, y + size);
-      context.stroke();
+    (ctx: CanvasRenderingContext2D, x: number, y: number, size: number, strokeStyle: string) => {
+      ctx.strokeStyle = strokeStyle;
+      ctx.beginPath();
+      ctx.moveTo(x - size, y - size);
+      ctx.lineTo(x + size, y + size);
+      ctx.moveTo(x + size, y - size);
+      ctx.lineTo(x - size, y + size);
+      ctx.stroke();
     },
     []
   );
@@ -240,7 +272,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   /**
    * Draws a circle
    *
-   * @param context     Context to draw the circle on
+   * @param ctx         Context to draw the circle on
    * @param x           Width coordinate
    * @param y           Height coordinate
    * @param radius      Circle radius
@@ -249,157 +281,125 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    */
   const drawCircle = useCallback(
     (
-      context: CanvasRenderingContext2D,
+      ctx: CanvasRenderingContext2D,
       x: number,
       y: number,
       radius: number,
       width: number,
       strokeStyle: string
     ) => {
-      context.strokeStyle = strokeStyle;
-      context.lineWidth = width;
-      context.beginPath();
-      context.arc(x, y, (radius * canvasSize) / DEFAULT_CANVAS_SIZE, 0, 2 * Math.PI);
-      context.stroke();
-    },
-    [canvasSize]
-  );
-
-  /**
-   * Returns an array of cube coordinates, filling a side of a given canvas,
-   * with gaps between every 2 cubes
-   *
-   * @param canvas   Canvas to fill with cubes. Used for width value
-   * @param numCubes Number of cubes to return (on one side)
-   * @param cubeSide Length of a cube side
-   * @param left     Whether to generate cubes for the left or right side of canvas
-   *
-   * @return Array of cube corner coordinates
-   */
-  const getCubes = useCallback(
-    (canvas: HTMLCanvasElement, numCubes: number, cubeSide: number, left: boolean) => {
-      const cubes: number[][] = [];
-
-      for (let i = 0; i < numCubes; i++) {
-        const cube: number[] = [];
-
-        cube[0] = left ? 0 : canvas.width - cubeSide;
-        cube[1] = left ? 2 * i * cubeSide : (2 * i + 1) * cubeSide;
-        cube[2] = cube[0] + cubeSide;
-        cube[3] = cube[1] + cubeSide;
-
-        cubes[i] = cube;
-      }
-
-      return cubes;
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, 2 * Math.PI);
+      ctx.stroke();
     },
     []
   );
 
+  const getCube = useCallback((baseCornerX: number, baseCornerY: number, cubeSide: number) => {
+    const cube: number[] = [];
+
+    cube[0] = baseCornerX;
+    cube[1] = baseCornerY;
+    cube[2] = cube[0] + cubeSide;
+    cube[3] = cube[1] + cubeSide;
+    return cube;
+  }, []);
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const getCornerCube = useCallback(
+    (cubeSide: number) => {
+      return getCube(0, 0, cubeSide);
+    },
+    [getCube]
+  );
+
+  /**
+   * Clears the animation canvas
+   */
+  const clearAnimCanvas = useCallback(() => {
+    animContext.clearRect(0, 0, animContext.canvas.width, animContext.canvas.height);
+  }, [animContext]);
+
   /**
    * Draw an AI search animation, rendering cubes on both sides of the canvas,
    * moving towards their opposite side
-   *
-   * @param canvas  Canvas to draw the animation on. Used for width value
-   * @param context Context to draw the animation on
    */
-  const drawAiSearchAnimation = useCallback(
-    (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-      const animationTime = 1000;
-      const numCubes = 5;
-      const cubeSide = canvas.width / (numCubes * 2);
-      const leftCubes = getCubes(canvas, numCubes, cubeSide, true);
-      const rightCubes = getCubes(canvas, numCubes, cubeSide, false);
+  const drawAiSearchAnimation = useCallback(() => {
+    const animationTime = 5000;
+    const numCubes = 5;
 
-      /* Draw cubes in initial position */
-      leftCubes.forEach((cube) => drawRectangle(context, cube, INVALID_COLOUR, 3));
-      rightCubes.forEach((cube) => drawRectangle(context, cube, TRUE_COLOUR, 3));
+    const canvasWidth = animContext.canvas.width;
+    const canvasHeight = animContext.canvas.height;
+    const cubeSide = canvasWidth / (numCubes * 2);
+    let cube = getCornerCube(cubeSide);
 
-      const intervalId = window.setInterval(() => {
-        /* Clear previous cubes */
-        context.clearRect(0, 0, canvas.width, canvas.height);
+    /* Draw cubes in initial position */
+    drawRectangle(animContext, cube, INVALID_COLOUR, 3);
 
-        /* Advance left cubes */
-        leftCubes.forEach((cube) => {
-          cube[0] += cubeSide;
-          cube[2] += cubeSide;
+    const intervalId = window.setInterval(() => {
+      /* Clear previous cubes */
+      clearAnimCanvas();
 
-          drawRectangle(context, cube, INVALID_COLOUR, 3);
-        });
+      /* Advance cube to right */
+      cube[0] += cubeSide;
+      cube[2] += cubeSide;
 
-        /* Advance right cubes */
-        rightCubes.forEach((cube) => {
-          cube[0] -= cubeSide;
-          cube[2] -= cubeSide;
+      drawRectangle(animContext, cube, VALID_COLOUR, 3);
 
-          drawRectangle(context, cube, TRUE_COLOUR, 3);
-        });
-      }, animationTime / (numCubes * 2));
-
-      setTimeout(() => {
+      /* When cube gets to right-most bound, advance cube below & restart */
+      if (cube[2] > canvasWidth) {
+        cube = getCube(-cubeSide, cube[1] + cubeSide, cubeSide);
+      }
+      /* When cube gets out of lower bound, end animation */
+      if (cube[1] > canvasHeight) {
         clearInterval(intervalId);
-
-        /* Clear whole canvas */
-        context.clearRect(0, 0, canvas.width, canvas.height);
-      }, animationTime);
-    },
-    [drawRectangle, getCubes]
-  );
+        clearAnimCanvas();
+      }
+    }, animationTime / 100);
+  }, [animContext, clearAnimCanvas, drawRectangle, getCornerCube, getCube]);
 
   /**
    * Draws the truth rectangle
-   *
-   * @param context Context to draw the rectangle on
    */
-  const drawTruth = useCallback(
-    (context: CanvasRenderingContext2D) => {
-      drawRectangle(context, truth, TRUE_COLOUR, 3);
-    },
-    [truth, drawRectangle]
-  );
+  const drawTruth = useCallback(() => {
+    drawRectangle(context, truth, TRUE_COLOUR, 3);
+  }, [context, drawRectangle, truth]);
 
   /**
    * Draws the predicted rectangle
-   *
-   * @param context     Context to draw the rectangle on
    * @param strokeStyle Style for drawing the rectangle
    */
   const drawPredicted = useCallback(
-    (context: CanvasRenderingContext2D, strokeStyle: string) => {
+    (strokeStyle: string) => {
       drawRectangle(context, predicted, strokeStyle, 3);
     },
-    [predicted, drawRectangle]
+    [context, drawRectangle, predicted]
   );
 
   /**
    * Draws the hint circle
-   *
-   * @param context Context to draw the circle on
    */
-  const drawHint = useCallback(
-    (context: CanvasRenderingContext2D) => {
-      const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
-      const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
+  const drawHint = useCallback(() => {
+    const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
+    const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
+    const radius = 100;
 
-      drawCircle(context, x, y, 100, 2, INVALID_COLOUR);
-    },
-    [drawCircle, truth]
-  );
+    drawCircle(context, x, y, mapToCanvasScale(radius), 2, INVALID_COLOUR);
+  }, [context, drawCircle, mapToCanvasScale, truth]);
 
   /**
    * Draws the player click cross
    *
-   * @param context     Context to draw the cross on
    * @param x           Width coordinate
    * @param y           Height coordinate
    * @param strokeStyle Style for drawing the cross
    */
-  const drawPlayerClick = useCallback(
-    (context: CanvasRenderingContext2D, x: number, y: number, strokeStyle: string) => {
-      drawCross(context, x, y, 5, strokeStyle);
-    },
-    [drawCross]
-  );
+  const drawPlayerClick = (x: number, y: number, strokeStyle: string) => {
+    drawCross(context, x, y, 5, strokeStyle);
+  };
 
   /**
    * Given the coordinates of two rectangles, returns the ratio of their intersection
@@ -448,12 +448,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    *
    * @return The success value
    */
-  const isPlayerRight = useCallback(
-    (x: number, y: number) => {
-      return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
-    },
-    [truth]
-  );
+  const isPlayerRight = (x: number, y: number) => {
+    return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
+  };
 
   useEffect(() => {
     if (!running) {
@@ -461,34 +458,36 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
 
     if (timeRemaining <= 0) {
+      setLoading(true);
       stopTimer();
 
-      setAnimDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-        drawAiSearchAnimation(canvas, context);
-      });
+      drawAiSearchAnimation();
 
-      setDraw(() => (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-        setTimeout(() => {
-          drawPredicted(context, DEFAULT_COLOUR);
-        }, 1000);
+      setTimeout(() => {
+        drawPredicted(DEFAULT_COLOUR);
+      }, AI_ANIMATION_TIME);
 
-        setTimeout(() => {
-          drawTruth(context);
-        }, 1500);
+      setTimeout(() => {
+        drawTruth();
+      }, AI_ANIMATION_TIME + 500);
 
-        setTimeout(() => {
-          if (isAiPredictionRight()) {
-            setAiPoints((prevState) => prevState + 1);
-            drawPredicted(context, VALID_COLOUR);
-            setAiCorrect(true);
-          } else {
-            drawPredicted(context, INVALID_COLOUR);
-            setAiCorrect(false);
-          }
+      setTimeout(() => {
+        if (isAiPredictionRight()) {
+          const scoreObtained = Math.round(
+            getIntersectionOverUnion(truth, predicted) * AI_SCORE_INCREASE_RATE
+          );
 
-          setShowDialog(true);
-        }, 2500);
-      });
+          setAiScore((prevState) => prevState + scoreObtained);
+          setAiCorrectAnswers((prevState) => prevState + 1);
+          drawPredicted(VALID_COLOUR);
+          setAiCorrect(true);
+        } else {
+          drawPredicted(INVALID_COLOUR);
+          setAiCorrect(false);
+        }
+
+        setLoading(false);
+      }, AI_ANIMATION_TIME + 1500);
     } else if (timeRemaining <= 2000) {
       setTimerColor("red");
     } else if (timeRemaining <= 5000) {
@@ -500,7 +499,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       setTimerColor("orange");
 
-      setDraw(() => (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => drawHint(context));
+      drawHint();
     } else {
       setTimerColor("#373737");
     }
@@ -513,30 +512,29 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     isAiPredictionRight,
     running,
     timeRemaining,
+    truth,
+    predicted,
+    aiCorrectAnswers,
   ]);
 
   /**
    * Maps the mouse position relative to the given canvas
    *
-   * @param canvas Canvas to map relative to
    * @param clickX Click coordinate on width
    * @param clickY Click coordinate on height
    *
    * @return Click width and height coordinates, relative to the canvas
    */
-  const getClickPositionOnCanvas = useCallback(
-    (canvas: HTMLCanvasElement, clickX: number, clickY: number) => {
-      const rect = canvas.getBoundingClientRect();
-      const widthScale = canvas.width / rect.width;
-      const heightScale = canvas.height / rect.height;
+  const getClickPositionOnCanvas = (clickX: number, clickY: number) => {
+    const rect = context.canvas.getBoundingClientRect();
+    const widthScale = context.canvas.width / rect.width;
+    const heightScale = context.canvas.height / rect.height;
 
-      return {
-        x: (clickX - rect.left) * widthScale,
-        y: (clickY - rect.top) * heightScale,
-      };
-    },
-    []
-  );
+    return {
+      x: (clickX - rect.left) * widthScale,
+      y: (clickY - rect.top) * heightScale,
+    };
+  };
 
   /**
    * Called when the canvas is clicked
@@ -548,51 +546,57 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
+    setLoading(true);
     stopTimer();
 
     const [clickX, clickY] = [event.clientX, event.clientY];
 
-    setAnimDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) =>
-      drawAiSearchAnimation(canvas, context)
-    );
+    drawAiSearchAnimation();
 
-    setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-      const { x, y } = getClickPositionOnCanvas(canvas, clickX, clickY);
+    const { x, y } = getClickPositionOnCanvas(clickX, clickY);
 
-      drawPlayerClick(context, x, y, DEFAULT_COLOUR);
+    drawPlayerClick(x, y, DEFAULT_COLOUR);
 
-      setTimeout(() => {
-        drawPredicted(context, DEFAULT_COLOUR);
-      }, 1000);
+    setTimeout(() => {
+      drawPredicted(DEFAULT_COLOUR);
+    }, AI_ANIMATION_TIME);
 
-      setTimeout(() => {
-        drawTruth(context);
-      }, 1500);
+    setTimeout(() => {
+      drawTruth();
+    }, AI_ANIMATION_TIME + 500);
 
-      setTimeout(() => {
-        if (isPlayerRight(x, y)) {
-          setPlayerPoints((prevState) => prevState + 1);
-          drawPlayerClick(context, x, y, VALID_COLOUR);
-          setPlayerCorrect(true);
-        } else {
-          drawPlayerClick(context, x, y, INVALID_COLOUR);
-          setPlayerCorrect(false);
-        }
-      }, 2000);
+    setTimeout(() => {
+      if (isPlayerRight(x, y)) {
+        const timeRate = timeRemaining / 1000;
+        const increaseRate = hinted ? timeRate * 10 : timeRate * 20;
 
-      setTimeout(() => {
-        if (isAiPredictionRight()) {
-          setAiPoints((prevState) => prevState + 1);
-          drawPredicted(context, VALID_COLOUR);
-          setAiCorrect(true);
-        } else {
-          drawPredicted(context, INVALID_COLOUR);
-          setAiCorrect(false);
-        }
+        setPlayerCorrectAnswers((prevState) => prevState + 1);
+        setPlayerScore((prevState) => prevState + increaseRate);
+        drawPlayerClick(x, y, VALID_COLOUR);
+        setPlayerCorrect(true);
+      } else {
+        drawPlayerClick(x, y, INVALID_COLOUR);
+        setPlayerCorrect(false);
+      }
+    }, AI_ANIMATION_TIME + 1000);
 
-        setShowDialog(true);
-      }, 2500);
-    });
+    setTimeout(() => {
+      if (isAiPredictionRight()) {
+        const scoreObtained = Math.round(
+          getIntersectionOverUnion(truth, predicted) * AI_SCORE_INCREASE_RATE
+        );
+
+        setAiScore((prevState) => prevState + scoreObtained);
+        setAiCorrectAnswers((prevState) => prevState + 1);
+        drawPredicted(VALID_COLOUR);
+        setAiCorrect(true);
+      } else {
+        drawPredicted(INVALID_COLOUR);
+        setAiCorrect(false);
+      }
+
+      setLoading(false);
+    }, AI_ANIMATION_TIME + 1500);
   };
 
   /**
@@ -630,12 +634,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     `${process.env.PUBLIC_URL}/content/images/${fileNumber}.png`;
 
   /**
-   * Maps the coordinates of a given rectangle according to the current canvas size
+   * Maps the coordinates of a given rectangle to the current canvas scale
    *
    * @param rect Coordinates for the corners of the rectangle to map
+   *
+   * @return Given rectangle coordinates, mapped to the canvas scale
    */
-  const mapCoordinates = (rect: number[]): number[] =>
-    rect.map((coordinate) => (coordinate * canvasSize) / DEFAULT_CANVAS_SIZE);
+  const mapCoordinates = (rect: number[]) => rect.map(mapToCanvasScale);
 
   /**
    * Loads the data from the json corresponding to the given fileNumber
@@ -660,14 +665,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       const image = new Image();
 
       image.onload = () => {
-        setAnimDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) =>
-          context.clearRect(0, 0, canvas.width, canvas.height)
-        );
+        clearAnimCanvas();
 
-        setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-          context.clearRect(0, 0, canvas.width, canvas.height);
-          context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        });
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+        context.drawImage(image, 0, 0, context.canvas.width, context.canvas.height);
 
         resolve();
       };
@@ -682,12 +683,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Starts a new round, loading a new image and its corresponding json data
    */
   const startNewRound = async () => {
-    setCurrentRound((prevState) => prevState + 1);
-    setShowDialog(false);
-    setAiCorrect(false);
-    setPlayerCorrect(false);
-    setHinted(false);
     setLoading(true);
+    setHinted(false);
+    setCurrentRound((prevState) => prevState + 1);
+    // setIsAiCorrect(false);
+    // setIsPlayerCorrect(false);
 
     const fileNumber = getNewFileNumber();
 
@@ -710,10 +710,17 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Uploads the score to the database
    */
   const uploadScore = async () => {
+    if (username === "") {
+      return;
+    }
+
     const date = new Date();
     const entry = {
       user: username,
-      score: playerPoints,
+      score: playerScore,
+      ai_score: aiScore,
+      correct_player_answers: playerCorrectAnswers,
+      correct_ai_answers: aiCorrectAnswers,
       day: date.getDate(),
       month: DbUtils.monthNames[date.getMonth()],
       year: date.getFullYear(),
@@ -729,7 +736,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       .where("month", "==", entry.month)
       .where("day", "==", entry.day)
       .where("user", "==", username)
-      .where("score", ">", playerPoints)
+      .where("score", ">", playerScore)
       .get();
 
     if (dailySnapshot.empty) {
@@ -741,7 +748,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       .where("year", "==", entry.year)
       .where("month", "==", entry.month)
       .where("user", "==", username)
-      .where("score", ">", playerPoints)
+      .where("score", ">", playerScore)
       .get();
 
     if (monthlySnapshot.empty) {
@@ -751,7 +758,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const allTimeSnapshot = await db
       .collection(DbUtils.ALL_TIME_LEADERBOARD)
       .where("user", "==", username)
-      .where("score", ">", playerPoints)
+      .where("score", ">", playerScore)
       .get();
 
     if (allTimeSnapshot.empty) {
@@ -759,24 +766,68 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
   };
 
-  const displayCorrect = (correct: boolean) => (
-    <span style={{ color: correct ? VALID_COLOUR : INVALID_COLOUR }}>
-      {correct ? "Correct!" : "Wrong!"}
-    </span>
-  );
+  const displayCorrect = (correct: boolean) => {
+    if (currentRound === 0 || running || loading) {
+      return null;
+    }
+
+    if (correct) {
+      return <Check style={{ fontSize: "48", fill: "green", width: 100 }} />;
+    }
+
+    return <Clear style={{ fontSize: "48", fill: "red", width: 100 }} />;
+  };
 
   const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.value !== "") {
+      setSubmitEnabled(true);
+    }
+    if (event.target.value === "") {
+      setSubmitEnabled(false);
+    }
     setUsername(event.target.value);
   };
 
+  const onSubmitScore = async () => {
+    setSubmitEnabled(false);
+    await uploadScore();
+    setTimeout(() => {
+      setRoute("home");
+    }, 2000);
+    enqueueSnackbar("Score successfully submitted!");
+  };
+
+  const decideWinner = () => {
+    if (playerScore > aiScore) {
+      return (
+        <Typography className={classes.result} variant="h6" style={{ color: VALID_COLOUR }}>
+          You Won !
+        </Typography>
+      );
+    }
+    if (aiScore > playerScore) {
+      return (
+        <Typography className={classes.result} variant="h6" style={{ color: INVALID_COLOUR }}>
+          AI won !
+        </Typography>
+      );
+    }
+    // Otherwise it was a draw
+    return (
+      <Typography className={classes.result} variant="h6" style={{ color: DEFAULT_COLOUR }}>
+        It was a draw !
+      </Typography>
+    );
+  };
+
   const dialogAction = () => {
-    if (currentRound < NUMBER_OF_ROUNDS) {
+    if (currentRound < NUMBER_OF_ROUNDS || running || loading) {
       return (
         <LoadingButton
           loading={loading}
           buttonDisabled={running || loading}
           onButtonClick={onStartNextClick}
-          buttonText={currentRound === 0 ? "Start" : "Next"}
+          buttonText={currentRound === 0 ? "START" : "NEXT"}
         />
       );
     }
@@ -785,7 +836,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       <>
         <TwitterShareButton
           url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
-          title={`I got ${playerPoints} points in Spot-the-Lesion! Can you beat my score?`}
+          title={`I got ${playerScore} points in Spot-the-Lesion! Can you beat my score?`}
         >
           <TwitterIcon size="50px" round />
         </TwitterShareButton>
@@ -797,15 +848,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           onChange={onChangeUsername}
         />
 
+        {decideWinner()}
+
         <Button
           variant="contained"
           color="primary"
           size="large"
-          disabled={running || loading}
-          onClick={() => {
-            uploadScore();
-            setRoute("home");
-          }}
+          disabled={running || loading || !submitEnabled}
+          onClick={onSubmitScore}
         >
           Submit Score
         </Button>
@@ -813,25 +863,17 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     );
   };
 
-  const hideAnswersOnStart = (round: number) => {
-    if (round > 0) {
-      return (
-        <div>
-          <Typography className={classes.result} variant="h4">
-            You were: {displayCorrect(playerCorrect)}
-          </Typography>
+  const bounds: LatLngBoundsLiteral = [
+    [100, 0],
+    [0, 100],
+  ];
 
-          <Typography className={classes.result} variant="h4">
-            AI was: {displayCorrect(aiCorrect)}
-          </Typography>
+  const openHeatmap = () => {
+    setHeatmapDialogOpen(true);
+  };
 
-          <Typography className={classes.result} variant="h4">
-            Results
-          </Typography>
-        </div>
-      );
-    }
-    return null;
+  const closeHeatmap = () => {
+    setHeatmapDialogOpen(false);
   };
 
   return (
@@ -853,58 +895,85 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       </AppBar>
 
       <div className={classes.container}>
-        <Card className={classes.timerContainer}>
-          <Typography className={classes.timerText} variant="h4" style={{ color: timerColor }}>
-            Time remaining: {(timeRemaining / 1000).toFixed(1)}s
-          </Typography>
+        <div className={classes.emptyDiv} />
 
-          <ColoredLinearProgress
-            barColor={timerColor}
-            variant="determinate"
-            value={timeRemaining / 100}
-          />
-        </Card>
+        <div className={classes.timerCanvasContainer}>
+          <Card className={classes.timerContainer}>
+            <Typography className={classes.timerText} variant="h4" style={{ color: timerColor }}>
+              Time remaining: {(timeRemaining / 1000).toFixed(1)}s
+            </Typography>
 
-        <Card className={classes.canvasContainer}>
-          <canvas
-            className={classes.canvas}
-            ref={canvasRef}
-            width={canvasSize}
-            height={canvasSize}
-          />
+            <ColoredLinearProgress
+              barColor={timerColor}
+              variant="determinate"
+              value={timeRemaining / 100}
+            />
+          </Card>
 
-          <canvas
-            className={classes.canvas}
-            ref={animCanvasRef}
-            width={canvasSize}
-            height={canvasSize}
-            onClick={onCanvasClick}
-          />
-        </Card>
+          <Card className={classes.canvasContainer}>
+            <canvas
+              className={classes.canvas}
+              ref={canvasRef}
+              width={MAX_CANVAS_SIZE}
+              height={MAX_CANVAS_SIZE}
+            />
+
+            <canvas
+              className={classes.canvas}
+              ref={animCanvasRef}
+              width={MAX_CANVAS_SIZE}
+              height={MAX_CANVAS_SIZE}
+              onClick={onCanvasClick}
+            />
+          </Card>
+        </div>
+
+        <div className={classes.sideContainer}>
+          <Card className={classes.sideCard}>
+            <div className={classes.flexButton}>
+              <Typography className={classes.result} variant="h4">
+                You:
+              </Typography>
+
+              <div className={classes.result}>{displayCorrect(playerCorrect)}</div>
+            </div>
+
+            <div className={classes.flexButton}>
+              <Typography className={classes.result} variant="h4">
+                {playerScore} vs {aiScore}
+              </Typography>
+
+              <div className={classes.result}>{dialogAction()}</div>
+            </div>
+
+            <div className={classes.flexButton}>
+              <Typography className={classes.result} variant="h4">
+                AI:
+              </Typography>
+
+              <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
+            </div>
+
+            <Button variant="contained" color="primary" size="large" onClick={openHeatmap}>
+              See the heatmap
+            </Button>
+          </Card>
+        </div>
+
+        <Dialog fullScreen open={heatmapDialogOpen} onClose={openHeatmap}>
+          <AppBar position="sticky">
+            <Toolbar variant="dense">
+              <IconButton edge="start" color="inherit" onClick={closeHeatmap} aria-label="close">
+                <Close />
+              </IconButton>
+            </Toolbar>
+          </AppBar>
+
+          <Map crs={L.CRS.Simple} bounds={bounds}>
+            <ImageOverlay bounds={bounds} url={`${process.env.PUBLIC_URL}/content/images/0.png`} />
+          </Map>
+        </Dialog>
       </div>
-
-      <Dialog classes={{ paper: classes.dialogPaper }} open={showDialog}>
-        <DialogTitle className={classes.result} disableTypography>
-          <Typography variant="h3">Results</Typography>
-        </DialogTitle>
-
-        <DialogContent>
-          {hideAnswersOnStart(currentRound)}
-          <Typography className={classes.result} variant="h4">
-            Correct (you): {playerPoints}
-          </Typography>
-
-          <Typography className={classes.result} variant="h4">
-            Correct (AI): {aiPoints}
-          </Typography>
-
-          <Typography className={classes.result} variant="h4">
-            Total Scans: {currentRound}
-          </Typography>
-        </DialogContent>
-
-        <DialogActions>{dialogAction()}</DialogActions>
-      </Dialog>
     </>
   );
 };

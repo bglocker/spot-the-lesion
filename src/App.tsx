@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { makeStyles, createStyles, createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
+import { SnackbarProvider } from "notistack";
 import colors from "./res/colors";
 import Home from "./screens/home/Home";
 import Game from "./screens/game/Game";
@@ -57,7 +58,9 @@ const App: React.FC = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <div className={classes.container}>{currentScreen}</div>
+      <SnackbarProvider maxSnack={2}>
+        <div className={classes.container}>{currentScreen}</div>
+      </SnackbarProvider>
     </ThemeProvider>
   );
 };
