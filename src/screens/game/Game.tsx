@@ -130,7 +130,7 @@ const useStyles = makeStyles((theme: Theme) =>
       },
       textAlign: "center",
     },
-    weirdFlexButOk: {
+    flexButton: {
       flex: 1,
       flexDirection: "column",
     },
@@ -750,9 +750,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const displayCorrect = (correct: boolean) => {
     if (currentRound > 0 && !running && !loading) {
       return correct ? (
-        <CheckIcon style={{ fill: "green", width: 100 }} />
+        <CheckIcon style={{ fontSize: "48", fill: "green", width: 100 }} />
       ) : (
-        <ClearIcon style={{ fill: "red", width: 100 }} />
+        <ClearIcon style={{ fontSize: "48", fill: "red", width: 100 }} />
       );
     }
     return "";
@@ -774,7 +774,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           loading={loading}
           buttonDisabled={running || loading}
           onButtonClick={onStartNextClick}
-          buttonText={currentRound === 0 ? "Start" : ".Next."}
+          buttonText={currentRound === 0 ? "START" : "NEXT"}
         />
       );
     }
@@ -862,23 +862,23 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
         <div className={classes.sideContainer}>
           <Card className={classes.sideCard}>
-            <div className={classes.weirdFlexButOk}>
+            <div className={classes.flexButton}>
               <Typography className={classes.result} variant="h4">
-                You
+                You:
               </Typography>
               <div className={classes.result}>{displayCorrect(playerCorrect)}</div>
             </div>
 
-            <div className={classes.weirdFlexButOk}>
+            <div className={classes.flexButton}>
               <Typography className={classes.result} variant="h4">
                 {playerPoints} vs {aiPoints}
               </Typography>
               <div className={classes.result}>{dialogAction()}</div>
             </div>
 
-            <div className={classes.weirdFlexButOk}>
+            <div className={classes.flexButton}>
               <Typography className={classes.result} variant="h4">
-                AI
+                AI:
               </Typography>
               <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
             </div>
