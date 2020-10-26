@@ -9,16 +9,14 @@ import {
   Typography,
 } from "@material-ui/core";
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
-import { KeyboardBackspace } from "@material-ui/icons";
-import CheckIcon from "@material-ui/icons/Check";
-import ClearIcon from "@material-ui/icons/Clear";
+import { KeyboardBackspace, Check, Clear } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import useInterval from "../../components/useInterval";
-import { db } from "../../firebase/firebaseApp";
+import useCanvasContext from "../../components/useCanvasContext";
 import LoadingButton from "../../components/LoadingButton";
 import DbUtils from "../../utils/DbUtils";
-import useCanvasContext from "../../components/useCanvasContext";
+import { db } from "../../firebase/firebaseApp";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -748,14 +746,15 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   const displayCorrect = (correct: boolean) => {
-    if (currentRound > 0 && !running && !loading) {
-      return correct ? (
-        <CheckIcon style={{ fontSize: "48", fill: "green", width: 100 }} />
-      ) : (
-        <ClearIcon style={{ fontSize: "48", fill: "red", width: 100 }} />
-      );
+    if (currentRound === 0 || running || loading) {
+      return null;
     }
-    return "";
+
+    if (correct) {
+      return <Check style={{ fontSize: "48", fill: "green", width: 100 }} />;
+    }
+
+    return <Clear style={{ fontSize: "48", fill: "red", width: 100 }} />;
   };
 
   const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
@@ -866,6 +865,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               <Typography className={classes.result} variant="h4">
                 You:
               </Typography>
+
               <div className={classes.result}>{displayCorrect(playerCorrect)}</div>
             </div>
 
@@ -873,6 +873,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               <Typography className={classes.result} variant="h4">
                 {playerPoints} vs {aiPoints}
               </Typography>
+
               <div className={classes.result}>{dialogAction()}</div>
             </div>
 
@@ -880,6 +881,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               <Typography className={classes.result} variant="h4">
                 AI:
               </Typography>
+
               <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
             </div>
           </Card>
