@@ -11,7 +11,7 @@ import {
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
-import { Alert } from "@material-ui/lab";
+import { useSnackbar } from "notistack";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import useInterval from "../../components/useInterval";
 import { db } from "../../firebase/firebaseApp";
@@ -100,26 +100,6 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: 8,
     },
     canvas: {
-      [theme.breakpoints.only("xs")]: {
-        height: 300,
-        width: 300,
-      },
-      [theme.breakpoints.only("sm")]: {
-        height: 450,
-        width: 450,
-      },
-      [theme.breakpoints.only("md")]: {
-        height: 550,
-        width: 550,
-      },
-      [theme.breakpoints.only("lg")]: {
-        height: 650,
-        width: 650,
-      },
-      [theme.breakpoints.only("xl")]: {
-        height: 750,
-        width: 750,
-      },
       gridColumnStart: 1,
       gridRowStart: 1,
     },
@@ -172,9 +152,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  const [canvasSize, setCanvasSize] = useState(
-    Math.floor(Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8))
-  );
+  const [canvasSize, setCanvasSize] = useState(750);
 
   const [currentRound, setCurrentRound] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -198,11 +176,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [isPlayerCorrect, setIsPlayerCorrect] = useState(false);
   const [isAiCorrect, setIsAiCorrect] = useState(false);
 
-  const [alert, setAlert] = useState(false);
-
-  type DrawType = (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => void;
+  type DrawType = (context: CanvasRenderingContext2D) => void;
   const [draw, setDraw] = useState<DrawType | null>(null);
   const [animDraw, setAnimDraw] = useState<DrawType | null>(null);
+
+  /* TODO: check if upload to databse fails to give different message */
+  const { enqueueSnackbar } = useSnackbar();
 
   /**
    * Called every 100 milliseconds, while the game is running,
@@ -249,7 +228,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
-    draw(canvas, context);
+    draw(context);
   }, [draw]);
 
   useEffect(() => {
@@ -267,7 +246,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
-    animDraw(animCanvas, animContext);
+    animDraw(animContext);
   }, [animDraw]);
 
   /**
@@ -356,7 +335,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Returns an array of cube coordinates, filling a side of a given canvas,
    * with gaps between every 2 cubes
    *
-   * @param canvas   Canvas to fill with cubes. Used for width value
    * @param numCubes Number of cubes to return (on one side)
    * @param cubeSide Length of a cube side
    * @param left     Whether to generate cubes for the left or right side of canvas
@@ -364,13 +342,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * @return Array of cube corner coordinates
    */
   const getCubes = useCallback(
-    (canvas: HTMLCanvasElement, numCubes: number, cubeSide: number, left: boolean) => {
+    (context: CanvasRenderingContext2D, numCubes: number, cubeSide: number, left: boolean) => {
       const cubes: number[][] = [];
 
       for (let i = 0; i < numCubes; i++) {
         const cube: number[] = [];
 
-        cube[0] = left ? 0 : canvas.width - cubeSide;
+        cube[0] = left ? 0 : context.canvas.width - cubeSide;
         cube[1] = left ? 2 * i * cubeSide : (2 * i + 1) * cubeSide;
         cube[2] = cube[0] + cubeSide;
         cube[3] = cube[1] + cubeSide;
@@ -387,16 +365,15 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Draw an AI search animation, rendering cubes on both sides of the canvas,
    * moving towards their opposite side
    *
-   * @param canvas  Canvas to draw the animation on. Used for width value
    * @param context Context to draw the animation on
    */
   const drawAiSearchAnimation = useCallback(
-    (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+    (context: CanvasRenderingContext2D) => {
       const animationTime = 1000;
       const numCubes = 5;
-      const cubeSide = canvas.width / (numCubes * 2);
-      const leftCubes = getCubes(canvas, numCubes, cubeSide, true);
-      const rightCubes = getCubes(canvas, numCubes, cubeSide, false);
+      const cubeSide = context.canvas.width / (numCubes * 2);
+      const leftCubes = getCubes(context, numCubes, cubeSide, true);
+      const rightCubes = getCubes(context, numCubes, cubeSide, false);
 
       /* Draw cubes in initial position */
       leftCubes.forEach((cube) => drawRectangle(context, cube, INVALID_COLOUR, 3));
@@ -404,7 +381,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       const intervalId = window.setInterval(() => {
         /* Clear previous cubes */
-        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
         /* Advance left cubes */
         leftCubes.forEach((cube) => {
@@ -427,7 +404,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         clearInterval(intervalId);
 
         /* Clear whole canvas */
-        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
       }, animationTime);
     },
     [drawRectangle, getCubes]
@@ -551,11 +528,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       setLoading(true);
       stopTimer();
 
-      setAnimDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-        drawAiSearchAnimation(canvas, context);
+      setAnimDraw(() => (context: CanvasRenderingContext2D) => {
+        drawAiSearchAnimation(context);
       });
 
-      setDraw(() => (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
+      setDraw(() => (context: CanvasRenderingContext2D) => {
         setTimeout(() => {
           drawPredicted(context, DEFAULT_COLOUR);
         }, 1000);
@@ -588,7 +565,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       setTimerColor("orange");
 
-      setDraw(() => (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => drawHint(context));
+      setDraw(() => (context: CanvasRenderingContext2D) => drawHint(context));
     } else {
       setTimerColor("#373737");
     }
@@ -613,10 +590,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * @return Click width and height coordinates, relative to the canvas
    */
   const getClickPositionOnCanvas = useCallback(
-    (canvas: HTMLCanvasElement, clickX: number, clickY: number) => {
-      const rect = canvas.getBoundingClientRect();
-      const widthScale = canvas.width / rect.width;
-      const heightScale = canvas.height / rect.height;
+    (context: CanvasRenderingContext2D, clickX: number, clickY: number) => {
+      const rect = context.canvas.getBoundingClientRect();
+      const widthScale = context.canvas.width / rect.width;
+      const heightScale = context.canvas.height / rect.height;
 
       return {
         x: (clickX - rect.left) * widthScale,
@@ -641,12 +618,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     const [clickX, clickY] = [event.clientX, event.clientY];
 
-    setAnimDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) =>
-      drawAiSearchAnimation(canvas, context)
-    );
+    setAnimDraw(() => (context: CanvasRenderingContext2D) => drawAiSearchAnimation(context));
 
-    setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-      const { x, y } = getClickPositionOnCanvas(canvas, clickX, clickY);
+    setDraw(() => (context: CanvasRenderingContext2D) => {
+      const { x, y } = getClickPositionOnCanvas(context, clickX, clickY);
 
       drawPlayerClick(context, x, y, DEFAULT_COLOUR);
 
@@ -752,13 +727,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       const image = new Image();
 
       image.onload = () => {
-        setAnimDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) =>
-          context.clearRect(0, 0, canvas.width, canvas.height)
+        setAnimDraw(() => (context: CanvasRenderingContext2D) =>
+          context.clearRect(0, 0, context.canvas.width, context.canvas.height)
         );
 
-        setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
-          context.clearRect(0, 0, canvas.width, canvas.height);
-          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        setDraw(() => (context: CanvasRenderingContext2D) => {
+          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+          context.drawImage(image, 0, 0, context.canvas.width, context.canvas.height);
         });
 
         resolve();
@@ -804,6 +779,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     if (username === "") {
       return;
     }
+
     const date = new Date();
     const entry = {
       user: username,
@@ -855,11 +831,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
   };
 
-  const displayCorrect = (correct: boolean) => (
-    <span style={{ color: correct ? VALID_COLOUR : INVALID_COLOUR }}>
-      {correct ? "Correct!" : "Wrong!"}
-    </span>
-  );
+  const displayCorrect = (correct: boolean) =>
+    currentRound > 0 && !running && !loading ? (
+      <span style={{ color: correct ? VALID_COLOUR : INVALID_COLOUR }}>
+        {correct ? "(+ 1)" : "(+ 0)"}
+      </span>
+    ) : (
+      ""
+    );
 
   const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.value !== "") {
@@ -872,23 +851,15 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   const onSubmitScore = async () => {
-    setAlert(true);
     setSubmitEnabled(false);
     await uploadScore();
     setTimeout(() => {
       setRoute("home");
     }, 2000);
+    enqueueSnackbar("Score successfully submitted!");
   };
 
-  const displayAlert = () => {
-    return alert ? (
-      <Alert variant="filled" severity="success">
-        Score submitted!
-      </Alert>
-    ) : null;
-  };
-
-  const dialogAction = () => {
+  const enableNextClick = () => {
     if (currentRound < NUMBER_OF_ROUNDS || running || loading) {
       return (
         <LoadingButton
@@ -987,23 +958,22 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           <Card className={classes.canvasContainer}>
             <canvas
               className={classes.canvas}
+              ref={canvasRef}
               width={canvasSize}
               height={canvasSize}
-              ref={canvasRef}
             />
 
             <canvas
               className={classes.canvas}
+              ref={animCanvasRef}
               width={canvasSize}
               height={canvasSize}
-              ref={animCanvasRef}
               onClick={onCanvasClick}
             />
           </Card>
         </div>
 
         <div className={classes.sideContainer}>
-          {hideAnswersOnStart(currentRound)}
           <Card className={classes.sideCard}>
             <div>
               <Typography className={classes.result} variant="h5">
@@ -1019,8 +989,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               </Typography>
             </div>
 
-            {dialogAction()}
-            {displayAlert()}
+            {enableNextClick()}
           </Card>
         </div>
       </div>
