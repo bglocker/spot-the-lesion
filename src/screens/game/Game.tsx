@@ -76,6 +76,7 @@ const TOTAL_TIME_MS = 10000;
 const DEFAULT_CANVAS_SIZE = 512;
 
 const MAX_FILE_NUMBER = 100;
+const AI_ANIMATION_TIME = 5000;
 
 type JsonData = { truth: number[]; predicted: number[] };
 
@@ -333,15 +334,17 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         /* Clear previous cubes */
         context.clearRect(0, 0, canvas.width, canvas.height);
 
-        /* Advance left cubes */
+        /* Advance cube to right */
         cube[0] += cubeSide;
         cube[2] += cubeSide;
 
         drawRectangle(context, cube, VALID_COLOUR, 3);
 
+        /* When cube gets to right-most bound, advance cube below & restart */
         if (cube[2] > canvas.width) {
           cube = getCube(-cubeSide, cube[1] + cubeSide, cubeSide);
         }
+        /* When cube gets out of lower bound, end animation */
         if (cube[1] > canvas.height) {
           clearInterval(intervalId);
           context.clearRect(0, 0, canvas.width, canvas.height);
@@ -475,11 +478,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       setDraw(() => (_: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
         setTimeout(() => {
           drawPredicted(context, DEFAULT_COLOUR);
-        }, 1000);
+        }, AI_ANIMATION_TIME);
 
         setTimeout(() => {
           drawTruth(context);
-        }, 1500);
+        }, AI_ANIMATION_TIME + 500);
 
         setTimeout(() => {
           if (isAiPredictionRight()) {
@@ -492,7 +495,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           }
 
           setShowDialog(true);
-        }, 2500);
+        }, AI_ANIMATION_TIME + 1500);
       });
     } else if (timeRemaining <= 2000) {
       setTimerColor("red");
@@ -563,16 +566,15 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     setDraw(() => (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
       const { x, y } = getClickPositionOnCanvas(canvas, clickX, clickY);
-
       drawPlayerClick(context, x, y, DEFAULT_COLOUR);
 
       setTimeout(() => {
         drawPredicted(context, DEFAULT_COLOUR);
-      }, 1000);
+      }, AI_ANIMATION_TIME);
 
       setTimeout(() => {
         drawTruth(context);
-      }, 1500);
+      }, AI_ANIMATION_TIME + 500);
 
       setTimeout(() => {
         if (isPlayerRight(x, y)) {
@@ -583,7 +585,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           drawPlayerClick(context, x, y, INVALID_COLOUR);
           setPlayerCorrect(false);
         }
-      }, 2000);
+      }, AI_ANIMATION_TIME + 1000);
 
       setTimeout(() => {
         if (isAiPredictionRight()) {
@@ -596,7 +598,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         }
 
         setShowDialog(true);
-      }, 2500);
+      }, AI_ANIMATION_TIME + 1500);
     });
   };
 
