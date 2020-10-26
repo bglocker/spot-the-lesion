@@ -340,16 +340,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         drawRectangle(context, cube, VALID_COLOUR, 3);
 
         if (cube[2] > canvas.width) {
-          cube = getCube(0, cube[1] + cubeSide, cubeSide);
+          cube = getCube(-cubeSide, cube[1] + cubeSide, cubeSide);
+        }
+        if (cube[1] > canvas.height) {
+          clearInterval(intervalId);
+          context.clearRect(0, 0, canvas.width, canvas.height);
         }
       }, animationTime / 100);
-
-      setTimeout(() => {
-        clearInterval(intervalId);
-
-        /* Clear whole canvas */
-        context.clearRect(0, 0, canvas.width, canvas.height);
-      }, animationTime);
     },
     [drawRectangle, getCornerCube, getCube]
   );
