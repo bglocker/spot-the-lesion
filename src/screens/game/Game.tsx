@@ -185,6 +185,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [username, setUsername] = useState("");
 
+  const [currentImageId, setCurrentImageId] = useState(0);
+
   /**
    * The heatmap dialog box information
    */
@@ -536,6 +538,38 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     };
   };
 
+  const uploadImageClick = async (xCoord: number, yCoord: number, imageId: number) => {
+    const docNameForImage = `image_${imageId}`;
+    let entry;
+    let clickPointExists = false;
+
+    const newClickPoint = {
+      x: xCoord,
+      y: yCoord,
+      clickCount: 1,
+    };
+
+    const imageDoc = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
+
+    if (!imageDoc.exists) {
+      entry = { clicks: [newClickPoint] };
+    } else {
+      const { clicks } = imageDoc.data()!;
+      clicks.forEach((elem: { x: number; y: number; count: number }) => {
+        if (elem.x === xCoord && elem.y === yCoord) {
+          elem.count += 1;
+          clickPointExists = true;
+        }
+      });
+
+      if (!clickPointExists) {
+        clicks.push(newClickPoint);
+      }
+      entry = { clicks };
+    }
+    await db.collection(DbUtils.IMAGES).doc(docNameForImage).set(entry);
+  };
+
   /**
    * Called when the canvas is clicked
    *
@@ -556,6 +590,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const { x, y } = getClickPositionOnCanvas(clickX, clickY);
 
     drawPlayerClick(x, y, DEFAULT_COLOUR);
+
+    await uploadImageClick(Math.round(x), Math.round(y), currentImageId);
 
     setTimeout(() => {
       drawPredicted(DEFAULT_COLOUR);
@@ -686,10 +722,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setLoading(true);
     setHinted(false);
     setCurrentRound((prevState) => prevState + 1);
-    // setIsAiCorrect(false);
-    // setIsPlayerCorrect(false);
 
     const fileNumber = getNewFileNumber();
+    setCurrentImageId(fileNumber);
 
     await loadJson(fileNumber);
     await loadImage(fileNumber);
