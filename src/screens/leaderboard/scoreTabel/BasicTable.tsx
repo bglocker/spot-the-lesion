@@ -74,10 +74,20 @@ const useStyles = makeStyles((theme) =>
   })
 );
 
+/**
+ * Function for showing a medal icon for top 3 in Leaderboard
+ * @param medal - indicates whether a medal should be present
+ */
 const showMedal = (medal: boolean) => {
   return medal ? <FaMedal /> : null;
 };
 
+/**
+ * Basic React Functional Component for building up a simple table
+ * @param firstTimeOpened - tells whether a Tab was clicked on for the first time
+ * @param scores - array of ScoreType to populate the table with data
+ * @constructor
+ */
 const BasicTable: React.FC<BasicTableProps> = ({ firstTimeOpened, scores }: BasicTableProps) => {
   const classes = useStyles();
 
