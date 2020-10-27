@@ -167,6 +167,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [running, setRunning] = useState(false);
   const [hinted, setHinted] = useState(false);
   const [submitEnabled, setSubmitEnabled] = useState(false);
+  const [heatmapEnable, setHeatmapEnabled] = useState(false);
 
   const [timeRemaining, setTimeRemaining] = useState(TOTAL_TIME_MS);
   const [timerColor, setTimerColor] = useState("#373737");
@@ -487,7 +488,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           drawPredicted(INVALID_COLOUR);
           setAiCorrect(false);
         }
-
+        setHeatmapEnabled(true);
         setLoading(false);
       }, AI_ANIMATION_TIME + 1500);
     } else if (timeRemaining <= 2000) {
@@ -639,7 +640,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         drawPredicted(INVALID_COLOUR);
         setAiCorrect(false);
       }
-
+      setHeatmapEnabled(true);
       setLoading(false);
     }, AI_ANIMATION_TIME + 1500);
   };
@@ -730,6 +731,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const startNewRound = async () => {
     setLoading(true);
     setHinted(false);
+    setHeatmapEnabled(false);
     setCurrentRound((prevState) => prevState + 1);
 
     const fileNumber = getNewFileNumber();
@@ -849,9 +851,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const onSubmitScore = async () => {
     setSubmitEnabled(false);
     await uploadScore();
-    setTimeout(() => {
-      setRoute("home");
-    }, 2000);
+    setRoute("home");
     enqueueSnackbar("Score successfully submitted!");
   };
 
@@ -1024,7 +1024,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
             </div>
 
-            <Button variant="contained" color="primary" size="large" onClick={openHeatmap}>
+            <Button
+              disabled={!heatmapEnable}
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={openHeatmap}
+            >
               See the heatmap
             </Button>
           </Card>
