@@ -1023,17 +1023,16 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
               <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
             </div>
-
-            <Button
-              disabled={!heatmapEnable}
-              variant="contained"
-              color="primary"
-              size="large"
-              onClick={openHeatmap}
-            >
-              See the heatmap
-            </Button>
           </Card>
+          <Button
+            disabled={!heatmapEnable}
+            variant="contained"
+            color="primary"
+            size="large"
+            onClick={openHeatmap}
+          >
+            See the heatmap
+          </Button>
         </div>
 
         <Dialog fullScreen open={heatmapDialogOpen} onClose={openHeatmap}>

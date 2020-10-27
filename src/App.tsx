@@ -8,6 +8,7 @@ import Tutorial from "./screens/tutorial/Tutorial";
 import About from "./screens/about/About";
 import Credits from "./screens/credits/Credits";
 import Leaderboard from "./screens/leaderboard/Leaderboard";
+import Statistics from "./screens/statistics/Statistics";
 
 const theme = createMuiTheme({
   palette: {
@@ -53,6 +54,9 @@ const App: React.FC = () => {
       break;
     case "credits":
       currentScreen = <Credits setRoute={setRoute} />;
+      break;
+    case "statistics":
+      currentScreen = <Statistics setRoute={setRoute} />;
       break;
   }
 
