@@ -538,6 +538,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     };
   };
 
+  /**
+   * Function for uploading user clicks for a CT scan in Firebase
+   * @param xCoord - x-Coordinate of the click on the image
+   * @param yCoord - y-Coordinate of the click on the image
+   * @param imageId - file number of the CT Scan
+   */
   const uploadImageClick = async (xCoord: number, yCoord: number, imageId: number) => {
     const docNameForImage = `image_${imageId}`;
     let entry;
@@ -552,6 +558,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const imageDoc = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
 
     if (!imageDoc.exists) {
+      // First time this image showed up in the game - entry will be singleton array
       entry = { clicks: [newClickPoint] };
     } else {
       const { clicks } = imageDoc.data()!;
@@ -563,8 +570,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       });
 
       if (!clickPointExists) {
+        // First time this clicked occurred for this image, Add to this image's clicks array
         clicks.push(newClickPoint);
       }
+      // Entry in DB will be the updated clicks array
       entry = { clicks };
     }
     await db.collection(DbUtils.IMAGES).doc(docNameForImage).set(entry);
@@ -801,6 +810,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
   };
 
+  /**
+   * Function for displaying a green or red thick depending on the correctness of the answer
+   * @param correct - true if answer was correct, false otherwise
+   */
   const displayCorrect = (correct: boolean) => {
     if (currentRound === 0 || running || loading) {
       return null;
@@ -813,6 +826,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     return <Clear style={{ fontSize: "48", fill: "red", width: 100 }} />;
   };
 
+  /**
+   * Function for filling up the username field before submitting score
+   * @param event - username writing event listener
+   */
   const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.value !== "") {
       setSubmitEnabled(true);
@@ -823,6 +840,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setUsername(event.target.value);
   };
 
+  /**
+   * Function for triggering the effects associated with submitting the score
+   * Submit button becomes disabled
+   * Snackbar triggered
+   * Scores uploaded into Firebase
+   */
   const onSubmitScore = async () => {
     setSubmitEnabled(false);
     await uploadScore();
@@ -832,6 +855,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     enqueueSnackbar("Score successfully submitted!");
   };
 
+  /**
+   * Function for displaying the result of the game
+   */
   const decideWinner = () => {
     if (playerScore > aiScore) {
       return (
@@ -855,6 +881,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     );
   };
 
+  /**
+   * Function for displaying the side dialog box with game results and start/next/submit buttons
+   */
   const dialogAction = () => {
     if (currentRound < NUMBER_OF_ROUNDS || running || loading) {
       return (
@@ -903,10 +932,16 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     [0, 100],
   ];
 
+  /**
+   * Function for opening the heatmap tab
+   */
   const openHeatmap = () => {
     setHeatmapDialogOpen(true);
   };
 
+  /**
+   * Function for closing the heatmap tab
+   */
   const closeHeatmap = () => {
     setHeatmapDialogOpen(false);
   };
