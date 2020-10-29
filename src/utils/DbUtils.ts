@@ -30,4 +30,6 @@ export default class DbUtils {
   public static MONTHLY_LEADERBOARD = "monthly-scores";
 
   public static ALL_TIME_LEADERBOARD = "alltime-scores";
+
+  public static IMAGES = "images";
 }

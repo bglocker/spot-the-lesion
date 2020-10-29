@@ -99,6 +99,16 @@ const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
               variant="contained"
               color="primary"
               size="large"
+              onClick={() => setRoute("tutorial")}
+            >
+              How to Play
+            </Button>
+
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              size="large"
               onClick={() => setRoute("leaderboard")}
             >
               Leaderboard
@@ -109,9 +119,9 @@ const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => setRoute("tutorial")}
+              onClick={() => setRoute("statistics")}
             >
-              How to Play
+              Statistics
             </Button>
 
             <Button

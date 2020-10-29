@@ -167,6 +167,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [running, setRunning] = useState(false);
   const [hinted, setHinted] = useState(false);
   const [submitEnabled, setSubmitEnabled] = useState(false);
+  const [heatmapEnable, setHeatmapEnabled] = useState(false);
 
   const [timeRemaining, setTimeRemaining] = useState(TOTAL_TIME_MS);
   const [timerColor, setTimerColor] = useState("#373737");
@@ -184,6 +185,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [playerCorrectAnswers, setPlayerCorrectAnswers] = useState(0);
 
   const [username, setUsername] = useState("");
+
+  const [currentImageId, setCurrentImageId] = useState(0);
 
   /**
    * The heatmap dialog box information
@@ -485,7 +488,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           drawPredicted(INVALID_COLOUR);
           setAiCorrect(false);
         }
-
+        setHeatmapEnabled(true);
         setLoading(false);
       }, AI_ANIMATION_TIME + 1500);
     } else if (timeRemaining <= 2000) {
@@ -537,6 +540,47 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   /**
+   * Function for uploading user clicks for a CT scan in Firebase
+   * @param xCoord - x-Coordinate of the click on the image
+   * @param yCoord - y-Coordinate of the click on the image
+   * @param imageId - file number of the CT Scan
+   */
+  const uploadImageClick = async (xCoord: number, yCoord: number, imageId: number) => {
+    const docNameForImage = `image_${imageId}`;
+    let entry;
+    let pointWasClickedBefore = false;
+
+    const newClickPoint = {
+      x: xCoord,
+      y: yCoord,
+      clickCount: 1,
+    };
+
+    const imageDoc = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
+
+    if (!imageDoc.exists) {
+      // First time this image showed up in the game - entry will be singleton array
+      entry = { clicks: [newClickPoint] };
+    } else {
+      const { clicks } = imageDoc.data()!;
+      clicks.forEach((click: { x: number; y: number; count: number }) => {
+        if (click.x === xCoord && click.y === yCoord) {
+          click.count += 1;
+          pointWasClickedBefore = true;
+        }
+      });
+
+      if (!pointWasClickedBefore) {
+        // First time this clicked occurred for this image, Add to this image's clicks array
+        clicks.push(newClickPoint);
+      }
+      // Entry in DB will be the updated clicks array
+      entry = { clicks };
+    }
+    await db.collection(DbUtils.IMAGES).doc(docNameForImage).set(entry);
+  };
+
+  /**
    * Called when the canvas is clicked
    *
    * @param event Mouse event, used to get click position
@@ -556,6 +600,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const { x, y } = getClickPositionOnCanvas(clickX, clickY);
 
     drawPlayerClick(x, y, DEFAULT_COLOUR);
+
+    await uploadImageClick(Math.round(x), Math.round(y), currentImageId);
 
     setTimeout(() => {
       drawPredicted(DEFAULT_COLOUR);
@@ -594,7 +640,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         drawPredicted(INVALID_COLOUR);
         setAiCorrect(false);
       }
-
+      setHeatmapEnabled(true);
       setLoading(false);
     }, AI_ANIMATION_TIME + 1500);
   };
@@ -685,11 +731,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const startNewRound = async () => {
     setLoading(true);
     setHinted(false);
+    setHeatmapEnabled(false);
     setCurrentRound((prevState) => prevState + 1);
-    // setIsAiCorrect(false);
-    // setIsPlayerCorrect(false);
 
     const fileNumber = getNewFileNumber();
+    setCurrentImageId(fileNumber);
 
     await loadJson(fileNumber);
     await loadImage(fileNumber);
@@ -766,6 +812,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
   };
 
+  /**
+   * Function for displaying a green or red thick depending on the correctness of the answer
+   * @param correct - true if answer was correct, false otherwise
+   */
   const displayCorrect = (correct: boolean) => {
     if (currentRound === 0 || running || loading) {
       return null;
@@ -778,6 +828,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     return <Clear style={{ fontSize: "48", fill: "red", width: 100 }} />;
   };
 
+  /**
+   * Function for filling up the username field before submitting score
+   * @param event - username writing event listener
+   */
   const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.value !== "") {
       setSubmitEnabled(true);
@@ -788,15 +842,22 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setUsername(event.target.value);
   };
 
+  /**
+   * Function for triggering the effects associated with submitting the score
+   * Submit button becomes disabled
+   * Snackbar triggered
+   * Scores uploaded into Firebase
+   */
   const onSubmitScore = async () => {
     setSubmitEnabled(false);
     await uploadScore();
-    setTimeout(() => {
-      setRoute("home");
-    }, 2000);
+    setRoute("home");
     enqueueSnackbar("Score successfully submitted!");
   };
 
+  /**
+   * Function for displaying the result of the game
+   */
   const decideWinner = () => {
     if (playerScore > aiScore) {
       return (
@@ -820,6 +881,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     );
   };
 
+  /**
+   * Function for displaying the side dialog box with game results and start/next/submit buttons
+   */
   const dialogAction = () => {
     if (currentRound < NUMBER_OF_ROUNDS || running || loading) {
       return (
@@ -868,10 +932,16 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     [0, 100],
   ];
 
+  /**
+   * Function for opening the heatmap tab
+   */
   const openHeatmap = () => {
     setHeatmapDialogOpen(true);
   };
 
+  /**
+   * Function for closing the heatmap tab
+   */
   const closeHeatmap = () => {
     setHeatmapDialogOpen(false);
   };
@@ -953,11 +1023,16 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
               <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
             </div>
-
-            <Button variant="contained" color="primary" size="large" onClick={openHeatmap}>
-              See the heatmap
-            </Button>
           </Card>
+          <Button
+            disabled={!heatmapEnable}
+            variant="contained"
+            color="primary"
+            size="large"
+            onClick={openHeatmap}
+          >
+            See the heatmap
+          </Button>
         </div>
 
         <Dialog fullScreen open={heatmapDialogOpen} onClose={openHeatmap}>

@@ -37,6 +37,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
 
   const [scores, setScores] = useState<ScoreType[]>([]);
 
+  /**
+   * Function for coloring the top 3 in Leaderboard with Gold, Silver and Bronze
+   * @param rowIndex - if rank is 1, 2 or 3 color accordingly, otherwise leave default
+   */
   function selectRowColour(rowIndex: number) {
     switch (rowIndex) {
       case 1:
@@ -50,6 +54,12 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
     }
   }
 
+  /**
+   * Function for creating the Leaderboard
+   * and fetching the Leaderboard data from Firebase in real time
+   * @param tableIndex - index of the table in DB to display
+   * tableIndex = 0 for Daily, 1 for Monthly, 2 for Alltime
+   */
   async function createLeaderboard(tableIndex: number) {
     const table: string = DbUtils.tableNames[tableIndex];
     const date: Date = new Date();
@@ -96,6 +106,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
     setScores(results);
   }
 
+  /**
+   * Function for triggering the creation of the next Leaderboard, when user changes tabs
+   * e.g.: tab changing from index 0 (Daily) to index 1 (Monthly)
+   * @param newIndex - index of the new table to display
+   */
   const onTabChange = async (newIndex: number) => {
     setCurrentTabIndex(newIndex);
     setFirstTimeOpened(false);
