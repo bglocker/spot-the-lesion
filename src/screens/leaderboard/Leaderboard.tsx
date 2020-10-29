@@ -54,6 +54,12 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
     }
   }
 
+  // function checkIfBetterScoreExist(user: string, userScore: number, scores: ScoreType[]) {
+  //   scores.forEach(score => {
+  //     if(score.getUser() === user && userScore > score.getScore())
+  //   });
+  // }
+
   /**
    * Function for creating the Leaderboard
    * and fetching the Leaderboard data from Firebase in real time
@@ -69,6 +75,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
     let medal = true;
     let prevScore = -1;
     let currentScore;
+    // Map for avoiding displaying duplicate entries in Leaderboard
+    const uniqueUsersMap: Map<string, boolean> = new Map<string, boolean>();
 
     const tableRef = db.collection(DbUtils.LEADERBOARD);
     let snapshot;
@@ -89,23 +97,27 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
 
     snapshot = await snapshot.orderBy("score", "desc").limit(100).get();
     snapshot.forEach((doc) => {
-      currentScore = doc.data().score;
-      if (currentScore !== prevScore) {
-        rankPosition += 1;
+      if (!uniqueUsersMap.has(doc.data().user)) {
+        // Current user's highest score - add to result set
+        currentScore = doc.data().score;
+        if (currentScore !== prevScore) {
+          rankPosition += 1;
+        }
+        if (rankPosition > 3) {
+          medal = false;
+        }
+        rowColour = selectRowColour(rankPosition);
+        const score: ScoreType = new ScoreType(
+          rankPosition,
+          doc.data().user,
+          currentScore,
+          rowColour,
+          medal
+        );
+        results.push(score);
+        prevScore = currentScore;
+        uniqueUsersMap.set(doc.data().user, true);
       }
-      if (rankPosition > 3) {
-        medal = false;
-      }
-      rowColour = selectRowColour(rankPosition);
-      const score: ScoreType = new ScoreType(
-        rankPosition,
-        doc.data().user,
-        currentScore,
-        rowColour,
-        medal
-      );
-      results.push(score);
-      prevScore = currentScore;
     });
     setScores(results);
   }
