@@ -1,10 +1,13 @@
-import * as firebase from "firebase/app";
+import firebase from "firebase/app";
 import "firebase/auth";
 import "firebase/firestore";
 import firebaseConfig from "./firebaseConfig";
 
 /* TODO: test with firebase.auth() and firebase.firestore() later on */
+/* TODO: fix mutable exports */
+// eslint-disable-next-line import/no-mutable-exports
 export let auth: firebase.auth.Auth;
+// eslint-disable-next-line import/no-mutable-exports
 export let db: firebase.firestore.Firestore;
 
 export const setupFirebase = (): void => {

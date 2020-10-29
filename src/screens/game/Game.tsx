@@ -15,8 +15,12 @@ import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
 import { Map, ImageOverlay } from "react-leaflet";
 import L, { LatLngBoundsLiteral } from "leaflet";
+
+/* TODO: find solution for missing types */
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import HeatmapLayer from "react-leaflet-heatmap-layer";
+
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import { drawCross, drawCircle, drawRectangle } from "../../components/CanvasUtils";
 import useInterval from "../../components/useInterval";
@@ -529,7 +533,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const docNameForImage = `image_${imageId}`;
     const snapshot = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
     const data = snapshot.data();
-    if (data === undefined) return;
+    if (data === undefined) {
+      return;
+    }
     const clicks: [number, number][] = [];
     for (let i = 0; i < data.clicks.length; i++) {
       for (let k = 0; k < data.clicks[i].clickCount; k++) {
