@@ -548,7 +548,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const uploadImageClick = async (xCoord: number, yCoord: number, imageId: number) => {
     const docNameForImage = `image_${imageId}`;
     let entry;
-    let clickPointExists = false;
+    let pointWasClickedBefore = false;
 
     const newClickPoint = {
       x: xCoord,
@@ -563,14 +563,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       entry = { clicks: [newClickPoint] };
     } else {
       const { clicks } = imageDoc.data()!;
-      clicks.forEach((elem: { x: number; y: number; count: number }) => {
-        if (elem.x === xCoord && elem.y === yCoord) {
-          elem.count += 1;
-          clickPointExists = true;
+      clicks.forEach((click: { x: number; y: number; count: number }) => {
+        if (click.x === xCoord && click.y === yCoord) {
+          click.count += 1;
+          pointWasClickedBefore = true;
         }
       });
 
-      if (!clickPointExists) {
+      if (!pointWasClickedBefore) {
         // First time this clicked occurred for this image, Add to this image's clicks array
         clicks.push(newClickPoint);
       }
