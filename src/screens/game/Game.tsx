@@ -139,6 +139,10 @@ const useStyles = makeStyles((theme: Theme) =>
       width: "100%",
       background: "white",
     },
+    heatmapContainer: {
+      width: 512,
+      height: 512,
+    },
   })
 );
 
@@ -194,6 +198,15 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [currentImageId, setCurrentImageId] = useState(0);
 
   const [dataPoints, setDataPoints] = useState<{ x: number; y: number; value: number }[]>([]);
+
+  const [heatmapDivLoaded, setHeatmapDivLoaded] = useState(false);
+
+  const [heatmapDivRef, setHeatmapDivRef] = useState(null);
+
+  const updateHeatmapDivRef = (div) => {
+    setHeatmapDivRef(div);
+    setHeatmapDivLoaded(true);
+  };
 
   /**
    * The heatmap dialog box information
@@ -686,23 +699,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setLoading(false);
   };
 
-  const createHeatmap = () => {
-    // minimal heatmap instance configuration
-    const heatmapInstance = h337.create({
-      // only container is required, the rest will be defaults
-      container: document.querySelector(".heatmap"),
-    });
-
-    // heatmap data format
-    const data = {
-      max: 1000,
-      data: dataPoints,
-    };
-    // if you have a set of datapoints always use setData instead of addData
-    // for data initialization
-    heatmapInstance.setData(data);
-  };
-
   /**
    * Called when the Start/Next button is clicked
    */
@@ -873,8 +869,33 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Function for closing the heatmap tab
    */
   const closeHeatmap = () => {
+    setHeatmapDivLoaded(false);
     setHeatmapDialogOpen(false);
   };
+
+  useEffect(() => {
+    if (!heatmapDivLoaded) {
+      return;
+    }
+    // minimal heatmap instance configuration
+    // eslint-disable-next-line no-console
+    console.log(heatmapDivRef);
+    const heatmapInstance = h337.create({
+      // only container is required, the rest will be defaults
+      container: heatmapDivRef,
+    });
+
+    // heatmap data format
+    const data = {
+      max: 1,
+      data: dataPoints,
+    };
+    // eslint-disable-next-line no-console
+    console.log(data);
+    // if you have a set of datapoints always use setData instead of addData
+    // for data initialization
+    heatmapInstance.setData(data);
+  }, [dataPoints, heatmapDialogOpen, heatmapDivLoaded, heatmapDivRef]);
 
   return (
     <>
@@ -973,8 +994,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               </IconButton>
             </Toolbar>
           </AppBar>
-          {createHeatmap()}
-          <img src={getImagePath(currentImageId)} alt={getImagePath(currentImageId)} />
+          <div className={classes.heatmapContainer} ref={updateHeatmapDivRef}>
+            <img src={getImagePath(currentImageId)} alt={getImagePath(currentImageId)} />
+          </div>
         </Dialog>
       </div>
     </>
