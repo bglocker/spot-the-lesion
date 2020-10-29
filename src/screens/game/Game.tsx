@@ -13,9 +13,8 @@ import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import { KeyboardBackspace, Check, Clear, Close } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
-import { Map, ImageOverlay } from "react-leaflet";
-import L, { LatLngBoundsLiteral } from "leaflet";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
+import { drawCross, drawCircle, drawRectangle } from "../../components/CanvasUtils";
 import useInterval from "../../components/useInterval";
 import useCanvasContext from "../../components/useCanvasContext";
 import LoadingButton from "../../components/LoadingButton";
@@ -134,6 +133,11 @@ const useStyles = makeStyles((theme: Theme) =>
       flex: 1,
       flexDirection: "column",
     },
+    leafletContainer: {
+      height: "90vh",
+      width: "100%",
+      background: "white",
+    },
   })
 );
 
@@ -188,6 +192,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [currentImageId, setCurrentImageId] = useState(0);
 
+  // const [dataPoints, setDataPoints] = useState<[number, number][]>([]);
+
   /**
    * The heatmap dialog box information
    */
@@ -222,82 +228,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return (x * context.canvas.width) / DEFAULT_CANVAS_SIZE;
     },
     [context]
-  );
-
-  /**
-   * Draws a rectangle
-   *
-   * @param ctx         Context to draw the rectangle on
-   * @param rect        Coordinates for the corners of the rectangle to draw
-   * @param strokeStyle Style for drawing the rectangle
-   * @param lineWidth   Width of the rectangle lines
-   */
-  const drawRectangle = useCallback(
-    (ctx: CanvasRenderingContext2D, rect: number[], strokeStyle: string, lineWidth: number) => {
-      const xBase = rect[0];
-      const xEnd = rect[2];
-      const yBase = rect[1];
-      const yEnd = rect[3];
-
-      const width = xEnd - xBase;
-      const height = yEnd - yBase;
-
-      ctx.strokeStyle = strokeStyle;
-      ctx.lineWidth = lineWidth;
-      ctx.beginPath();
-      ctx.rect(xBase, yBase, width, height);
-      ctx.stroke();
-    },
-    []
-  );
-
-  /**
-   * Draws a cross
-   *
-   * @param ctx         Context to draw the cross on
-   * @param x           Width coordinate
-   * @param y           Height coordinate
-   * @param strokeStyle Style for drawing the cross
-   */
-  const drawCross = useCallback(
-    (ctx: CanvasRenderingContext2D, x: number, y: number, size: number, strokeStyle: string) => {
-      ctx.strokeStyle = strokeStyle;
-      ctx.beginPath();
-      ctx.moveTo(x - size, y - size);
-      ctx.lineTo(x + size, y + size);
-      ctx.moveTo(x + size, y - size);
-      ctx.lineTo(x - size, y + size);
-      ctx.stroke();
-    },
-    []
-  );
-
-  /**
-   * Draws a circle
-   *
-   * @param ctx         Context to draw the circle on
-   * @param x           Width coordinate
-   * @param y           Height coordinate
-   * @param radius      Circle radius
-   * @param width       Width of the circle line
-   * @param strokeStyle Style for drawing the circle
-   */
-  const drawCircle = useCallback(
-    (
-      ctx: CanvasRenderingContext2D,
-      x: number,
-      y: number,
-      radius: number,
-      width: number,
-      strokeStyle: string
-    ) => {
-      ctx.strokeStyle = strokeStyle;
-      ctx.lineWidth = width;
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, 2 * Math.PI);
-      ctx.stroke();
-    },
-    []
   );
 
   const getCube = useCallback((baseCornerX: number, baseCornerY: number, cubeSide: number) => {
@@ -364,14 +294,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         clearAnimCanvas();
       }
     }, animationTime / 100);
-  }, [animContext, clearAnimCanvas, drawRectangle, enqueueSnackbar, getCornerCube, getCube]);
+  }, [animContext, clearAnimCanvas, enqueueSnackbar, getCornerCube, getCube]);
 
   /**
    * Draws the truth rectangle
    */
   const drawTruth = useCallback(() => {
     drawRectangle(context, truth, TRUE_COLOUR, 3);
-  }, [context, drawRectangle, truth]);
+  }, [context, truth]);
 
   /**
    * Draws the predicted rectangle
@@ -381,7 +311,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     (strokeStyle: string) => {
       drawRectangle(context, predicted, strokeStyle, 3);
     },
-    [context, drawRectangle, predicted]
+    [context, predicted]
   );
 
   /**
@@ -393,7 +323,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const radius = 100;
 
     drawCircle(context, x, y, mapToCanvasScale(radius), 2, INVALID_COLOUR);
-  }, [context, drawCircle, mapToCanvasScale, truth]);
+  }, [context, mapToCanvasScale, truth]);
 
   /**
    * Draws the player click cross
@@ -591,6 +521,22 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     await db.collection(DbUtils.IMAGES).doc(docNameForImage).set(entry);
   };
 
+  const getClickedPoints = async (imageId: number) => {
+    const docNameForImage = `image_${imageId}`;
+    const snapshot = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
+    const data = snapshot.data();
+    if (data === undefined) {
+      return;
+    }
+    const clicks: [number, number][] = [];
+    for (let i = 0; i < data.clicks.length; i++) {
+      for (let k = 0; k < data.clicks[i].clickCount; k++) {
+        clicks.push([data.clicks[i].y, data.clicks[i].x]);
+      }
+    }
+    // setDataPoints(clicks);
+  };
+
   /**
    * Called when the canvas is clicked
    *
@@ -606,13 +552,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     const [clickX, clickY] = [event.clientX, event.clientY];
 
-    drawAiSearchAnimation();
-
     const { x, y } = getClickPositionOnCanvas(clickX, clickY);
 
     drawPlayerClick(x, y, DEFAULT_COLOUR);
 
     await uploadImageClick(Math.round(x), Math.round(y), currentImageId);
+
+    drawAiSearchAnimation();
 
     setTimeout(() => {
       drawPredicted(DEFAULT_COLOUR);
@@ -768,12 +714,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       year: date.getFullYear(),
     };
 
-    const docNameForDaily = `${entry.year}.${entry.month}.${entry.day}.${entry.user}`;
-    const docNameForMonthly = `${entry.year}.${entry.month}.${entry.user}`;
-    const docNameForAllTime = entry.user;
+    const entryName = `${entry.year}.${entry.month}.${entry.day}.${entry.user}`;
 
-    const dailySnapshot = await db
-      .collection(DbUtils.DAILY_LEADERBOARD)
+    const snapshot = await db
+      .collection(DbUtils.LEADERBOARD)
       .where("year", "==", entry.year)
       .where("month", "==", entry.month)
       .where("day", "==", entry.day)
@@ -781,30 +725,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       .where("score", ">", playerScore)
       .get();
 
-    if (dailySnapshot.empty) {
-      await db.collection(DbUtils.DAILY_LEADERBOARD).doc(docNameForDaily).set(entry);
-    }
-
-    const monthlySnapshot = await db
-      .collection(DbUtils.MONTHLY_LEADERBOARD)
-      .where("year", "==", entry.year)
-      .where("month", "==", entry.month)
-      .where("user", "==", username)
-      .where("score", ">", playerScore)
-      .get();
-
-    if (monthlySnapshot.empty) {
-      await db.collection(DbUtils.MONTHLY_LEADERBOARD).doc(docNameForMonthly).set(entry);
-    }
-
-    const allTimeSnapshot = await db
-      .collection(DbUtils.ALL_TIME_LEADERBOARD)
-      .where("user", "==", username)
-      .where("score", ">", playerScore)
-      .get();
-
-    if (allTimeSnapshot.empty) {
-      await db.collection(DbUtils.ALL_TIME_LEADERBOARD).doc(docNameForAllTime).set(entry);
+    if (snapshot.empty) {
+      await db.collection(DbUtils.LEADERBOARD).doc(entryName).set(entry);
     }
   };
 
@@ -923,15 +845,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     );
   };
 
-  const bounds: LatLngBoundsLiteral = [
-    [100, 0],
-    [0, 100],
-  ];
-
   /**
    * Function for opening the heatmap tab
    */
   const openHeatmap = () => {
+    getClickedPoints(currentImageId);
     setHeatmapDialogOpen(true);
   };
 
@@ -957,6 +875,15 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           </IconButton>
 
           <Typography>Spot the Lesion</Typography>
+          <Button
+            disabled={!heatmapEnable}
+            variant="contained"
+            color="primary"
+            size="large"
+            onClick={openHeatmap}
+          >
+            See the heatmap
+          </Button>
         </Toolbar>
       </AppBar>
 
@@ -1020,15 +947,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
             </div>
           </Card>
-          <Button
-            disabled={!heatmapEnable}
-            variant="contained"
-            color="primary"
-            size="large"
-            onClick={openHeatmap}
-          >
-            See the heatmap
-          </Button>
         </div>
 
         <Dialog fullScreen open={heatmapDialogOpen} onClose={openHeatmap}>
@@ -1039,10 +957,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               </IconButton>
             </Toolbar>
           </AppBar>
-
-          <Map crs={L.CRS.Simple} bounds={bounds}>
-            <ImageOverlay bounds={bounds} url={`${process.env.PUBLIC_URL}/content/images/0.png`} />
-          </Map>
         </Dialog>
       </div>
     </>

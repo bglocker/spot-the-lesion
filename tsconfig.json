@@ -6,6 +6,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "importHelpers": true,
+    "incremental": true,
     "isolatedModules": true,
     "jsx": "react",
     "lib": [ "dom", "dom.iterable", "esnext" ],
@@ -14,6 +15,7 @@
     "noEmit": true,
     "noFallthroughCasesInSwitch": false,
     "noImplicitReturns": true,
+    "noImplicitAny": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "resolveJsonModule": true,
@@ -21,7 +23,7 @@
     "sourceMap": true,
     "strict": true,
     "suppressImplicitAnyIndexErrors": true,
-    "target": "es5",
+    "target": "es2020",
     "typeRoots": [
       "./types",
       "./node_modules/@types"

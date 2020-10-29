@@ -69,39 +69,49 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
     let medal = true;
     let prevScore = -1;
     let currentScore;
+    // Map for avoiding displaying duplicate entries in Leaderboard
+    const uniqueUsersMap: Map<string, boolean> = new Map<string, boolean>();
 
-    const tableRef = db.collection(table);
+    const tableRef = db.collection(DbUtils.LEADERBOARD);
     let snapshot;
     snapshot = tableRef;
 
-    if (table !== DbUtils.ALL_TIME_LEADERBOARD) {
-      snapshot = snapshot
-        .where("year", "==", date.getFullYear())
-        .where("month", "==", DbUtils.monthNames[date.getMonth()]);
-      if (table === DbUtils.DAILY_LEADERBOARD) {
+    switch (table) {
+      case "daily-scores":
         snapshot = snapshot.where("day", "==", date.getDate());
-      }
+        break;
+      case "monthly-scores":
+        snapshot = snapshot
+          .where("year", "==", date.getFullYear())
+          .where("month", "==", DbUtils.monthNames[date.getMonth()]);
+        break;
+      default:
+        break;
     }
 
     snapshot = await snapshot.orderBy("score", "desc").limit(100).get();
     snapshot.forEach((doc) => {
-      currentScore = doc.data().score;
-      if (currentScore !== prevScore) {
-        rankPosition += 1;
+      if (!uniqueUsersMap.has(doc.data().user)) {
+        // Current user's highest score - add to result set
+        currentScore = doc.data().score;
+        if (currentScore !== prevScore) {
+          rankPosition += 1;
+        }
+        if (rankPosition > 3) {
+          medal = false;
+        }
+        rowColour = selectRowColour(rankPosition);
+        const score: ScoreType = new ScoreType(
+          rankPosition,
+          doc.data().user,
+          currentScore,
+          rowColour,
+          medal
+        );
+        results.push(score);
+        prevScore = currentScore;
+        uniqueUsersMap.set(doc.data().user, true);
       }
-      if (rankPosition > 3) {
-        medal = false;
-      }
-      rowColour = selectRowColour(rankPosition);
-      const score: ScoreType = new ScoreType(
-        rankPosition,
-        doc.data().user,
-        currentScore,
-        rowColour,
-        medal
-      );
-      results.push(score);
-      prevScore = currentScore;
     });
     setScores(results);
   }
