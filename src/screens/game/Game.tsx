@@ -13,6 +13,7 @@ import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import { KeyboardBackspace, Check, Clear, Close } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
+import h337 from "heatmap.js";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import { drawCross, drawCircle, drawRectangle } from "../../components/CanvasUtils";
 import useInterval from "../../components/useInterval";
@@ -192,7 +193,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [currentImageId, setCurrentImageId] = useState(0);
 
-  // const [dataPoints, setDataPoints] = useState<[number, number][]>([]);
+  const [dataPoints, setDataPoints] = useState<{ x: number; y: number; value: number }[]>([]);
 
   /**
    * The heatmap dialog box information
@@ -528,13 +529,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     if (data === undefined) {
       return;
     }
-    const clicks: [number, number][] = [];
+    const clicks: { x: number; y: number; value: number }[] = [];
     for (let i = 0; i < data.clicks.length; i++) {
-      for (let k = 0; k < data.clicks[i].clickCount; k++) {
-        clicks.push([data.clicks[i].y, data.clicks[i].x]);
-      }
+      clicks.push({ x: data.clicks[i].x, y: data.clicks[i].y, value: data.clicks[i].clickCount });
     }
-    // setDataPoints(clicks);
+    setDataPoints(clicks);
   };
 
   /**
@@ -685,6 +684,23 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setTimeRemaining(TOTAL_TIME_MS);
     setRunning(true);
     setLoading(false);
+  };
+
+  const createHeatmap = () => {
+    // minimal heatmap instance configuration
+    const heatmapInstance = h337.create({
+      // only container is required, the rest will be defaults
+      container: document.querySelector(".heatmap"),
+    });
+
+    // heatmap data format
+    const data = {
+      max: 1000,
+      data: dataPoints,
+    };
+    // if you have a set of datapoints always use setData instead of addData
+    // for data initialization
+    heatmapInstance.setData(data);
   };
 
   /**
@@ -957,6 +973,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               </IconButton>
             </Toolbar>
           </AppBar>
+          {createHeatmap()}
+          <img src={getImagePath(currentImageId)} alt={getImagePath(currentImageId)} />
         </Dialog>
       </div>
     </>
