@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AppBar, Grid, IconButton, Toolbar, Typography } from "@material-ui/core";
+import { AppBar, CircularProgress, Grid, IconButton, Toolbar, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { CanvasJSChart } from "canvasjs-react-charts";
@@ -19,39 +19,47 @@ const useStyles = makeStyles(() =>
 const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) => {
   const classes = useStyles();
 
+  /**
+   * Loading flag to enable waiting
+   */
+  const [loading, setLoading] = useState(true);
+
   const [aiScore, setAiScore] = useState(0);
   const [humanScore, setHumanScore] = useState(0);
   const [aiWins, setAiWins] = useState(0);
   const [humanWins, setHumanWins] = useState(0);
-  // const [loading, setLoading] = useState(true);
 
-  const tableRef = db.collection("alltime-scores");
+  /**
+   * Retrieves the data from the databse to display into the pie-chart and graph
+   */
+  const retrieveStatistics = async () => {
+    const snapshot = await db.collection("alltime-scores").get();
+    let aiScoreCounter = 0;
+    let humanScoreCounter = 0;
+    let noOfHumanWins = 0;
+    let noOfGames = 0;
 
-  let aiScoreCounter = 0;
-  let humanScoreCounter = 0;
-  let noOfHumanWins = 0;
-  let noOfGames = 0;
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const snapshot = await tableRef.get();
-  snapshot.forEach((doc) => {
-    aiScoreCounter += doc.data().ai_score;
-    humanScoreCounter += doc.data().score;
-    if (doc.data().correct_player_answers > doc.data().correct_ai_answers) {
-      noOfHumanWins += 1;
-    }
-    noOfGames += 1;
-  });
-  setAiScore(aiScoreCounter / noOfGames);
-  setHumanScore(humanScoreCounter / noOfGames);
-  setHumanWins(noOfHumanWins);
-  setAiWins(noOfGames - noOfHumanWins);
+    snapshot.forEach((doc) => {
+      aiScoreCounter += doc.data().ai_score;
+      humanScoreCounter += doc.data().score;
+      if (doc.data().correct_player_answers > doc.data().correct_ai_answers) {
+        noOfHumanWins += 1;
+      }
+      noOfGames += 1;
+    });
+    setAiScore(aiScoreCounter / noOfGames);
+    setHumanScore(humanScoreCounter / noOfGames);
+    setHumanWins(noOfHumanWins);
+    setAiWins(noOfGames - noOfHumanWins);
+
+    setLoading(false);
+  };
 
   const getOptionsPieChart = (title: string, aiLabel: string, humanLabel: string) => {
     return {
       animationEnabled: true,
       exportEnabled: true,
-      backgroundColor: "#66A5AD",
+      backgroundColor: "#63A2AB",
       title: {
         text: title,
         fontColor: "white",
@@ -81,7 +89,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     return {
       animationEnabled: true,
       exportEnabled: true,
-      backgroundColor: "#66A5AD",
+      backgroundColor: "#63A2AB",
       title: {
         text: title,
         fontColor: "white",
@@ -114,6 +122,30 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
   const options1 = getOptionsPieChart("Human vs AI", "AI Victories", "Human Victories");
   const options2 = getOptionsContainerChart("Average Scores", "AI Average", "Human Average");
 
+  if (loading) {
+    retrieveStatistics();
+    return (
+      <>
+        <AppBar position="sticky">
+          <Toolbar variant="dense">
+            <IconButton
+              className={classes.backButton}
+              edge="start"
+              color="inherit"
+              aria-label="Back"
+              onClick={() => setRoute("home")}
+            >
+              <KeyboardBackspace />
+            </IconButton>
+
+            <Typography>Spot the Lesion</Typography>
+          </Toolbar>
+        </AppBar>
+
+        <CircularProgress />
+      </>
+    );
+  }
   return (
     <>
       <AppBar position="sticky">
