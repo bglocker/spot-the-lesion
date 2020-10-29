@@ -16,6 +16,7 @@ import { useSnackbar } from "notistack";
 import { Map, ImageOverlay } from "react-leaflet";
 import L, { LatLngBoundsLiteral } from "leaflet";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
+import { drawCross, drawCircle, drawRectangle } from "../../components/CanvasUtils";
 import useInterval from "../../components/useInterval";
 import useCanvasContext from "../../components/useCanvasContext";
 import LoadingButton from "../../components/LoadingButton";
@@ -224,82 +225,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     [context]
   );
 
-  /**
-   * Draws a rectangle
-   *
-   * @param ctx         Context to draw the rectangle on
-   * @param rect        Coordinates for the corners of the rectangle to draw
-   * @param strokeStyle Style for drawing the rectangle
-   * @param lineWidth   Width of the rectangle lines
-   */
-  const drawRectangle = useCallback(
-    (ctx: CanvasRenderingContext2D, rect: number[], strokeStyle: string, lineWidth: number) => {
-      const xBase = rect[0];
-      const xEnd = rect[2];
-      const yBase = rect[1];
-      const yEnd = rect[3];
-
-      const width = xEnd - xBase;
-      const height = yEnd - yBase;
-
-      ctx.strokeStyle = strokeStyle;
-      ctx.lineWidth = lineWidth;
-      ctx.beginPath();
-      ctx.rect(xBase, yBase, width, height);
-      ctx.stroke();
-    },
-    []
-  );
-
-  /**
-   * Draws a cross
-   *
-   * @param ctx         Context to draw the cross on
-   * @param x           Width coordinate
-   * @param y           Height coordinate
-   * @param strokeStyle Style for drawing the cross
-   */
-  const drawCross = useCallback(
-    (ctx: CanvasRenderingContext2D, x: number, y: number, size: number, strokeStyle: string) => {
-      ctx.strokeStyle = strokeStyle;
-      ctx.beginPath();
-      ctx.moveTo(x - size, y - size);
-      ctx.lineTo(x + size, y + size);
-      ctx.moveTo(x + size, y - size);
-      ctx.lineTo(x - size, y + size);
-      ctx.stroke();
-    },
-    []
-  );
-
-  /**
-   * Draws a circle
-   *
-   * @param ctx         Context to draw the circle on
-   * @param x           Width coordinate
-   * @param y           Height coordinate
-   * @param radius      Circle radius
-   * @param width       Width of the circle line
-   * @param strokeStyle Style for drawing the circle
-   */
-  const drawCircle = useCallback(
-    (
-      ctx: CanvasRenderingContext2D,
-      x: number,
-      y: number,
-      radius: number,
-      width: number,
-      strokeStyle: string
-    ) => {
-      ctx.strokeStyle = strokeStyle;
-      ctx.lineWidth = width;
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, 2 * Math.PI);
-      ctx.stroke();
-    },
-    []
-  );
-
   const getCube = useCallback((baseCornerX: number, baseCornerY: number, cubeSide: number) => {
     const cube: number[] = [];
 
@@ -364,14 +289,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         clearAnimCanvas();
       }
     }, animationTime / 100);
-  }, [animContext, clearAnimCanvas, drawRectangle, enqueueSnackbar, getCornerCube, getCube]);
+  }, [animContext, clearAnimCanvas, enqueueSnackbar, getCornerCube, getCube]);
 
   /**
    * Draws the truth rectangle
    */
   const drawTruth = useCallback(() => {
     drawRectangle(context, truth, TRUE_COLOUR, 3);
-  }, [context, drawRectangle, truth]);
+  }, [context, truth]);
 
   /**
    * Draws the predicted rectangle
@@ -381,7 +306,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     (strokeStyle: string) => {
       drawRectangle(context, predicted, strokeStyle, 3);
     },
-    [context, drawRectangle, predicted]
+    [context, predicted]
   );
 
   /**
@@ -393,7 +318,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const radius = 100;
 
     drawCircle(context, x, y, mapToCanvasScale(radius), 2, INVALID_COLOUR);
-  }, [context, drawCircle, mapToCanvasScale, truth]);
+  }, [context, mapToCanvasScale, truth]);
 
   /**
    * Draws the player click cross
@@ -606,13 +531,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     const [clickX, clickY] = [event.clientX, event.clientY];
 
-    drawAiSearchAnimation();
-
     const { x, y } = getClickPositionOnCanvas(clickX, clickY);
 
     drawPlayerClick(x, y, DEFAULT_COLOUR);
 
     await uploadImageClick(Math.round(x), Math.round(y), currentImageId);
+
+    drawAiSearchAnimation();
 
     setTimeout(() => {
       drawPredicted(DEFAULT_COLOUR);
