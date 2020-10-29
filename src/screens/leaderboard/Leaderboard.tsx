@@ -70,7 +70,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
     let prevScore = -1;
     let currentScore;
 
-    const tableRef = db.collection(table);
+    const tableRef = db.collection(DbUtils.LEADERBOARD);
     let snapshot;
     snapshot = tableRef;
 
