@@ -1,6 +1,6 @@
 import React from "react";
 import { AppBar, IconButton, Toolbar, Typography } from "@material-ui/core";
-import { makeStyles, createStyles } from "@material-ui/core/styles";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { CanvasJSChart } from "canvasjs-react-charts";
 
@@ -15,14 +15,13 @@ const useStyles = makeStyles(() =>
   })
 );
 
-const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) => {
-  const classes = useStyles();
-  const options = {
+const getOptions = (title: string, aiLabel: string, humanLabel: string) => {
+  return {
     animationEnabled: true,
     exportEnabled: true,
     backgroundColor: "#66A5AD",
     title: {
-      text: "Human vs AI",
+      text: title,
       fontColor: "white",
     },
     data: [
@@ -33,16 +32,21 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
         dataPoints: [
           {
             y: 80,
-            label: "AI Victories",
+            label: aiLabel,
           },
           {
             y: 20,
-            label: "Human Victories",
+            label: humanLabel,
           },
         ],
       },
     ],
   };
+};
+
+const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) => {
+  const classes = useStyles();
+  const options = getOptions("Human vs AI", "AI Victories", "Human Victories");
 
   return (
     <>
