@@ -15,6 +15,8 @@ import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
 import { Map, ImageOverlay } from "react-leaflet";
 import L, { LatLngBoundsLiteral } from "leaflet";
+// @ts-ignore
+import HeatmapLayer from "react-leaflet-heatmap-layer";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import { drawCross, drawCircle, drawRectangle } from "../../components/CanvasUtils";
 import useInterval from "../../components/useInterval";
@@ -135,6 +137,11 @@ const useStyles = makeStyles((theme: Theme) =>
       flex: 1,
       flexDirection: "column",
     },
+    leafletContainer: {
+      height: "90vh",
+      width: "100%",
+      background: "white",
+    },
   })
 );
 
@@ -188,6 +195,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [username, setUsername] = useState("");
 
   const [currentImageId, setCurrentImageId] = useState(0);
+
+  const [dataPoints, setDataPoints] = useState<[number, number][]>([]);
 
   /**
    * The heatmap dialog box information
@@ -514,6 +523,20 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       entry = { clicks };
     }
     await db.collection(DbUtils.IMAGES).doc(docNameForImage).set(entry);
+  };
+
+  const getClickedPoints = async (imageId: number) => {
+    const docNameForImage = `image_${imageId}`;
+    const snapshot = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
+    const data = snapshot.data();
+    if (data === undefined) return;
+    const clicks: [number, number][] = [];
+    for (let i = 0; i < data.clicks.length; i++) {
+      for (let k = 0; k < data.clicks[i].clickCount; k++) {
+        clicks.push([data.clicks[i].y, data.clicks[i].x]);
+      }
+    }
+    setDataPoints(clicks);
   };
 
   /**
@@ -857,6 +880,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Function for opening the heatmap tab
    */
   const openHeatmap = () => {
+    getClickedPoints(currentImageId);
     setHeatmapDialogOpen(true);
   };
 
@@ -882,6 +906,15 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           </IconButton>
 
           <Typography>Spot the Lesion</Typography>
+          <Button
+            disabled={!heatmapEnable}
+            variant="contained"
+            color="primary"
+            size="large"
+            onClick={openHeatmap}
+          >
+            See the heatmap
+          </Button>
         </Toolbar>
       </AppBar>
 
@@ -945,15 +978,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
             </div>
           </Card>
-          <Button
-            disabled={!heatmapEnable}
-            variant="contained"
-            color="primary"
-            size="large"
-            onClick={openHeatmap}
-          >
-            See the heatmap
-          </Button>
         </div>
 
         <Dialog fullScreen open={heatmapDialogOpen} onClose={openHeatmap}>
@@ -966,6 +990,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           </AppBar>
 
           <Map crs={L.CRS.Simple} bounds={bounds}>
+            <HeatmapLayer
+              points={dataPoints}
+              longitudeExtractor={(m: [number, number]) => m[0]}
+              latitudeExtractor={(m: [number, number]) => m[1]}
+              intensityExtractor={() => 100}
+            />
             <ImageOverlay bounds={bounds} url={`${process.env.PUBLIC_URL}/content/images/0.png`} />
           </Map>
         </Dialog>
