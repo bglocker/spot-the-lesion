@@ -2,6 +2,7 @@ import React from "react";
 import { AppBar, IconButton, Toolbar, Typography } from "@material-ui/core";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
+import { CanvasJSChart } from "canvasjs-react-charts";
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -16,6 +17,32 @@ const useStyles = makeStyles(() =>
 
 const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) => {
   const classes = useStyles();
+  const options = {
+    animationEnabled: true,
+    exportEnabled: true,
+    backgroundColor: "#66A5AD",
+    title: {
+      text: "Human vs AI",
+      fontColor: "white",
+    },
+    data: [
+      {
+        type: "pie",
+        indexLabel: "{label}: {y}%",
+        startAngle: -90,
+        dataPoints: [
+          {
+            y: 80,
+            label: "AI Victories",
+          },
+          {
+            y: 20,
+            label: "Human Victories",
+          },
+        ],
+      },
+    ],
+  };
 
   return (
     <>
@@ -35,7 +62,9 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
         </Toolbar>
       </AppBar>
 
-      <div className={classes.container} />
+      <div className={classes.container}>
+        <CanvasJSChart options={options} />{" "}
+      </div>
     </>
   );
 };
