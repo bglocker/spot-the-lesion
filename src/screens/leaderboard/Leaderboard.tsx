@@ -54,12 +54,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
     }
   }
 
-  // function checkIfBetterScoreExist(user: string, userScore: number, scores: ScoreType[]) {
-  //   scores.forEach(score => {
-  //     if(score.getUser() === user && userScore > score.getScore())
-  //   });
-  // }
-
   /**
    * Function for creating the Leaderboard
    * and fetching the Leaderboard data from Firebase in real time
