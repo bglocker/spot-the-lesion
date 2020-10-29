@@ -768,12 +768,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       year: date.getFullYear(),
     };
 
-    const docNameForDaily = `${entry.year}.${entry.month}.${entry.day}.${entry.user}`;
-    const docNameForMonthly = `${entry.year}.${entry.month}.${entry.user}`;
-    const docNameForAllTime = entry.user;
+    const entryName = `${entry.year}.${entry.month}.${entry.day}.${entry.user}`;
 
-    const dailySnapshot = await db
-      .collection(DbUtils.DAILY_LEADERBOARD)
+    const snapshot = await db
+      .collection(DbUtils.LEADERBOARD)
       .where("year", "==", entry.year)
       .where("month", "==", entry.month)
       .where("day", "==", entry.day)
@@ -781,30 +779,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       .where("score", ">", playerScore)
       .get();
 
-    if (dailySnapshot.empty) {
-      await db.collection(DbUtils.DAILY_LEADERBOARD).doc(docNameForDaily).set(entry);
-    }
-
-    const monthlySnapshot = await db
-      .collection(DbUtils.MONTHLY_LEADERBOARD)
-      .where("year", "==", entry.year)
-      .where("month", "==", entry.month)
-      .where("user", "==", username)
-      .where("score", ">", playerScore)
-      .get();
-
-    if (monthlySnapshot.empty) {
-      await db.collection(DbUtils.MONTHLY_LEADERBOARD).doc(docNameForMonthly).set(entry);
-    }
-
-    const allTimeSnapshot = await db
-      .collection(DbUtils.ALL_TIME_LEADERBOARD)
-      .where("user", "==", username)
-      .where("score", ">", playerScore)
-      .get();
-
-    if (allTimeSnapshot.empty) {
-      await db.collection(DbUtils.ALL_TIME_LEADERBOARD).doc(docNameForAllTime).set(entry);
+    if (snapshot.empty) {
+      await db.collection(DbUtils.LEADERBOARD).doc(entryName).set(entry);
     }
   };
 

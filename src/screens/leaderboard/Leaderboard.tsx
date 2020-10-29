@@ -74,13 +74,17 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
     let snapshot;
     snapshot = tableRef;
 
-    if (table !== DbUtils.ALL_TIME_LEADERBOARD) {
-      snapshot = snapshot
-        .where("year", "==", date.getFullYear())
-        .where("month", "==", DbUtils.monthNames[date.getMonth()]);
-      if (table === DbUtils.DAILY_LEADERBOARD) {
+    switch (table) {
+      case "daily-scores":
         snapshot = snapshot.where("day", "==", date.getDate());
-      }
+        break;
+      case "monthly-scores":
+        snapshot = snapshot
+          .where("year", "==", date.getFullYear())
+          .where("month", "==", DbUtils.monthNames[date.getMonth()]);
+        break;
+      default:
+        break;
     }
 
     snapshot = await snapshot.orderBy("score", "desc").limit(100).get();
