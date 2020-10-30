@@ -1,3 +1,17 @@
+/* Default canvas size, used for scale mapping */
+const DEFAULT_CANVAS_SIZE = 512;
+
+/**
+ * Maps a given value to the given canvas scale
+ *
+ * @param x   Value to map
+ * @param ctx Canvas context, used to determine canvas size for scaling
+ *
+ * @return Given value, mapped to the canvas scale
+ */
+const mapToCanvasScale = (x: number, ctx: CanvasRenderingContext2D): number =>
+  (x * ctx.canvas.width) / DEFAULT_CANVAS_SIZE;
+
 /**
  * Draws a rectangle
  *
@@ -77,4 +91,4 @@ const drawCircle = (
   ctx.stroke();
 };
 
-export { drawCircle, drawCross, drawRectangle };
+export { drawCircle, drawCross, drawRectangle, mapToCanvasScale };

@@ -14,7 +14,13 @@ import { KeyboardBackspace, Check, Clear, Close } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
-import { drawCross, drawCircle, drawRectangle } from "../../components/CanvasUtils";
+import {
+  drawCross,
+  drawCircle,
+  drawRectangle,
+  mapToCanvasScale,
+} from "../../components/CanvasUtils";
+import { getImagePath, getIntersectionOverUnion, getJsonPath } from "./GameUitls";
 import useInterval from "../../components/useInterval";
 import useCanvasContext from "../../components/useCanvasContext";
 import LoadingButton from "../../components/LoadingButton";
@@ -150,7 +156,6 @@ const NUMBER_OF_ROUNDS = 10;
 const TOTAL_TIME_MS = 10000;
 const AI_SCORE_INCREASE_RATE = 75;
 
-const DEFAULT_CANVAS_SIZE = 512;
 const MAX_CANVAS_SIZE = 750;
 
 const MAX_FILE_NUMBER = 100;
@@ -216,37 +221,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    */
   const stopTimer = () => setRunning(false);
 
-  /**
-   * Maps a given value to the current canvas scale
-   *
-   * @param x Value to map
-   *
-   * @return Given value, mapped to the canvas scale
-   */
-  const mapToCanvasScale = useCallback(
-    (x: number) => {
-      return (x * context.canvas.width) / DEFAULT_CANVAS_SIZE;
+  const setCube = useCallback(
+    (cube: number[], baseCornerX: number, baseCornerY: number, cubeSide: number) => {
+      cube[0] = baseCornerX;
+      cube[1] = baseCornerY;
+      cube[2] = baseCornerX + cubeSide;
+      cube[3] = baseCornerY + cubeSide;
     },
-    [context]
-  );
-
-  const getCube = useCallback((baseCornerX: number, baseCornerY: number, cubeSide: number) => {
-    const cube: number[] = [];
-
-    cube[0] = baseCornerX;
-    cube[1] = baseCornerY;
-    cube[2] = cube[0] + cubeSide;
-    cube[3] = cube[1] + cubeSide;
-    return cube;
-  }, []);
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const getCornerCube = useCallback(
-    (cubeSide: number) => {
-      return getCube(0, 0, cubeSide);
-    },
-    [getCube]
+    []
   );
 
   /**
@@ -269,10 +251,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const canvasWidth = animContext.canvas.width;
     const canvasHeight = animContext.canvas.height;
     const cubeSide = canvasWidth / (numCubes * 2);
-    let cube = getCornerCube(cubeSide);
+    const cube: number[] = [];
+
+    setCube(cube, 0, 0, cubeSide);
 
     /* Draw cubes in initial position */
-    drawRectangle(animContext, cube, INVALID_COLOUR, 3);
+    drawRectangle(animContext, cube, VALID_COLOUR, 3);
 
     const intervalId = window.setInterval(() => {
       /* Clear previous cubes */
@@ -286,25 +270,20 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       /* When cube gets to right-most bound, advance cube below & restart */
       if (cube[2] > canvasWidth) {
-        cube = getCube(-cubeSide, cube[1] + cubeSide, cubeSide);
+        setCube(cube, -cubeSide, cube[1] + cubeSide, cubeSide);
       }
+
       /* When cube gets out of lower bound, end animation */
       if (cube[1] > canvasHeight) {
         clearInterval(intervalId);
         clearAnimCanvas();
       }
     }, animationTime / 100);
-  }, [animContext, clearAnimCanvas, enqueueSnackbar, getCornerCube, getCube]);
-
-  /**
-   * Draws the truth rectangle
-   */
-  const drawTruth = useCallback(() => {
-    drawRectangle(context, truth, TRUE_COLOUR, 3);
-  }, [context, truth]);
+  }, [animContext, clearAnimCanvas, enqueueSnackbar, setCube]);
 
   /**
    * Draws the predicted rectangle
+   *
    * @param strokeStyle Style for drawing the rectangle
    */
   const drawPredicted = useCallback(
@@ -315,6 +294,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   );
 
   /**
+   * Draws the truth rectangle
+   */
+  const drawTruth = useCallback(() => {
+    drawRectangle(context, truth, TRUE_COLOUR, 3);
+  }, [context, truth]);
+
+  /**
    * Draws the hint circle
    */
   const drawHint = useCallback(() => {
@@ -322,8 +308,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
     const radius = 100;
 
-    drawCircle(context, x, y, mapToCanvasScale(radius), 2, INVALID_COLOUR);
-  }, [context, mapToCanvasScale, truth]);
+    drawCircle(context, x, y, mapToCanvasScale(radius, context), 2, INVALID_COLOUR);
+  }, [context, truth]);
 
   /**
    * Draws the player click cross
@@ -335,44 +321,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const drawPlayerClick = (x: number, y: number, strokeStyle: string) => {
     drawCross(context, x, y, 5, strokeStyle);
   };
-
-  /**
-   * Given the coordinates of two rectangles, returns the ratio of their intersection
-   * over their union.
-   *
-   * Used in determining the success of a given AI prediction.
-   *
-   * @param rectA Coordinates for the corners of the first rectangle
-   * @param rectB Coordinates for the corners of the second rectangle
-   *
-   * @return Ratio of intersection area over union area
-   */
-  const getIntersectionOverUnion = (rectA: number[], rectB: number[]): number => {
-    const xA = Math.max(rectA[0], rectB[0]);
-    const xB = Math.min(rectA[2], rectB[2]);
-    const yA = Math.max(rectA[1], rectB[1]);
-    const yB = Math.min(rectA[3], rectB[3]);
-
-    const inter = Math.max(0, xB - xA + 1) * Math.max(0, yB - yA + 1);
-
-    const areaA = (rectA[2] - rectA[0] + 1) * (rectA[3] - rectA[1] + 1);
-    const areaB = (rectB[2] - rectB[0] + 1) * (rectB[3] - rectB[1] + 1);
-
-    const union = areaA + areaB - inter;
-
-    return inter / union;
-  };
-
-  /**
-   * Determines whether the AI prediction was successful, by checking that
-   * the ratio of the intersection over the union of the predicted and truth rectangles
-   * is greater than 0.5
-   *
-   * @return The success value
-   */
-  const isAiPredictionRight = useCallback(() => {
-    return getIntersectionOverUnion(truth, predicted) > 0.5;
-  }, [truth, predicted]);
 
   /**
    * Determines whether the player was successful, by checking that the click position
@@ -387,29 +335,45 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
   };
 
+  const checkPlayer = (x: number, y: number) => {
+    enqueueSnackbar("Checking results...");
+
+    if (isPlayerRight(x, y)) {
+      const timeRate = timeRemaining / 1000;
+      const increaseRate = hinted ? timeRate * 10 : timeRate * 20;
+
+      setPlayerCorrectAnswers((prevState) => prevState + 1);
+      setPlayerScore((prevState) => prevState + increaseRate);
+      drawPlayerClick(x, y, VALID_COLOUR);
+      setPlayerCorrect(true);
+    } else {
+      drawPlayerClick(x, y, INVALID_COLOUR);
+      setPlayerCorrect(false);
+    }
+  };
+
   /**
-   * Sets a timeout for animation that shows whether the AI prediction was right or wrong
+   * Draw the predicted rectangle, this time checking if the AI was right or wrong
    */
-  const drawAIAnswerCheckAnimation = useCallback(() => {
-    setTimeout(() => {
-      if (isAiPredictionRight()) {
-        const scoreObtained = Math.round(
-          getIntersectionOverUnion(truth, predicted) * AI_SCORE_INCREASE_RATE
-        );
+  const checkAi = useCallback(() => {
+    const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
 
-        setAiScore((prevState) => prevState + scoreObtained);
-        setAiCorrectAnswers((prevState) => prevState + 1);
-        drawPredicted(VALID_COLOUR);
-        setAiCorrect(true);
-      } else {
-        drawPredicted(INVALID_COLOUR);
-        setAiCorrect(false);
-      }
+    /* Ai was successful if the ratio of the intersection over the union is greater than 0.5 */
+    if (intersectionOverUnion > 0.5) {
+      const scoreObtained = Math.round(intersectionOverUnion * AI_SCORE_INCREASE_RATE);
 
-      setHeatmapEnabled(true);
-      setLoading(false);
-    }, AI_ANIMATION_TIME + 1500);
-  }, [drawPredicted, isAiPredictionRight, predicted, truth]);
+      setAiScore((prevState) => prevState + scoreObtained);
+      setAiCorrectAnswers((prevState) => prevState + 1);
+      drawPredicted(VALID_COLOUR);
+      setAiCorrect(true);
+    } else {
+      drawPredicted(INVALID_COLOUR);
+      setAiCorrect(false);
+    }
+
+    setHeatmapEnabled(true);
+    setLoading(false);
+  }, [drawPredicted, predicted, truth]);
 
   useEffect(() => {
     if (!running) {
@@ -430,7 +394,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         drawTruth();
       }, AI_ANIMATION_TIME + 500);
 
-      drawAIAnswerCheckAnimation();
+      setTimeout(() => {
+        checkAi();
+      }, AI_ANIMATION_TIME + 1500);
     } else if (timeRemaining <= 2000) {
       setTimerColor("red");
     } else if (timeRemaining <= 5000) {
@@ -452,13 +418,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     drawPredicted,
     drawTruth,
     hinted,
-    isAiPredictionRight,
     running,
     timeRemaining,
-    truth,
-    predicted,
-    aiCorrectAnswers,
-    drawAIAnswerCheckAnimation,
+    checkAi,
   ]);
 
   /**
@@ -481,19 +443,20 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   /**
-   * Function for uploading user clicks for a CT scan in Firebase
-   * @param xCoord - x-Coordinate of the click on the image
-   * @param yCoord - y-Coordinate of the click on the image
-   * @param imageId - file number of the CT Scan
+   * Uploads the player click information
+   *
+   * @param x       Width coordinate
+   * @param y       Height coordinate
+   * @param imageId Number of the image file
    */
-  const uploadImageClick = async (xCoord: number, yCoord: number, imageId: number) => {
+  const uploadPlayerClick = async (x: number, y: number, imageId: number) => {
     const docNameForImage = `image_${imageId}`;
     let entry;
     let pointWasClickedBefore = false;
 
     const newClickPoint = {
-      x: xCoord,
-      y: yCoord,
+      x,
+      y,
       clickCount: 1,
     };
 
@@ -504,8 +467,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       entry = { clicks: [newClickPoint] };
     } else {
       const { clicks } = imageDoc.data()!;
+
       clicks.forEach((click: { x: number; y: number; count: number }) => {
-        if (click.x === xCoord && click.y === yCoord) {
+        if (click.x === x && click.y === y) {
           click.count += 1;
           pointWasClickedBefore = true;
         }
@@ -515,26 +479,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         // First time this clicked occurred for this image, Add to this image's clicks array
         clicks.push(newClickPoint);
       }
+
       // Entry in DB will be the updated clicks array
       entry = { clicks };
     }
-    await db.collection(DbUtils.IMAGES).doc(docNameForImage).set(entry);
-  };
 
-  const getClickedPoints = async (imageId: number) => {
-    const docNameForImage = `image_${imageId}`;
-    const snapshot = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
-    const data = snapshot.data();
-    if (data === undefined) {
-      return;
-    }
-    const clicks: [number, number][] = [];
-    for (let i = 0; i < data.clicks.length; i++) {
-      for (let k = 0; k < data.clicks[i].clickCount; k++) {
-        clicks.push([data.clicks[i].y, data.clicks[i].x]);
-      }
-    }
-    // setDataPoints(clicks);
+    await db.collection(DbUtils.IMAGES).doc(docNameForImage).set(entry);
   };
 
   /**
@@ -556,7 +506,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     drawPlayerClick(x, y, DEFAULT_COLOUR);
 
-    await uploadImageClick(Math.round(x), Math.round(y), currentImageId);
+    await uploadPlayerClick(Math.round(x), Math.round(y), currentImageId);
 
     drawAiSearchAnimation();
 
@@ -569,23 +519,15 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }, AI_ANIMATION_TIME + 500);
 
     setTimeout(() => {
-      enqueueSnackbar("Checking results...");
-      if (isPlayerRight(x, y)) {
-        const timeRate = timeRemaining / 1000;
-        const increaseRate = hinted ? timeRate * 10 : timeRate * 20;
-
-        setPlayerCorrectAnswers((prevState) => prevState + 1);
-        setPlayerScore((prevState) => prevState + increaseRate);
-        drawPlayerClick(x, y, VALID_COLOUR);
-        setPlayerCorrect(true);
-      } else {
-        drawPlayerClick(x, y, INVALID_COLOUR);
-        setPlayerCorrect(false);
-      }
+      checkPlayer(x, y);
     }, AI_ANIMATION_TIME + 1000);
 
-    drawAIAnswerCheckAnimation();
+    setTimeout(() => {
+      checkAi();
+    }, AI_ANIMATION_TIME + 1500);
   };
+
+  // <editor-fold>
 
   /**
    * Returns a random, previously unseen, file number
@@ -606,29 +548,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   /**
-   * Returns the path to the json file corresponding to the given fileNumber
-   *
-   * @param fileNumber Number of the file to retrieve
-   */
-  const getJsonPath = (fileNumber: number) =>
-    `${process.env.PUBLIC_URL}/content/annotation/${fileNumber}.json`;
-
-  /**
-   * Returns the path to the image file corresponding to the given fileNumber
-   *
-   * @param fileNumber Number of the file to retrieve
-   */
-  const getImagePath = (fileNumber: number) =>
-    `${process.env.PUBLIC_URL}/content/images/${fileNumber}.png`;
-
-  /**
    * Maps the coordinates of a given rectangle to the current canvas scale
    *
    * @param rect Coordinates for the corners of the rectangle to map
    *
    * @return Given rectangle coordinates, mapped to the canvas scale
    */
-  const mapCoordinates = (rect: number[]) => rect.map(mapToCanvasScale);
+  const mapCoordinates = (rect: number[]) => rect.map((x) => mapToCanvasScale(x, context));
 
   /**
    * Loads the data from the json corresponding to the given fileNumber
@@ -670,7 +596,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   /**
    * Starts a new round, loading a new image and its corresponding json data
    */
-  const startNewRound = async () => {
+  const onStartNextClick = async () => {
     setLoading(true);
     setHinted(false);
     setHeatmapEnabled(false);
@@ -685,13 +611,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setTimeRemaining(TOTAL_TIME_MS);
     setRunning(true);
     setLoading(false);
-  };
-
-  /**
-   * Called when the Start/Next button is clicked
-   */
-  const onStartNextClick = async () => {
-    await startNewRound();
   };
 
   /**
@@ -845,6 +764,22 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     );
   };
 
+  const getClickedPoints = async (imageId: number) => {
+    const docNameForImage = `image_${imageId}`;
+    const snapshot = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
+    const data = snapshot.data();
+    if (data === undefined) {
+      return;
+    }
+    const clicks: [number, number][] = [];
+    for (let i = 0; i < data.clicks.length; i++) {
+      for (let k = 0; k < data.clicks[i].clickCount; k++) {
+        clicks.push([data.clicks[i].y, data.clicks[i].x]);
+      }
+    }
+    // setDataPoints(clicks);
+  };
+
   /**
    * Function for opening the heatmap tab
    */
@@ -859,6 +794,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const closeHeatmap = () => {
     setHeatmapDialogOpen(false);
   };
+  // </editor-fold>
 
   return (
     <>
