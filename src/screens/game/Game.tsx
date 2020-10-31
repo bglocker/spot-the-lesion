@@ -208,78 +208,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const { enqueueSnackbar } = useSnackbar();
 
   /**
-   * Called every 100 milliseconds, while the game is running,
+   * Called every timer tick
    */
   const timerTick = () => {
     setTimeRemaining((prevState) => prevState - 100);
   };
 
   useInterval(timerTick, running ? 100 : null);
-
-  /**
-   * Stops the timer by stopping the current round.
-   */
-  const stopTimer = () => setRunning(false);
-
-  const setCube = useCallback(
-    (cube: number[], baseCornerX: number, baseCornerY: number, cubeSide: number) => {
-      cube[0] = baseCornerX;
-      cube[1] = baseCornerY;
-      cube[2] = baseCornerX + cubeSide;
-      cube[3] = baseCornerY + cubeSide;
-    },
-    []
-  );
-
-  /**
-   * Clears the animation canvas
-   */
-  const clearAnimCanvas = useCallback(() => {
-    animContext.clearRect(0, 0, animContext.canvas.width, animContext.canvas.height);
-  }, [animContext]);
-
-  /**
-   * Draw an AI search animation, rendering cubes on both sides of the canvas,
-   * moving towards their opposite side
-   */
-  const drawAiSearchAnimation = useCallback(() => {
-    enqueueSnackbar("The system is thinking...");
-
-    const animationTime = 5000;
-    const numCubes = 5;
-
-    const canvasWidth = animContext.canvas.width;
-    const canvasHeight = animContext.canvas.height;
-    const cubeSide = canvasWidth / (numCubes * 2);
-    const cube: number[] = [];
-
-    setCube(cube, 0, 0, cubeSide);
-
-    /* Draw cubes in initial position */
-    drawRectangle(animContext, cube, VALID_COLOUR, 3);
-
-    const intervalId = window.setInterval(() => {
-      /* Clear previous cubes */
-      clearAnimCanvas();
-
-      /* Advance cube to right */
-      cube[0] += cubeSide;
-      cube[2] += cubeSide;
-
-      drawRectangle(animContext, cube, VALID_COLOUR, 3);
-
-      /* When cube gets to right-most bound, advance cube below & restart */
-      if (cube[2] > canvasWidth) {
-        setCube(cube, -cubeSide, cube[1] + cubeSide, cubeSide);
-      }
-
-      /* When cube gets out of lower bound, end animation */
-      if (cube[1] > canvasHeight) {
-        clearInterval(intervalId);
-        clearAnimCanvas();
-      }
-    }, animationTime / 100);
-  }, [animContext, clearAnimCanvas, enqueueSnackbar, setCube]);
 
   /**
    * Draws the predicted rectangle
@@ -318,9 +253,71 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * @param y           Height coordinate
    * @param strokeStyle Style for drawing the cross
    */
-  const drawPlayerClick = (x: number, y: number, strokeStyle: string) => {
-    drawCross(context, x, y, 5, strokeStyle);
-  };
+  const drawPlayerClick = useCallback(
+    (x: number, y: number, strokeStyle: string) => {
+      drawCross(context, x, y, 5, strokeStyle);
+    },
+    [context]
+  );
+
+  const setCube = useCallback(
+    (cube: number[], baseCornerX: number, baseCornerY: number, cubeSide: number) => {
+      cube[0] = baseCornerX;
+      cube[1] = baseCornerY;
+      cube[2] = baseCornerX + cubeSide;
+      cube[3] = baseCornerY + cubeSide;
+    },
+    []
+  );
+
+  /**
+   * Clears the animation canvas
+   */
+  const clearAnimCanvas = useCallback(() => {
+    animContext.clearRect(0, 0, animContext.canvas.width, animContext.canvas.height);
+  }, [animContext]);
+
+  /**
+   * Draw an AI search animation, rendering cubes on both sides of the canvas,
+   * moving towards their opposite side
+   */
+  const drawAiSearchAnimation = useCallback(() => {
+    enqueueSnackbar("The system is thinking...");
+
+    const numCubes = 5;
+
+    const canvasWidth = animContext.canvas.width;
+    const canvasHeight = animContext.canvas.height;
+    const cubeSide = canvasWidth / (numCubes * 2);
+    const cube: number[] = [];
+
+    setCube(cube, 0, 0, cubeSide);
+
+    /* Draw cubes in initial position */
+    drawRectangle(animContext, cube, VALID_COLOUR, 3);
+
+    const intervalId = window.setInterval(() => {
+      /* Clear previous cubes */
+      clearAnimCanvas();
+
+      /* Advance cube to right */
+      cube[0] += cubeSide;
+      cube[2] += cubeSide;
+
+      drawRectangle(animContext, cube, VALID_COLOUR, 3);
+
+      /* When cube gets to right-most bound, advance cube below & restart */
+      if (cube[2] > canvasWidth) {
+        setCube(cube, -cubeSide, cube[1] + cubeSide, cubeSide);
+      }
+
+      /* When cube gets out of lower bound, end animation */
+      if (cube[1] > canvasHeight) {
+        clearInterval(intervalId);
+        clearAnimCanvas();
+      }
+    }, AI_ANIMATION_TIME / 100);
+  }, [animContext, clearAnimCanvas, enqueueSnackbar, setCube]);
 
   /**
    * Determines whether the player was successful, by checking that the click position
@@ -331,30 +328,33 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    *
    * @return The success value
    */
-  const isPlayerRight = (x: number, y: number) => {
-    return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
-  };
+  const isPlayerRight = useCallback(
+    (x: number, y: number) => {
+      return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
+    },
+    [truth]
+  );
 
-  const checkPlayer = (x: number, y: number) => {
-    enqueueSnackbar("Checking results...");
+  const checkPlayer = useCallback(
+    (x: number, y: number) => {
+      enqueueSnackbar("Checking results...");
 
-    if (isPlayerRight(x, y)) {
-      const timeRate = timeRemaining / 1000;
-      const increaseRate = hinted ? timeRate * 10 : timeRate * 20;
+      if (isPlayerRight(x, y)) {
+        const timeRate = timeRemaining / 1000;
+        const increaseRate = hinted ? timeRate * 10 : timeRate * 20;
 
-      setPlayerCorrectAnswers((prevState) => prevState + 1);
-      setPlayerScore((prevState) => prevState + increaseRate);
-      drawPlayerClick(x, y, VALID_COLOUR);
-      setPlayerCorrect(true);
-    } else {
-      drawPlayerClick(x, y, INVALID_COLOUR);
-      setPlayerCorrect(false);
-    }
-  };
+        setPlayerCorrectAnswers((prevState) => prevState + 1);
+        setPlayerScore((prevState) => prevState + increaseRate);
+        drawPlayerClick(x, y, VALID_COLOUR);
+        setPlayerCorrect(true);
+      } else {
+        drawPlayerClick(x, y, INVALID_COLOUR);
+        setPlayerCorrect(false);
+      }
+    },
+    [drawPlayerClick, enqueueSnackbar, hinted, isPlayerRight, timeRemaining]
+  );
 
-  /**
-   * Draw the predicted rectangle, this time checking if the AI was right or wrong
-   */
   const checkAi = useCallback(() => {
     const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
 
@@ -372,17 +372,27 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
 
     setHeatmapEnabled(true);
+    setHinted(false);
     setLoading(false);
   }, [drawPredicted, predicted, truth]);
 
-  useEffect(() => {
-    if (!running) {
-      return;
-    }
-
-    if (timeRemaining <= 0) {
+  /**
+   * Ends the current round, drawing the search animations, and calculating AI and Player scores
+   *
+   * @param click Player click position, undefined if timer ended before the player clicked
+   */
+  const endRound = useCallback(
+    (click?: { x: number; y: number }) => {
       setLoading(true);
-      stopTimer();
+      setRunning(false);
+
+      if (click !== undefined) {
+        const { x, y } = click;
+
+        drawPlayerClick(x, y, DEFAULT_COLOUR);
+
+        uploadPlayerClick(Math.round(x), Math.round(y), currentImageId);
+      }
 
       drawAiSearchAnimation();
 
@@ -394,9 +404,39 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         drawTruth();
       }, AI_ANIMATION_TIME + 500);
 
+      if (click !== undefined) {
+        const { x, y } = click;
+
+        setTimeout(() => {
+          checkPlayer(x, y);
+        }, AI_ANIMATION_TIME + 1000);
+      }
+
       setTimeout(() => {
         checkAi();
       }, AI_ANIMATION_TIME + 1500);
+    },
+    [
+      checkAi,
+      checkPlayer,
+      currentImageId,
+      drawAiSearchAnimation,
+      drawPlayerClick,
+      drawPredicted,
+      drawTruth,
+    ]
+  );
+
+  /**
+   * Track time based events
+   */
+  useEffect(() => {
+    if (!running) {
+      return;
+    }
+
+    if (timeRemaining <= 0) {
+      endRound();
     } else if (timeRemaining <= 2000) {
       setTimerColor("red");
     } else if (timeRemaining <= 5000) {
@@ -404,46 +444,17 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         return;
       }
 
-      setHinted(true);
-
       setTimerColor("orange");
+      setHinted(true);
 
       drawHint();
     } else {
       setTimerColor("#373737");
     }
-  }, [
-    drawAiSearchAnimation,
-    drawHint,
-    drawPredicted,
-    drawTruth,
-    hinted,
-    running,
-    timeRemaining,
-    checkAi,
-  ]);
+  }, [drawHint, endRound, hinted, running, timeRemaining]);
 
   /**
-   * Maps the mouse position relative to the given canvas
-   *
-   * @param clickX Click coordinate on width
-   * @param clickY Click coordinate on height
-   *
-   * @return Click width and height coordinates, relative to the canvas
-   */
-  const getClickPositionOnCanvas = (clickX: number, clickY: number) => {
-    const rect = context.canvas.getBoundingClientRect();
-    const widthScale = context.canvas.width / rect.width;
-    const heightScale = context.canvas.height / rect.height;
-
-    return {
-      x: (clickX - rect.left) * widthScale,
-      y: (clickY - rect.top) * heightScale,
-    };
-  };
-
-  /**
-   * Uploads the player click information
+   * Upload the player click, in order to gather statistics and generate heatmaps
    *
    * @param x       Width coordinate
    * @param y       Height coordinate
@@ -488,46 +499,38 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   /**
+   * Maps the mouse position relative to the canvas
+   *
+   * @param clickX Width coordinate
+   * @param clickY Height coordinate
+   *
+   * @return Click coordinates relative to the canvas
+   */
+  const mapClickToCanvas = (clickX: number, clickY: number) => {
+    const rect = context.canvas.getBoundingClientRect();
+    const widthScale = context.canvas.width / rect.width;
+    const heightScale = context.canvas.height / rect.height;
+
+    return {
+      x: (clickX - rect.left) * widthScale,
+      y: (clickY - rect.top) * heightScale,
+    };
+  };
+
+  /**
    * Called when the canvas is clicked
    *
    * @param event Mouse event, used to get click position
    */
-  const onCanvasClick = async (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+  const onCanvasClick = (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
     if (!running) {
       return;
     }
 
-    setLoading(true);
-    stopTimer();
+    const click = mapClickToCanvas(event.clientX, event.clientY);
 
-    const [clickX, clickY] = [event.clientX, event.clientY];
-
-    const { x, y } = getClickPositionOnCanvas(clickX, clickY);
-
-    drawPlayerClick(x, y, DEFAULT_COLOUR);
-
-    await uploadPlayerClick(Math.round(x), Math.round(y), currentImageId);
-
-    drawAiSearchAnimation();
-
-    setTimeout(() => {
-      drawPredicted(DEFAULT_COLOUR);
-    }, AI_ANIMATION_TIME);
-
-    setTimeout(() => {
-      drawTruth();
-    }, AI_ANIMATION_TIME + 500);
-
-    setTimeout(() => {
-      checkPlayer(x, y);
-    }, AI_ANIMATION_TIME + 1000);
-
-    setTimeout(() => {
-      checkAi();
-    }, AI_ANIMATION_TIME + 1500);
+    endRound(click);
   };
-
-  // <editor-fold>
 
   /**
    * Returns a random, previously unseen, file number
@@ -594,12 +597,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     });
 
   /**
-   * Starts a new round, loading a new image and its corresponding json data
+   * Starts a new round, loading a new image and its corresponding JSON data
    */
-  const onStartNextClick = async () => {
+  const startRound = async () => {
     setLoading(true);
-    setHinted(false);
-    setHeatmapEnabled(false);
     setCurrentRound((prevState) => prevState + 1);
 
     const fileNumber = getNewFileNumber();
@@ -727,7 +728,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         <LoadingButton
           loading={loading}
           buttonDisabled={running || loading}
-          onButtonClick={onStartNextClick}
+          onButtonClick={startRound}
           buttonText={currentRound === 0 ? "START" : "NEXT"}
         />
       );
@@ -794,7 +795,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const closeHeatmap = () => {
     setHeatmapDialogOpen(false);
   };
-  // </editor-fold>
 
   return (
     <>
