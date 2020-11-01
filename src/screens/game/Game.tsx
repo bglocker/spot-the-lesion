@@ -89,8 +89,6 @@ const useStyles = makeStyles((theme: Theme) =>
         maxHeight: "70vw",
       },
       display: "grid",
-      justifyContent: "center",
-      alignItems: "center",
       padding: 8,
     },
     canvas: {
@@ -138,11 +136,6 @@ const useStyles = makeStyles((theme: Theme) =>
     flexButton: {
       flex: 1,
       flexDirection: "column",
-    },
-    leafletContainer: {
-      height: "90vh",
-      width: "100%",
-      background: "white",
     },
   })
 );
