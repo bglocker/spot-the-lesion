@@ -492,21 +492,20 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   /**
-   * Maps the mouse position relative to the canvas
+   * Maps the click position relative to the canvas
    *
-   * @param clickX Width coordinate
-   * @param clickY Height coordinate
+   * @param event Mouse event, used to get click position
    *
    * @return Click coordinates relative to the canvas
    */
-  const mapClickToCanvas = (clickX: number, clickY: number) => {
+  const mapClickToCanvas = (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
     const rect = context.canvas.getBoundingClientRect();
     const widthScale = context.canvas.width / rect.width;
     const heightScale = context.canvas.height / rect.height;
 
     return {
-      x: (clickX - rect.left) * widthScale,
-      y: (clickY - rect.top) * heightScale,
+      x: (event.clientX - rect.left) * widthScale,
+      y: (event.clientY - rect.top) * heightScale,
     };
   };
 
@@ -520,11 +519,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
-    const click = mapClickToCanvas(event.clientX, event.clientY);
-
-    endRound(click);
+    endRound(mapClickToCanvas(event));
   };
 
+  // <editor-fold>
   /**
    * Returns a random, previously unseen, file number
    *
@@ -575,8 +573,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       const image = new Image();
 
       image.onload = () => {
-        clearAnimCanvas();
-
         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
         context.drawImage(image, 0, 0, context.canvas.width, context.canvas.height);
 
@@ -890,6 +886,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       </div>
     </>
   );
+  // </editor-fold>
 };
 
 export default Game;
