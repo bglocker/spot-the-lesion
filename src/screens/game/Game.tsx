@@ -140,8 +140,11 @@ const useStyles = makeStyles((theme: Theme) =>
       background: "white",
     },
     heatmapContainer: {
-      width: 512,
-      height: 512,
+      height: "80vw",
+      width: "80vw",
+      maxWidth: "90vh",
+      maxHeight: "90vh",
+      margin: "auto",
     },
   })
 );
@@ -201,7 +204,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [heatmapDivLoaded, setHeatmapDivLoaded] = useState(false);
 
-  const [heatmapDivRef, setHeatmapDivRef] = useState(null);
+  const [heatmapDivRef, setHeatmapDivRef] = useState<HTMLDivElement>(null!);
 
   const updateHeatmapDivRef = (div) => {
     setHeatmapDivRef(div);
@@ -506,8 +509,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     let pointWasClickedBefore = false;
 
     const newClickPoint = {
-      x: xCoord,
-      y: yCoord,
+      x: (xCoord * 100) / context.canvas.width,
+      y: (yCoord * 100) / context.canvas.height,
       clickCount: 1,
     };
 
@@ -615,6 +618,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     seenFiles.add(newFileNumber);
 
     return newFileNumber;
+    return 0;
   };
 
   /**
@@ -888,7 +892,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     // heatmap data format
     const data = {
       max: 1,
-      data: dataPoints,
+      data: dataPoints.map((point) => {
+        return {
+          x: Math.floor((point.x * heatmapDivRef.offsetWidth) / 100),
+          y: Math.floor((point.y * heatmapDivRef.offsetHeight) / 100),
+          value: point.value,
+        };
+      }),
     };
     // eslint-disable-next-line no-console
     console.log(data);
@@ -995,7 +1005,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
             </Toolbar>
           </AppBar>
           <div className={classes.heatmapContainer} ref={updateHeatmapDivRef}>
-            <img src={getImagePath(currentImageId)} alt={getImagePath(currentImageId)} />
+            <img
+              className={classes.heatmapContainer}
+              src={getImagePath(currentImageId)}
+              alt={getImagePath(currentImageId)}
+            />
           </div>
         </Dialog>
       </div>
