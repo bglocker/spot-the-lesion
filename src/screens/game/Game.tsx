@@ -13,7 +13,6 @@ import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import { KeyboardBackspace, Check, Clear, Close } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
-import h337 from "heatmap.js";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import { drawCross, drawCircle, drawRectangle } from "../../components/CanvasUtils";
 import useInterval from "../../components/useInterval";
@@ -21,6 +20,7 @@ import useCanvasContext from "../../components/useCanvasContext";
 import LoadingButton from "../../components/LoadingButton";
 import DbUtils from "../../utils/DbUtils";
 import { db } from "../../firebase/firebaseApp";
+import Heatmap from "../../components/HeatmapComponent";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -199,17 +199,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [username, setUsername] = useState("");
 
   const [currentImageId, setCurrentImageId] = useState(0);
-
-  const [dataPoints, setDataPoints] = useState<{ x: number; y: number; value: number }[]>([]);
-
-  const [heatmapDivLoaded, setHeatmapDivLoaded] = useState(false);
-
-  const [heatmapDivRef, setHeatmapDivRef] = useState<HTMLDivElement>(null!);
-
-  const updateHeatmapDivRef = (div) => {
-    setHeatmapDivRef(div);
-    setHeatmapDivLoaded(true);
-  };
 
   /**
    * The heatmap dialog box information
@@ -538,20 +527,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     await db.collection(DbUtils.IMAGES).doc(docNameForImage).set(entry);
   };
 
-  const getClickedPoints = async (imageId: number) => {
-    const docNameForImage = `image_${imageId}`;
-    const snapshot = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
-    const data = snapshot.data();
-    if (data === undefined) {
-      return;
-    }
-    const clicks: { x: number; y: number; value: number }[] = [];
-    for (let i = 0; i < data.clicks.length; i++) {
-      clicks.push({ x: data.clicks[i].x, y: data.clicks[i].y, value: data.clicks[i].clickCount });
-    }
-    setDataPoints(clicks);
-  };
-
   /**
    * Called when the canvas is clicked
    *
@@ -865,7 +840,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Function for opening the heatmap tab
    */
   const openHeatmap = () => {
-    getClickedPoints(currentImageId);
     setHeatmapDialogOpen(true);
   };
 
@@ -873,39 +847,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Function for closing the heatmap tab
    */
   const closeHeatmap = () => {
-    setHeatmapDivLoaded(false);
     setHeatmapDialogOpen(false);
   };
-
-  useEffect(() => {
-    if (!heatmapDivLoaded) {
-      return;
-    }
-    // minimal heatmap instance configuration
-    // eslint-disable-next-line no-console
-    console.log(heatmapDivRef);
-    const heatmapInstance = h337.create({
-      // only container is required, the rest will be defaults
-      container: heatmapDivRef,
-    });
-
-    // heatmap data format
-    const data = {
-      max: 1,
-      data: dataPoints.map((point) => {
-        return {
-          x: Math.floor((point.x * heatmapDivRef.offsetWidth) / 100),
-          y: Math.floor((point.y * heatmapDivRef.offsetHeight) / 100),
-          value: point.value,
-        };
-      }),
-    };
-    // eslint-disable-next-line no-console
-    console.log(data);
-    // if you have a set of datapoints always use setData instead of addData
-    // for data initialization
-    heatmapInstance.setData(data);
-  }, [dataPoints, heatmapDialogOpen, heatmapDivLoaded, heatmapDivRef]);
 
   return (
     <>
@@ -1004,13 +947,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               </IconButton>
             </Toolbar>
           </AppBar>
-          <div className={classes.heatmapContainer} ref={updateHeatmapDivRef}>
-            <img
-              className={classes.heatmapContainer}
-              src={getImagePath(currentImageId)}
-              alt={getImagePath(currentImageId)}
-            />
-          </div>
+          <Heatmap currentImageId={currentImageId} />
         </Dialog>
       </div>
     </>
