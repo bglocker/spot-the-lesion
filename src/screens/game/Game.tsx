@@ -387,10 +387,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       }
 
       setAnimationRunning(false);
-      setHeatmapEnabled(true);
-      setHinted(false);
       setLoading(false);
-      setClick(null);
+
+      setHeatmapEnabled(true);
     }
   }, [
     animationRunning,
@@ -414,6 +413,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
+    if (roundTime === 10000) {
+      /* 10 seconds left: set Timer to initial color */
+      setTimerColor(INITIAL_TIMER_COLOR);
+    }
     if (roundTime === 5000 && !hinted) {
       /* 5 seconds left: draw Hint circle, set Timer to orange */
       setTimerColor("orange");
@@ -429,7 +432,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       setTimerColor("red");
     } else if (roundTime === 0) {
       /* 0 seconds left: start animation timer */
-      setAnimationTime(0);
       setAnimationRunning(true);
     }
   }, [context, hinted, roundTime, running, truth]);
@@ -465,7 +467,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
 
     setClick(mapClickToCanvas(event));
-    setAnimationTime(0);
     setAnimationRunning(true);
   };
 
@@ -538,7 +539,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    */
   const startRound = async () => {
     setLoading(true);
-    setRound((prevState) => prevState + 1);
 
     const fileNumber = getNewFileNumber();
     setImageId(fileNumber);
@@ -546,8 +546,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     await loadJson(fileNumber);
     await loadImage(fileNumber);
 
-    setTimerColor(INITIAL_TIMER_COLOR);
+    setRound((prevState) => prevState + 1);
     setRoundTime(TOTAL_TIME_MS);
+    setAnimationTime(0);
+    setHinted(false);
+    setClick(null);
     setRunning(true);
     setLoading(false);
   };
@@ -630,12 +633,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * @param event - username writing event listener
    */
   const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.value !== "") {
-      setSubmitEnabled(true);
-    }
-    if (event.target.value === "") {
-      setSubmitEnabled(false);
-    }
+    setSubmitEnabled(event.target.value !== "");
     setUsername(event.target.value);
   };
 
