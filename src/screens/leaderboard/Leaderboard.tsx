@@ -127,18 +127,18 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
   /**
    * Function for triggering the creation of the next Leaderboard, when user changes tabs
    * e.g.: tab changing from index 0 (Daily) to index 1 (Monthly)
-   * @param newIndex - index of the new table to display
+   * @param newTimeIndex - index of the new table to display
    */
-  const onTabChange = async (newIndex: number) => {
-    setCurrentTabIndex(newIndex);
+  const onTabChange = async (newTimeIndex: number) => {
+    setCurrentTabIndex(newTimeIndex);
     setFirstTimeOpened(false);
-    await createLeaderboard(newIndex, currentGameTabIndex);
+    await createLeaderboard(newTimeIndex, currentGameTabIndex);
   };
 
-  const onGameTabChange = async (newIndex: number) => {
-    setGameCurrentTabIndex(newIndex);
+  const onGameTabChange = async (newGameIndex: number) => {
+    setGameCurrentTabIndex(newGameIndex);
     setFirstTimeOpened(false);
-    await createLeaderboard(currentTabIndex, newIndex);
+    await createLeaderboard(currentTabIndex, newGameIndex);
   };
 
   return (
