@@ -80,7 +80,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
     // Map for avoiding displaying duplicate entries in Leaderboard
     const uniqueUsersMap: Map<string, boolean> = new Map<string, boolean>();
 
-    const tableRef = db.collection(DbUtils.LEADERBOARD).where("gameType", "==", gameType);
+    const tableRef = db.collection(DbUtils.LEADERBOARD).where("game_type", "==", gameType);
     let snapshot;
     snapshot = tableRef;
 

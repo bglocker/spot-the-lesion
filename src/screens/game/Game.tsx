@@ -190,6 +190,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [username, setUsername] = useState("");
 
+  const [gameType, setGameType] = useState(0);
+
   const [currentImageId, setCurrentImageId] = useState(0);
 
   // const [dataPoints, setDataPoints] = useState<[number, number][]>([]);
@@ -701,7 +703,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     if (username === "") {
       return;
     }
-
+    setGameType(1);
     const date = new Date();
     const entry = {
       user: username,
@@ -712,6 +714,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       day: date.getDate(),
       month: DbUtils.monthNames[date.getMonth()],
       year: date.getFullYear(),
+      game_type: gameType,
     };
 
     const entryName = `${entry.year}.${entry.month}.${entry.day}.${entry.user}`;
