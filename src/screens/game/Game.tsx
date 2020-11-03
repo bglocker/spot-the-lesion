@@ -144,6 +144,7 @@ const VALID_COLOUR = "green";
 const INVALID_COLOUR = "red";
 const DEFAULT_COLOUR = "yellow";
 const TRUE_COLOUR = "blue";
+const INITIAL_TIMER_COLOR = "#373737";
 
 const NUMBER_OF_ROUNDS = 10;
 const TOTAL_TIME_MS = 10000;
@@ -166,12 +167,18 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [round, setRound] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [running, setRunning] = useState(false);
+
   const [hinted, setHinted] = useState(false);
 
-  const [roundTime, setRoundTime] = useState(TOTAL_TIME_MS);
-  const [timerColor, setTimerColor] = useState("#373737");
+  const [running, setRunning] = useState(false);
+  const [animationRunning, setAnimationRunning] = useState(false);
 
+  const [roundTime, setRoundTime] = useState(TOTAL_TIME_MS);
+  const [animationTime, setAnimationTime] = useState(0);
+
+  const [timerColor, setTimerColor] = useState(INITIAL_TIMER_COLOR);
+
+  const [click, setClick] = useState<{ x: number; y: number } | null>(null);
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
 
@@ -201,14 +208,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   /* TODO: check if upload to database fails to give different message */
   const { enqueueSnackbar } = useSnackbar();
 
-  /**
-   * Called every timer tick
-   */
-  const timerTick = () => {
-    setRoundTime((prevState) => prevState - 100);
-  };
+  useInterval(() => setRoundTime((prevState) => prevState - 100), running ? 100 : null);
 
-  useInterval(timerTick, running ? 100 : null);
+  useInterval(
+    () => setAnimationTime((prevState) => prevState + 100),
+    animationRunning ? 100 : null
+  );
 
   /**
    * Draws the predicted rectangle
@@ -352,11 +357,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       drawPredicted(INVALID_COLOUR);
     }
-
-    /* TODO: final state reset */
-    setHeatmapEnabled(true);
-    setHinted(false);
-    setLoading(false);
   }, [drawPredicted, predicted, truth]);
 
   /**
@@ -385,9 +385,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       } else {
         const { clicks } = imageDoc.data()!;
 
-        clicks.forEach((click: { x: number; y: number; count: number }) => {
-          if (click.x === x && click.y === y) {
-            click.count += 1;
+        clicks.forEach((clk: { x: number; y: number; count: number }) => {
+          if (clk.x === x && clk.y === y) {
+            clk.count += 1;
             pointWasClickedBefore = true;
           }
         });
@@ -407,55 +407,55 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   );
 
   /**
-   * Ends the current round, drawing the search animations, and calculating AI and Player scores
-   *
-   * @param click Player click position, undefined if timer ended before the player clicked
+   * Track animationTime based events
    */
-  const endRound = useCallback(
-    (click?: { x: number; y: number }) => {
+  useEffect(() => {
+    if (!animationRunning) {
+      return;
+    }
+
+    if (animationTime === 0) {
       setLoading(true);
       setRunning(false);
 
-      if (click !== undefined) {
+      drawAiSearchAnimation();
+
+      if (click) {
         const { x, y } = click;
 
         drawPlayerClick(x, y, DEFAULT_COLOUR);
 
         uploadPlayerClick(Math.round(x), Math.round(y));
       }
+    } else if (animationTime === 5000) {
+      drawPredicted(DEFAULT_COLOUR);
+    } else if (animationTime === 5500) {
+      drawTruth();
+    } else if (animationTime === 6000 && click) {
+      const { x, y } = click;
 
-      drawAiSearchAnimation();
+      checkPlayer(x, y);
+    } else if (animationTime === 6500) {
+      checkAi();
 
-      setTimeout(() => {
-        drawPredicted(DEFAULT_COLOUR);
-      }, AI_ANIMATION_TIME);
-
-      setTimeout(() => {
-        drawTruth();
-      }, AI_ANIMATION_TIME + 500);
-
-      if (click !== undefined) {
-        const { x, y } = click;
-
-        setTimeout(() => {
-          checkPlayer(x, y);
-        }, AI_ANIMATION_TIME + 1000);
-      }
-
-      setTimeout(() => {
-        checkAi();
-      }, AI_ANIMATION_TIME + 1500);
-    },
-    [
-      checkAi,
-      checkPlayer,
-      drawAiSearchAnimation,
-      drawPlayerClick,
-      drawPredicted,
-      drawTruth,
-      uploadPlayerClick,
-    ]
-  );
+      setAnimationRunning(false);
+      setHeatmapEnabled(true);
+      setHinted(false);
+      setLoading(false);
+      setClick(null);
+    }
+  }, [
+    animationRunning,
+    animationTime,
+    checkAi,
+    checkPlayer,
+    click,
+    drawAiSearchAnimation,
+    drawPlayerClick,
+    drawPredicted,
+    drawTruth,
+    uploadPlayerClick,
+  ]);
 
   /**
    * Track roundTime based events
@@ -465,19 +465,18 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
-    if (roundTime === 0) {
-      endRound();
-    } else if (roundTime === 2000) {
-      setTimerColor("red");
-    } else if (roundTime === 5000 && !hinted) {
+    if (roundTime === 5000 && !hinted) {
       setTimerColor("orange");
       setHinted(true);
 
       drawHint();
-    } else if (roundTime === 10000) {
-      setTimerColor("#373737");
+    } else if (roundTime === 2000) {
+      setTimerColor("red");
+    } else if (roundTime === 0) {
+      setAnimationTime(0);
+      setAnimationRunning(true);
     }
-  }, [drawHint, endRound, hinted, roundTime, running]);
+  }, [drawHint, hinted, roundTime, running]);
 
   // <editor-fold>
   /**
@@ -508,7 +507,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
-    endRound(mapClickToCanvas(event));
+    setClick(mapClickToCanvas(event));
+    setAnimationTime(0);
+    setAnimationRunning(true);
   };
 
   /**
@@ -586,6 +587,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     await loadJson(fileNumber);
     await loadImage(fileNumber);
 
+    setTimerColor(INITIAL_TIMER_COLOR);
     setRoundTime(TOTAL_TIME_MS);
     setRunning(true);
     setLoading(false);
