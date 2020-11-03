@@ -323,6 +323,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
 
     if (animationTime === 0) {
+      /* 0 seconds passed: start AI search animation, draw and upload player click if available */
       setLoading(true);
       setRunning(false);
 
@@ -336,10 +337,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         uploadPlayerClick(Math.round(x), Math.round(y));
       }
     } else if (animationTime === 5000) {
+      /* 5 seconds passed: draw predicted rectangle in default color */
       drawRectangle(context, predicted, DEFAULT_COLOUR, 3);
     } else if (animationTime === 5500) {
+      /* 5.5 seconds passed: draw truth rectangle */
       drawRectangle(context, truth, TRUE_COLOUR, 3);
     } else if (animationTime === 6000 && click) {
+      /* 6 seconds passed: evaluate player click if available  */
       const { x, y } = click;
 
       enqueueSnackbar("Checking results...");
@@ -359,9 +363,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         drawCross(context, x, y, 5, INVALID_COLOUR);
       }
     } else if (animationTime === 6500) {
+      /* 6.5 seconds passed: evaluate AI prediction */
       const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
 
-      /* Ai was successful if the ratio of the intersection over the union is greater than 0.5 */
+      /* AI was successful if the ratio of the intersection over the union is greater than 0.5 */
       if (intersectionOverUnion > 0.5) {
         const roundScore = Math.round(intersectionOverUnion * AI_SCORE_INCREASE_RATE);
 
@@ -405,6 +410,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
 
     if (roundTime === 5000 && !hinted) {
+      /* 5 seconds left: draw Hint circle, set Timer to orange */
       setTimerColor("orange");
       setHinted(true);
 
@@ -414,8 +420,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       drawCircle(context, x, y, radius, 2, INVALID_COLOUR);
     } else if (roundTime === 2000) {
+      /* 2 seconds left: set Timer to red */
       setTimerColor("red");
     } else if (roundTime === 0) {
+      /* 0 seconds left: start animation timer */
       setAnimationTime(0);
       setAnimationRunning(true);
     }
@@ -439,6 +447,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       y: (event.clientY - rect.top) * heightScale,
     };
   };
+  // </editor-fold>
 
   /**
    * Called when the canvas is clicked
@@ -455,6 +464,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setAnimationRunning(true);
   };
 
+  // <editor-fold>
   /**
    * Returns a random, previously unseen, file number
    *
@@ -516,6 +526,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       /* Set source after onLoad to ensure onLoad gets called (in case the image is cached) */
       image.src = getImagePath(fileNumber);
     });
+  // </editor-fold>
 
   /**
    * Starts a new round, loading a new image and its corresponding JSON data
@@ -536,6 +547,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setLoading(false);
   };
 
+  // <editor-fold>
   /**
    * Uploads the score to the database
    */
