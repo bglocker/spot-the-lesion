@@ -64,10 +64,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
    * and fetching the Leaderboard data from Firebase in real time
    * @param tableIndex - index of the table in DB to display
    * tableIndex = 0 for Daily, 1 for Monthly, 2 for Alltime
-   * @param gameIndex - index of the game table in DB to display
+   * @param gameModeIndex - index of the game table in DB to display
    * gameIndex = 0 for casual, 1 for competitive
    */
-  async function createLeaderboard(tableIndex: number, gameIndex: number) {
+  async function createLeaderboard(tableIndex: number, gameModeIndex: number) {
     const table: string = DbUtils.tableNames[tableIndex];
     const date: Date = new Date();
     const results: ScoreType[] = [];
@@ -79,14 +79,14 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
     // Map for avoiding displaying duplicate entries in Leaderboard
     const uniqueUsersMap: Map<string, boolean> = new Map<string, boolean>();
 
-    let tableRef;
-    if (gameIndex === 0) {
-      tableRef = db.collection(DbUtils.LEADERBOARD_CASUAL);
+    let leaderboardRef;
+    if (gameModeIndex === 0) {
+      leaderboardRef = db.collection(DbUtils.LEADERBOARD_CASUAL);
     } else {
-      tableRef = db.collection(DbUtils.LEADERBOARD_COMPETITIVE);
+      leaderboardRef = db.collection(DbUtils.LEADERBOARD_COMPETITIVE);
     }
     let snapshot;
-    snapshot = tableRef;
+    snapshot = leaderboardRef;
 
     switch (table) {
       case "daily-scores":

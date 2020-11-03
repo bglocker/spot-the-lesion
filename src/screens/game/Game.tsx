@@ -718,17 +718,17 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       year: date.getFullYear(),
     };
 
-    let table;
+    let leaderboard;
     if (gameMode === 0) {
-      table = DbUtils.LEADERBOARD_CASUAL;
+      leaderboard = DbUtils.LEADERBOARD_CASUAL;
     } else {
-      table = DbUtils.LEADERBOARD_COMPETITIVE;
+      leaderboard = DbUtils.LEADERBOARD_COMPETITIVE;
     }
 
     const entryName = `${entry.year}.${entry.month}.${entry.day}.${entry.user}`;
 
     const snapshot = await db
-      .collection(table)
+      .collection(leaderboard)
       .where("year", "==", entry.year)
       .where("month", "==", entry.month)
       .where("day", "==", entry.day)
@@ -737,7 +737,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     if (snapshot.empty) {
       // First time played today - add this score to DB
-      await db.collection(table).doc(entryName).set(entry);
+      await db.collection(leaderboard).doc(entryName).set(entry);
     } else {
       // Check if this score is better than what this player registered before
       let newScoreRecord = true;
@@ -749,7 +749,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       // Add current score in DB only if it is a new Score Record
       if (newScoreRecord) {
-        await db.collection(table).doc(entryName).set(entry);
+        await db.collection(leaderboard).doc(entryName).set(entry);
       }
     }
   };
