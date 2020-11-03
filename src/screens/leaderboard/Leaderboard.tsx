@@ -79,12 +79,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
     // Map for avoiding displaying duplicate entries in Leaderboard
     const uniqueUsersMap: Map<string, boolean> = new Map<string, boolean>();
 
-    // TODO: Separate Leaderboard into competitive or casual
     let tableRef;
     if (gameIndex === 0) {
-      tableRef = db.collection(DbUtils.LEADERBOARD);
+      tableRef = db.collection(DbUtils.LEADERBOARD_CASUAL);
     } else {
-      tableRef = db.collection(DbUtils.LEADERBOARD);
+      tableRef = db.collection(DbUtils.LEADERBOARD_COMPETITIVE);
     }
     let snapshot;
     snapshot = tableRef;

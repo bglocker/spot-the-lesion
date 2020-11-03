@@ -28,5 +28,9 @@ export default class DbUtils {
 
   public static LEADERBOARD = "leaderboard";
 
+  public static LEADERBOARD_CASUAL = "leaderboard_casual";
+
+  public static LEADERBOARD_COMPETITIVE = "leaderboard_competitive";
+
   public static IMAGES = "images";
 }
