@@ -53,3 +53,6 @@ atlassian-ide-plugin.xml
 
 # Protect API keys
 .env
+
+# Typescript incremental compiliation
+tsconfig.tsbuildinfo
