@@ -15,6 +15,10 @@ const useStyles = makeStyles(() =>
     },
     appBar: {
       alignItems: "center",
+      backgroundColor: "#004445",
+    },
+    gameTypeAppBar: {
+      alignItems: "center",
       backgroundColor: "#003B46",
     },
     tabIndicator: {
@@ -33,6 +37,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
   const classes = useStyles();
 
   const [currentTabIndex, setCurrentTabIndex] = React.useState(0);
+  const [currentGameTabIndex, setGameCurrentTabIndex] = React.useState(0);
   const [firstTimeOpened, setFirstTimeOpened] = React.useState(true);
 
   const [scores, setScores] = useState<ScoreType[]>([]);
@@ -59,9 +64,12 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
    * and fetching the Leaderboard data from Firebase in real time
    * @param tableIndex - index of the table in DB to display
    * tableIndex = 0 for Daily, 1 for Monthly, 2 for Alltime
+   * @param gameIndex - index of the game table in DB to display
+   * gameIndex = 0 for casual, 1 for competitive
    */
-  async function createLeaderboard(tableIndex: number) {
+  async function createLeaderboard(tableIndex: number, gameIndex: number) {
     const table: string = DbUtils.tableNames[tableIndex];
+    const gameType: string = DbUtils.gameNames[gameIndex];
     const date: Date = new Date();
     const results: ScoreType[] = [];
     let rankPosition = 0;
@@ -72,7 +80,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
     // Map for avoiding displaying duplicate entries in Leaderboard
     const uniqueUsersMap: Map<string, boolean> = new Map<string, boolean>();
 
-    const tableRef = db.collection(DbUtils.LEADERBOARD);
+    const tableRef = db.collection(DbUtils.LEADERBOARD).where("gameType", "==", gameType);
     let snapshot;
     snapshot = tableRef;
 
@@ -124,7 +132,13 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
   const onTabChange = async (newIndex: number) => {
     setCurrentTabIndex(newIndex);
     setFirstTimeOpened(false);
-    await createLeaderboard(newIndex);
+    await createLeaderboard(newIndex, currentGameTabIndex);
+  };
+
+  const onGameTabChange = async (newIndex: number) => {
+    setGameCurrentTabIndex(newIndex);
+    setFirstTimeOpened(false);
+    await createLeaderboard(currentTabIndex, newIndex);
   };
 
   return (
@@ -171,6 +185,28 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
             label="All Time"
             id="leaderboard-2"
             aria-controls="leaderboard-view-2"
+          />
+        </Tabs>
+      </AppBar>
+      <AppBar className={classes.gameTypeAppBar} position="sticky">
+        <Tabs
+          value={currentGameTabIndex}
+          onChange={(_, newValue) => onGameTabChange(newValue)}
+          aria-label="Gametypes"
+          classes={{ indicator: classes.tabIndicator }}
+        >
+          <Tab
+            className={classes.tab}
+            label="Casual"
+            id="gametype-0"
+            aria-controls="gametype-view-0"
+          />
+
+          <Tab
+            className={classes.tab}
+            label="Competitive"
+            id="gametype-1"
+            aria-controls="gametype-view-1"
           />
         </Tabs>
       </AppBar>

@@ -28,7 +28,7 @@
     "firebase": "^8.0.0",
     "fontsource-roboto": "^3.0.3",
     "leaflet": "^1.7.1",
-    "nivo": "^0.31.0",
+    "nivo": "^0.7.0",
     "notistack": "^1.0.1",
     "prettier": "^2.1.2",
     "react": "^17.0.1",
