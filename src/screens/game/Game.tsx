@@ -215,50 +215,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     animationRunning ? 100 : null
   );
 
-  /**
-   * Draws the predicted rectangle
-   *
-   * @param strokeStyle Style for drawing the rectangle
-   */
-  const drawPredicted = useCallback(
-    (strokeStyle: string) => {
-      drawRectangle(context, predicted, strokeStyle, 3);
-    },
-    [context, predicted]
-  );
-
-  /**
-   * Draws the truth rectangle
-   */
-  const drawTruth = useCallback(() => {
-    drawRectangle(context, truth, TRUE_COLOUR, 3);
-  }, [context, truth]);
-
-  /**
-   * Draws the hint circle
-   */
-  const drawHint = useCallback(() => {
-    const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
-    const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
-    const radius = 100;
-
-    drawCircle(context, x, y, mapToCanvasScale(radius, context), 2, INVALID_COLOUR);
-  }, [context, truth]);
-
-  /**
-   * Draws the player click cross
-   *
-   * @param x           Width coordinate
-   * @param y           Height coordinate
-   * @param strokeStyle Style for drawing the cross
-   */
-  const drawPlayerClick = useCallback(
-    (x: number, y: number, strokeStyle: string) => {
-      drawCross(context, x, y, 5, strokeStyle);
-    },
-    [context]
-  );
-
   const setCube = useCallback(
     (cube: number[], baseCornerX: number, baseCornerY: number, cubeSide: number) => {
       cube[0] = baseCornerX;
@@ -268,13 +224,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     },
     []
   );
-
-  /**
-   * Clears the animation canvas
-   */
-  const clearAnimCanvas = useCallback(() => {
-    animContext.clearRect(0, 0, animContext.canvas.width, animContext.canvas.height);
-  }, [animContext]);
 
   /**
    * Draw an AI search animation
@@ -297,7 +246,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     const intervalId = window.setInterval(() => {
       /* Clear previous cubes */
-      clearAnimCanvas();
+      animContext.clearRect(0, 0, canvasWidth, canvasHeight);
 
       /* Advance cube to right */
       cube[0] += cubeSide;
@@ -313,51 +262,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       /* When cube gets out of lower bound, end animation */
       if (cube[1] > canvasHeight) {
         clearInterval(intervalId);
-        clearAnimCanvas();
+        animContext.clearRect(0, 0, canvasWidth, canvasHeight);
       }
     }, AI_ANIMATION_TIME / (numCubes * numCubes));
-  }, [animContext, clearAnimCanvas, enqueueSnackbar, setCube]);
-
-  const checkPlayer = useCallback(
-    (x: number, y: number) => {
-      enqueueSnackbar("Checking results...");
-
-      /* Player was successful if the click coordinates are inside the truth rectangle */
-      if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
-        const roundScore = (roundTime / 1000) * (hinted ? 10 : 20);
-
-        setPlayerScore((prevState) => prevState + roundScore);
-        setPlayerCorrectAnswers((prevState) => prevState + 1);
-        setPlayerCorrect(true);
-
-        drawPlayerClick(x, y, VALID_COLOUR);
-      } else {
-        setPlayerCorrect(false);
-
-        drawPlayerClick(x, y, INVALID_COLOUR);
-      }
-    },
-    [drawPlayerClick, enqueueSnackbar, hinted, roundTime, truth]
-  );
-
-  const checkAi = useCallback(() => {
-    const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
-
-    /* Ai was successful if the ratio of the intersection over the union is greater than 0.5 */
-    if (intersectionOverUnion > 0.5) {
-      const roundScore = Math.round(intersectionOverUnion * AI_SCORE_INCREASE_RATE);
-
-      setAiScore((prevState) => prevState + roundScore);
-      setAiCorrectAnswers((prevState) => prevState + 1);
-      setAiCorrect(true);
-
-      drawPredicted(VALID_COLOUR);
-    } else {
-      setAiCorrect(false);
-
-      drawPredicted(INVALID_COLOUR);
-    }
-  }, [drawPredicted, predicted, truth]);
+  }, [animContext, enqueueSnackbar, setCube]);
 
   /**
    * Upload the player click, in order to gather statistics and generate heatmaps
@@ -423,20 +331,50 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       if (click) {
         const { x, y } = click;
 
-        drawPlayerClick(x, y, DEFAULT_COLOUR);
+        drawCross(context, x, y, 5, DEFAULT_COLOUR);
 
         uploadPlayerClick(Math.round(x), Math.round(y));
       }
     } else if (animationTime === 5000) {
-      drawPredicted(DEFAULT_COLOUR);
+      drawRectangle(context, predicted, DEFAULT_COLOUR, 3);
     } else if (animationTime === 5500) {
-      drawTruth();
+      drawRectangle(context, truth, TRUE_COLOUR, 3);
     } else if (animationTime === 6000 && click) {
       const { x, y } = click;
 
-      checkPlayer(x, y);
+      enqueueSnackbar("Checking results...");
+
+      /* Player was successful if the click coordinates are inside the truth rectangle */
+      if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
+        const roundScore = (roundTime / 1000) * (hinted ? 10 : 20);
+
+        setPlayerScore((prevState) => prevState + roundScore);
+        setPlayerCorrectAnswers((prevState) => prevState + 1);
+        setPlayerCorrect(true);
+
+        drawCross(context, x, y, 5, VALID_COLOUR);
+      } else {
+        setPlayerCorrect(false);
+
+        drawCross(context, x, y, 5, INVALID_COLOUR);
+      }
     } else if (animationTime === 6500) {
-      checkAi();
+      const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
+
+      /* Ai was successful if the ratio of the intersection over the union is greater than 0.5 */
+      if (intersectionOverUnion > 0.5) {
+        const roundScore = Math.round(intersectionOverUnion * AI_SCORE_INCREASE_RATE);
+
+        setAiScore((prevState) => prevState + roundScore);
+        setAiCorrectAnswers((prevState) => prevState + 1);
+        setAiCorrect(true);
+
+        drawRectangle(context, predicted, VALID_COLOUR, 3);
+      } else {
+        setAiCorrect(false);
+
+        drawRectangle(context, predicted, INVALID_COLOUR, 3);
+      }
 
       setAnimationRunning(false);
       setHeatmapEnabled(true);
@@ -447,13 +385,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   }, [
     animationRunning,
     animationTime,
-    checkAi,
-    checkPlayer,
     click,
+    context,
     drawAiSearchAnimation,
-    drawPlayerClick,
-    drawPredicted,
-    drawTruth,
+    enqueueSnackbar,
+    hinted,
+    predicted,
+    roundTime,
+    truth,
     uploadPlayerClick,
   ]);
 
@@ -469,14 +408,18 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       setTimerColor("orange");
       setHinted(true);
 
-      drawHint();
+      const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
+      const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
+      const radius = mapToCanvasScale(100, context);
+
+      drawCircle(context, x, y, radius, 2, INVALID_COLOUR);
     } else if (roundTime === 2000) {
       setTimerColor("red");
     } else if (roundTime === 0) {
       setAnimationTime(0);
       setAnimationRunning(true);
     }
-  }, [drawHint, hinted, roundTime, running]);
+  }, [context, hinted, roundTime, running, truth]);
 
   // <editor-fold>
   /**
