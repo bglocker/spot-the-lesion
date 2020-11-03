@@ -19,6 +19,7 @@ import {
   drawCross,
   drawCircle,
   drawRectangle,
+  mapClickToCanvas,
   mapToCanvasScale,
 } from "../../components/CanvasUtils";
 import { getImagePath, getIntersectionOverUnion, getJsonPath } from "./GameUitls";
@@ -151,10 +152,11 @@ const NUMBER_OF_ROUNDS = 10;
 const TOTAL_TIME_MS = 10000;
 const AI_SCORE_INCREASE_RATE = 75;
 
+const NUM_SEARCH_CUBES = 10;
+
 const MAX_CANVAS_SIZE = 750;
 
 const MAX_FILE_NUMBER = 100;
-const AI_ANIMATION_TIME = 5000;
 
 type JsonData = { truth: number[]; predicted: number[] };
 
@@ -220,63 +222,40 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     animationRunning ? 100 : null
   );
 
-  const setCube = useCallback(
-    (cube: number[], baseCornerX: number, baseCornerY: number, cubeSide: number) => {
-      cube[0] = baseCornerX;
-      cube[1] = baseCornerY;
-      cube[2] = baseCornerX + cubeSide;
-      cube[3] = baseCornerY + cubeSide;
-    },
-    []
-  );
-
   /**
    * Draw an AI search animation
    */
-  const drawAiSearchAnimation = useCallback(() => {
+  const drawAiSearch = useCallback(() => {
     enqueueSnackbar("The system is thinking...");
 
-    /* Number of cubes on width or height */
-    const numCubes = 10;
+    const cubeSide = animContext.canvas.width / NUM_SEARCH_CUBES;
 
-    const canvasWidth = animContext.canvas.width;
-    const canvasHeight = animContext.canvas.height;
-    const cubeSide = canvasWidth / numCubes;
-    const cube: number[] = [];
-
-    setCube(cube, 0, 0, cubeSide);
-
-    /* Draw cubes in initial position */
-    drawRectangle(animContext, cube, VALID_COLOUR, 3);
+    let i = 0;
 
     const intervalId = window.setInterval(() => {
-      /* Clear previous cubes */
-      animContext.clearRect(0, 0, canvasWidth, canvasHeight);
+      /* Clear previous cube */
+      animContext.clearRect(0, 0, animContext.canvas.width, animContext.canvas.height);
 
-      /* Advance cube to right */
-      cube[0] += cubeSide;
-      cube[2] += cubeSide;
+      if (i === NUM_SEARCH_CUBES * NUM_SEARCH_CUBES) {
+        clearInterval(intervalId);
+        return;
+      }
+
+      const baseX = (i % NUM_SEARCH_CUBES) * cubeSide;
+      const baseY = Math.floor(i / NUM_SEARCH_CUBES) * cubeSide;
+      const cube = [baseX, baseY, baseX + cubeSide, baseY + cubeSide];
 
       drawRectangle(animContext, cube, VALID_COLOUR, 3);
 
-      /* When cube gets to right-most bound, advance cube below & restart */
-      if (cube[2] > canvasWidth) {
-        setCube(cube, -cubeSide, cube[1] + cubeSide, cubeSide);
-      }
-
-      /* When cube gets out of lower bound, end animation */
-      if (cube[1] > canvasHeight) {
-        clearInterval(intervalId);
-        animContext.clearRect(0, 0, canvasWidth, canvasHeight);
-      }
-    }, AI_ANIMATION_TIME / (numCubes * numCubes));
-  }, [animContext, enqueueSnackbar, setCube]);
+      i += 1;
+    }, 5000 / (NUM_SEARCH_CUBES * NUM_SEARCH_CUBES));
+  }, [animContext, enqueueSnackbar]);
 
   /**
    * Upload the player click, in order to gather statistics and generate heatmaps
    *
-   * @param x       Width coordinate
-   * @param y       Height coordinate
+   * @param x Width coordinate
+   * @param y Height coordinate
    */
   const uploadPlayerClick = useCallback(
     async (x: number, y: number) => {
@@ -332,7 +311,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       setLoading(true);
       setRunning(false);
 
-      drawAiSearchAnimation();
+      drawAiSearch();
 
       if (click) {
         const { x, y } = click;
@@ -341,7 +320,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
         uploadPlayerClick(Math.round(x), Math.round(y));
       }
-    } else if (animationTime === 5000) {
+    } else if (animationTime === 5100) {
       /* 5 seconds passed: draw predicted rectangle in default color */
       drawRectangle(context, predicted, DEFAULT_COLOUR, 3);
     } else if (animationTime === 5500) {
@@ -392,7 +371,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     animationTime,
     click,
     context,
-    drawAiSearchAnimation,
+    drawAiSearch,
     enqueueSnackbar,
     hinted,
     predicted,
@@ -420,7 +399,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
       const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
-      const radius = mapToCanvasScale(100, context);
+      const radius = mapToCanvasScale(context, 100);
 
       drawCircle(context, x, y, radius, 2, INVALID_COLOUR);
     } else if (roundTime === 2000) {
@@ -433,24 +412,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   }, [context, hinted, roundTime, running, truth]);
 
   /**
-   * Maps the click position relative to the canvas
-   *
-   * @param event Mouse event, used to get click position
-   *
-   * @return Click coordinates relative to the canvas
-   */
-  const mapClickToCanvas = (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
-    const rect = context.canvas.getBoundingClientRect();
-    const widthScale = context.canvas.width / rect.width;
-    const heightScale = context.canvas.height / rect.height;
-
-    return {
-      x: (event.clientX - rect.left) * widthScale,
-      y: (event.clientY - rect.top) * heightScale,
-    };
-  };
-
-  /**
    * Called when the canvas is clicked
    *
    * @param event Mouse event, used to get click position
@@ -460,7 +421,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
-    setClick(mapClickToCanvas(event));
+    setClick(mapClickToCanvas(context, event));
     setAnimationRunning(true);
   };
 
@@ -489,7 +450,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    *
    * @return Given rectangle coordinates, mapped to the canvas scale
    */
-  const mapCoordinates = (rect: number[]) => rect.map((x) => mapToCanvasScale(x, context));
+  const mapCoordinates = (rect: number[]) => rect.map((x) => mapToCanvasScale(context, x));
 
   /**
    * Loads the data from the json corresponding to the given fileNumber
