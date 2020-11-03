@@ -69,7 +69,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
    */
   async function createLeaderboard(tableIndex: number, gameIndex: number) {
     const table: string = DbUtils.tableNames[tableIndex];
-    const gameType: string = DbUtils.gameNames[gameIndex];
     const date: Date = new Date();
     const results: ScoreType[] = [];
     let rankPosition = 0;
@@ -80,7 +79,13 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
     // Map for avoiding displaying duplicate entries in Leaderboard
     const uniqueUsersMap: Map<string, boolean> = new Map<string, boolean>();
 
-    const tableRef = db.collection(DbUtils.LEADERBOARD).where("game_type", "==", gameType);
+    // TODO: Separate Leaderboard into competitive or casual
+    let tableRef;
+    if (gameIndex === 0) {
+      tableRef = db.collection(DbUtils.LEADERBOARD);
+    } else {
+      tableRef = db.collection(DbUtils.LEADERBOARD);
+    }
     let snapshot;
     snapshot = tableRef;
 

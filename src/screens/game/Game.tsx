@@ -190,8 +190,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [username, setUsername] = useState("");
 
-  const [gameType, setGameType] = useState(0);
-
   const [currentImageId, setCurrentImageId] = useState(0);
 
   // const [dataPoints, setDataPoints] = useState<[number, number][]>([]);
@@ -703,7 +701,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     if (username === "") {
       return;
     }
-    setGameType(1);
     const date = new Date();
     const entry = {
       user: username,
@@ -714,7 +711,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       day: date.getDate(),
       month: DbUtils.monthNames[date.getMonth()],
       year: date.getFullYear(),
-      game_type: gameType,
     };
 
     const entryName = `${entry.year}.${entry.month}.${entry.day}.${entry.user}`;
@@ -725,11 +721,22 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       .where("month", "==", entry.month)
       .where("day", "==", entry.day)
       .where("user", "==", username)
-      .where("score", ">", playerScore)
       .get();
 
     if (snapshot.empty) {
       await db.collection(DbUtils.LEADERBOARD).doc(entryName).set(entry);
+    } else {
+      let newScoreRecord = true;
+      snapshot.forEach((doc) => {
+        if (doc.data().score > entry.score) {
+          newScoreRecord = false;
+        }
+      });
+
+      // Add current score in DB only if it is a new Score Record
+      if (newScoreRecord) {
+        await db.collection(DbUtils.LEADERBOARD).doc(entryName).set(entry);
+      }
     }
   };
 
