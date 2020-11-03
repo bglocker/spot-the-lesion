@@ -363,8 +363,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
         drawCross(context, x, y, 5, VALID_COLOUR);
       } else {
-        setPlayerCorrect(false);
-
         drawCross(context, x, y, 5, INVALID_COLOUR);
       }
     } else if (animationTime === 6500) {
@@ -381,8 +379,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
         drawRectangle(context, predicted, VALID_COLOUR, 3);
       } else {
-        setAiCorrect(false);
-
         drawRectangle(context, predicted, INVALID_COLOUR, 3);
       }
 
@@ -436,7 +432,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
   }, [context, hinted, roundTime, running, truth]);
 
-  // <editor-fold>
   /**
    * Maps the click position relative to the canvas
    *
@@ -454,7 +449,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       y: (event.clientY - rect.top) * heightScale,
     };
   };
-  // </editor-fold>
 
   /**
    * Called when the canvas is clicked
@@ -470,7 +464,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setAnimationRunning(true);
   };
 
-  // <editor-fold>
   /**
    * Returns a random, previously unseen, file number
    *
@@ -532,7 +525,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       /* Set source after onLoad to ensure onLoad gets called (in case the image is cached) */
       image.src = getImagePath(fileNumber);
     });
-  // </editor-fold>
 
   /**
    * Starts a new round, loading a new image and its corresponding JSON data
@@ -551,6 +543,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setAnimationTime(0);
     setHinted(false);
     setClick(null);
+    setPlayerCorrect(false);
+    setAiCorrect(false);
     setRunning(true);
     setLoading(false);
   };
@@ -863,7 +857,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       </>
     );
   };
-  // </editor-fold>
 
   return (
     <>
@@ -895,6 +888,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       {displayGameContent()}
     </>
   );
+  // </editor-fold>
 };
 
 export default Game;
