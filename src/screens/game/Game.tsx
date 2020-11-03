@@ -7,6 +7,7 @@ import {
   IconButton,
   TextField,
   Toolbar,
+  ButtonGroup,
   Typography,
 } from "@material-ui/core";
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
@@ -197,6 +198,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [submitEnabled, setSubmitEnabled] = useState(false);
   const [heatmapEnable, setHeatmapEnabled] = useState(false);
+
+  const [gameMode, setGameMode] = useState(0);
+
+  const [isGameModeSelected, setIsGameModeSelected] = useState(false);
 
   // const [dataPoints, setDataPoints] = useState<[number, number][]>([]);
 
@@ -568,19 +573,39 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       year: date.getFullYear(),
     };
 
+    let leaderboard;
+    if (gameMode === 0) {
+      leaderboard = DbUtils.LEADERBOARD_CASUAL;
+    } else {
+      leaderboard = DbUtils.LEADERBOARD_COMPETITIVE;
+    }
+
     const entryName = `${entry.year}.${entry.month}.${entry.day}.${entry.user}`;
 
     const snapshot = await db
-      .collection(DbUtils.LEADERBOARD)
+      .collection(leaderboard)
       .where("year", "==", entry.year)
       .where("month", "==", entry.month)
       .where("day", "==", entry.day)
       .where("user", "==", username)
-      .where("score", ">", playerScore)
       .get();
 
     if (snapshot.empty) {
-      await db.collection(DbUtils.LEADERBOARD).doc(entryName).set(entry);
+      // First time played today - add this score to DB
+      await db.collection(leaderboard).doc(entryName).set(entry);
+    } else {
+      // Check if this score is better than what this player registered before
+      let newScoreRecord = true;
+      snapshot.forEach((doc) => {
+        if (doc.data().score > entry.score) {
+          newScoreRecord = false;
+        }
+      });
+
+      // Add current score in DB only if it is a new Score Record
+      if (newScoreRecord) {
+        await db.collection(leaderboard).doc(entryName).set(entry);
+      }
     }
   };
 
@@ -730,6 +755,118 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setHeatmapDialogOpen(false);
   };
 
+  const displayGameContent = () => {
+    if (!isGameModeSelected) {
+      return (
+        <>
+          <Typography>Choose a game mode</Typography>
+
+          <ButtonGroup>
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={() => {
+                setIsGameModeSelected(true);
+                setGameMode(0);
+              }}
+            >
+              Casual
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={() => {
+                setIsGameModeSelected(true);
+                setGameMode(1);
+              }}
+            >
+              Competitive
+            </Button>
+          </ButtonGroup>
+        </>
+      );
+    }
+    return (
+      <>
+        <div className={classes.container}>
+          <div className={classes.emptyDiv} />
+
+          <div className={classes.timerCanvasContainer}>
+            <Card className={classes.timerContainer}>
+              <Typography className={classes.timerText} variant="h4" style={{ color: timerColor }}>
+                Time remaining: {(roundTime / 1000).toFixed(1)}s
+              </Typography>
+
+              <ColoredLinearProgress
+                barColor={timerColor}
+                variant="determinate"
+                value={roundTime / 100}
+              />
+            </Card>
+
+            <Card className={classes.canvasContainer}>
+              <canvas
+                className={classes.canvas}
+                ref={canvasRef}
+                width={MAX_CANVAS_SIZE}
+                height={MAX_CANVAS_SIZE}
+              />
+
+              <canvas
+                className={classes.canvas}
+                ref={animCanvasRef}
+                width={MAX_CANVAS_SIZE}
+                height={MAX_CANVAS_SIZE}
+                onClick={onCanvasClick}
+              />
+            </Card>
+          </div>
+
+          <div className={classes.sideContainer}>
+            <Card className={classes.sideCard}>
+              <div className={classes.flexButton}>
+                <Typography className={classes.result} variant="h4">
+                  You:
+                </Typography>
+
+                <div className={classes.result}>{displayCorrect(playerCorrect)}</div>
+              </div>
+
+              <div className={classes.flexButton}>
+                <Typography className={classes.result} variant="h4">
+                  {playerScore} vs {aiScore}
+                </Typography>
+
+                <div className={classes.result}>{dialogAction()}</div>
+              </div>
+
+              <div className={classes.flexButton}>
+                <Typography className={classes.result} variant="h4">
+                  AI:
+                </Typography>
+
+                <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
+              </div>
+            </Card>
+          </div>
+
+          <Dialog fullScreen open={heatmapDialogOpen} onClose={openHeatmap}>
+            <AppBar position="sticky">
+              <Toolbar variant="dense">
+                <IconButton edge="start" color="inherit" onClick={closeHeatmap} aria-label="close">
+                  <Close />
+                </IconButton>
+              </Toolbar>
+            </AppBar>
+          </Dialog>
+        </div>
+      </>
+    );
+  };
+  // </editor-fold>
+
   return (
     <>
       <AppBar position="sticky">
@@ -746,6 +883,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
           <Typography>Spot the Lesion</Typography>
           <Button
+            hidden={isGameModeSelected}
             disabled={!heatmapEnable}
             variant="contained"
             color="primary"
@@ -756,82 +894,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           </Button>
         </Toolbar>
       </AppBar>
-
-      <div className={classes.container}>
-        <div className={classes.emptyDiv} />
-
-        <div className={classes.timerCanvasContainer}>
-          <Card className={classes.timerContainer}>
-            <Typography className={classes.timerText} variant="h4" style={{ color: timerColor }}>
-              Time remaining: {(roundTime / 1000).toFixed(1)}s
-            </Typography>
-
-            <ColoredLinearProgress
-              barColor={timerColor}
-              variant="determinate"
-              value={roundTime / 100}
-            />
-          </Card>
-
-          <Card className={classes.canvasContainer}>
-            <canvas
-              className={classes.canvas}
-              ref={canvasRef}
-              width={MAX_CANVAS_SIZE}
-              height={MAX_CANVAS_SIZE}
-            />
-
-            <canvas
-              className={classes.canvas}
-              ref={animCanvasRef}
-              width={MAX_CANVAS_SIZE}
-              height={MAX_CANVAS_SIZE}
-              onClick={onCanvasClick}
-            />
-          </Card>
-        </div>
-
-        <div className={classes.sideContainer}>
-          <Card className={classes.sideCard}>
-            <div className={classes.flexButton}>
-              <Typography className={classes.result} variant="h4">
-                You:
-              </Typography>
-
-              <div className={classes.result}>{displayCorrect(playerCorrect)}</div>
-            </div>
-
-            <div className={classes.flexButton}>
-              <Typography className={classes.result} variant="h4">
-                {playerScore} vs {aiScore}
-              </Typography>
-
-              <div className={classes.result}>{dialogAction()}</div>
-            </div>
-
-            <div className={classes.flexButton}>
-              <Typography className={classes.result} variant="h4">
-                AI:
-              </Typography>
-
-              <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
-            </div>
-          </Card>
-        </div>
-
-        <Dialog fullScreen open={heatmapDialogOpen} onClose={openHeatmap}>
-          <AppBar position="sticky">
-            <Toolbar variant="dense">
-              <IconButton edge="start" color="inherit" onClick={closeHeatmap} aria-label="close">
-                <Close />
-              </IconButton>
-            </Toolbar>
-          </AppBar>
-        </Dialog>
-      </div>
+      {displayGameContent()}
     </>
   );
-  // </editor-fold>
 };
 
 export default Game;

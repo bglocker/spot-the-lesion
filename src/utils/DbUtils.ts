@@ -24,7 +24,13 @@ export default class DbUtils {
 
   public static tableNames = ["daily-scores", "monthly-scores", "alltime-scores"];
 
+  public static gameNames = ["casual", "competitive"];
+
   public static LEADERBOARD = "leaderboard";
+
+  public static LEADERBOARD_CASUAL = "leaderboard_casual";
+
+  public static LEADERBOARD_COMPETITIVE = "leaderboard_competitive";
 
   public static IMAGES = "images";
 }
