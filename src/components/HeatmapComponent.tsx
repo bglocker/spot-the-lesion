@@ -31,8 +31,8 @@ const Heatmap: React.FC<HeatmapParams> = ({ currentImageId }: HeatmapParams) => 
   const getImagePath = (fileNumber: number) =>
     `${process.env.PUBLIC_URL}/content/images/${fileNumber}.png`;
 
-  const getClickedPoints = async (imageId: number) => {
-    const docNameForImage = `image_${imageId}`;
+  const getClickedPoints = async () => {
+    const docNameForImage = `image_${currentImageId}`;
     const snapshot = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
     const data = snapshot.data();
     if (data === undefined) {
@@ -68,7 +68,7 @@ const Heatmap: React.FC<HeatmapParams> = ({ currentImageId }: HeatmapParams) => 
     }
 
     if (!getClicks) {
-      getClickedPoints(currentImageId);
+      getClickedPoints();
       setGetClicks(true);
     }
     // heatmap data format
@@ -83,7 +83,7 @@ const Heatmap: React.FC<HeatmapParams> = ({ currentImageId }: HeatmapParams) => 
       }),
     };
     heatmapInstance.setData(data);
-  }, [dataPoints, heatmapInstance, height, width]);
+  }, [dataPoints, getClicks, heatmapInstance, height, width]);
 
   return (
     <div className={classes.heatmapContainer} id="heatmapContainer">
