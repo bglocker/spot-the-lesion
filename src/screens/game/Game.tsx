@@ -952,7 +952,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
                   variant="contained"
                   color="primary"
                   size="large"
-                  disabled={roundRunning || loading || username === ""}
+                  disabled={roundRunning || loading || username === "" || round === 0}
                   onClick={onSubmitScore}
                   style={{ marginTop: 8 }}
                 >
