@@ -105,9 +105,6 @@ const useStyles = makeStyles((theme: Theme) =>
       width: "100%",
     },
     sideContainer: {
-      [theme.breakpoints.down("sm")]: {
-        justifyContent: "center",
-      },
       [theme.breakpoints.up("md")]: {
         flex: 1,
         height: "100%",
@@ -143,6 +140,12 @@ const useStyles = makeStyles((theme: Theme) =>
     flexButton: {
       flex: 1,
       flexDirection: "column",
+    },
+    checkGreen: {
+      fill: "green",
+    },
+    clearRed: {
+      fill: "red",
     },
   })
 );
@@ -570,19 +573,20 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   /**
-   * Function for displaying a green or red thick depending on the correctness of the answer
-   * @param correct - true if answer was correct, false otherwise
+   * Display a green Check or red Clear based on correct (only after first round, and between rounds)
+   *
+   * @param correct Boolean for icon picking
    */
-  const displayCorrect = (correct: boolean) => {
+  const showCorrect = (correct: boolean) => {
     if (round === 0 || roundRunning || loading) {
       return null;
     }
 
-    if (correct) {
-      return <Check style={{ fontSize: "48", fill: "green", width: 100 }} />;
-    }
-
-    return <Clear style={{ fontSize: "48", fill: "red", width: 100 }} />;
+    return correct ? (
+      <Check className={classes.checkGreen} fontSize="large" />
+    ) : (
+      <Clear className={classes.clearRed} fontSize="large" />
+    );
   };
 
   /**
@@ -591,6 +595,31 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    */
   const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
     setUsername(event.target.value);
+  };
+
+  /**
+   * Display the winner
+   */
+  const showWinner = () => {
+    let text: string;
+    let color: string;
+
+    if (playerScore > aiScore) {
+      text = "You won!";
+      color = VALID_COLOUR;
+    } else if (playerScore < aiScore) {
+      text = "AI won!";
+      color = INVALID_COLOUR;
+    } else {
+      text = "It was a draw!";
+      color = DEFAULT_COLOUR;
+    }
+
+    return (
+      <Typography className={classes.result} variant="h6" style={{ color }}>
+        {text}
+      </Typography>
+    );
   };
 
   /**
@@ -606,36 +635,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     enqueueSnackbar("Score successfully submitted!");
   };
 
-  /**
-   * Function for displaying the result of the game
-   */
-  const decideWinner = () => {
-    if (playerScore > aiScore) {
-      return (
-        <Typography className={classes.result} variant="h6" style={{ color: VALID_COLOUR }}>
-          You Won !
-        </Typography>
-      );
-    }
-    if (aiScore > playerScore) {
-      return (
-        <Typography className={classes.result} variant="h6" style={{ color: INVALID_COLOUR }}>
-          AI won !
-        </Typography>
-      );
-    }
-    // Otherwise it was a draw
-    return (
-      <Typography className={classes.result} variant="h6" style={{ color: DEFAULT_COLOUR }}>
-        It was a draw !
-      </Typography>
-    );
-  };
-
-  /**
-   * Function for displaying the side dialog box with game results and start/next/submit buttons
-   */
-  const dialogAction = () => {
+  const sideAction = () => {
     if (round < NUM_ROUNDS || roundRunning || loading) {
       return (
         <LoadingButton
@@ -663,7 +663,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           onChange={onChangeUsername}
         />
 
-        {decideWinner()}
+        {showWinner()}
 
         <Button
           variant="contained"
@@ -688,7 +688,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    */
   const onCloseHeatmap = () => setShowHeatmap(false);
 
-  const displayGameContent = () => {
+  const gameContent = () => {
     if (!isGameModeSelected) {
       return (
         <>
@@ -761,26 +761,26 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           <Card className={classes.sideCard}>
             <div className={classes.flexButton}>
               <Typography className={classes.result} variant="h4">
-                You:
+                You
               </Typography>
 
-              <div className={classes.result}>{displayCorrect(playerCorrect)}</div>
+              <div className={classes.result}>{showCorrect(playerCorrect)}</div>
             </div>
 
-            <div className={classes.flexButton}>
+            <div className={classes.flexButton} style={{ whiteSpace: "nowrap" }}>
               <Typography className={classes.result} variant="h4">
                 {playerScore} vs {aiScore}
               </Typography>
 
-              <div className={classes.result}>{dialogAction()}</div>
+              <div className={classes.result}>{sideAction()}</div>
             </div>
 
             <div className={classes.flexButton}>
               <Typography className={classes.result} variant="h4">
-                AI:
+                AI
               </Typography>
 
-              <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
+              <div className={classes.result}>{showCorrect(aiCorrect)}</div>
             </div>
           </Card>
         </div>
@@ -834,7 +834,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </Toolbar>
       </AppBar>
 
-      {displayGameContent()}
+      {gameContent()}
     </>
   );
 };
