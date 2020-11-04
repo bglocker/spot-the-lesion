@@ -138,7 +138,7 @@ const useStyles = makeStyles((theme: Theme) =>
       },
       minWidth: "20vw",
       display: "flex",
-      flexDirection: "row",
+      flexDirection: "column",
       alignItems: "center",
       alignContent: "center",
       margin: 8,
@@ -271,7 +271,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    */
   useInterval(() => setRoundTime((prevState) => prevState - 100), roundRunning ? 100 : null);
 
-  const displayHint = () => {
+  const displayHint = useCallback(() => {
     setHinted(true);
 
     const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
@@ -279,7 +279,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     const radius = mapToCanvasScale(context, 100);
 
     drawCircle(context, x, y, radius, 2, INVALID_COLOUR);
-  };
+  }, [context, truth]);
 
   /**
    * Round timer based events
@@ -300,7 +300,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       /* 0 seconds left: start end timer */
       setEndRunning(true);
     }
-  }, [context, hinted, roundTime, roundRunning, truth, gameMode]);
+  }, [context, hinted, roundTime, roundRunning, truth, gameMode, displayHint]);
 
   /**
    * End timer
@@ -372,7 +372,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
         drawCross(context, x, y, 5, DEFAULT_COLOUR);
 
-        uploadPlayerClick(Math.round(x), Math.round(y));
+        uploadPlayerClick(Math.round(x), Math.round(y)).then(() => null);
       }
 
       enqueueSnackbar("The system is thinking...");
@@ -843,8 +843,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
                   <Typography className={classes.result} variant="h4">
                     {playerScore} vs {aiScore}
                   </Typography>
-
-                  <div className={classes.result}>{dialogAction()}</div>
                 </div>
 
                 <div className={classes.flexButton}>
@@ -854,6 +852,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
                   <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
                 </div>
+                <div className={classes.result}>{dialogAction()}</div>
               </Card>
             </div>
 
@@ -924,8 +923,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
                 <Typography className={classes.result} variant="h4">
                   {playerCorrectAnswers} vs {aiCorrectAnswers}
                 </Typography>
-
-                <div className={classes.result}>{dialogAction()}</div>
               </div>
 
               <div className={classes.flexButton}>
@@ -935,6 +932,33 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
                 <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
               </div>
+              <div className={classes.result}>{dialogAction()}</div>
+              <>
+                <TwitterShareButton
+                  url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
+                  title={`I got ${playerScore} points in Spot-the-Lesion! Can you beat my score?`}
+                >
+                  <TwitterIcon size="50px" round />
+                </TwitterShareButton>
+
+                <TextField
+                  label="Username"
+                  variant="outlined"
+                  value={username}
+                  onChange={onChangeUsername}
+                />
+                <div />
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  disabled={roundRunning || loading || username === ""}
+                  onClick={onSubmitScore}
+                  style={{ marginTop: 8 }}
+                >
+                  Submit Score
+                </Button>
+              </>
             </Card>
           </div>
 
