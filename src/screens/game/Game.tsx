@@ -401,7 +401,15 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       /* Player was successful if the click coordinates are inside the truth rectangle */
       if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
-        const roundScore = (roundTime / 1000) * (hinted ? 10 : 20);
+        // For Casual Mode: if Hint was shown, receive half a point; otherwise receive full point
+        const casualIncreaseRate = hinted ? 0.5 : 1;
+
+        // For Competitive Mode: round time taken doubled if no hint provided
+        const competitiveIncreaseRate = (roundTime / 1000) * (hinted ? 10 : 20);
+
+        // If gameMode === 1, increase score according to Competitive Mode rate,
+        // otherwise with the Casual Mode rate
+        const roundScore = gameMode === 1 ? competitiveIncreaseRate : casualIncreaseRate;
 
         setPlayerScore((prevState) => prevState + roundScore);
         setPlayerCorrectAnswers((prevState) => prevState + 1);
@@ -862,7 +870,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
           <div className={classes.flexButton}>
             <Typography className={classes.result} variant="h4">
-              {playerCorrectAnswers} vs {aiCorrectAnswers}
+              {playerScore} vs {gameMode === 0 ? aiCorrectAnswers : aiScore}
             </Typography>
           </div>
 
