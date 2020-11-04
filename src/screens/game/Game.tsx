@@ -33,6 +33,9 @@ import { db } from "../../firebase/firebaseApp";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
+    root: {
+      flexGrow: 1,
+    },
     backButton: {
       marginRight: 8,
     },
@@ -861,7 +864,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   return (
     <>
       <AppBar position="sticky">
-        <Toolbar variant="dense">
+        <Toolbar>
           <IconButton
             className={classes.backButton}
             edge="start"
@@ -873,8 +876,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           </IconButton>
 
           <Typography>Spot the Lesion</Typography>
-          {showHeatmapButton()}
         </Toolbar>
+        {showHeatmapButton()}
       </AppBar>
       {displayGameContent()}
     </>
