@@ -199,12 +199,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [imageId, setImageId] = useState(0);
 
-  const [submitEnabled, setSubmitEnabled] = useState(false);
-  const [heatmapEnable, setHeatmapEnabled] = useState(false);
-
   const [gameMode, setGameMode] = useState(0);
-
-  const [isGameModeSelected, setIsGameModeSelected] = useState(false);
+  const [isGameModeSelected, setGameModeSelected] = useState(false);
 
   /**
    * The heatmap dialog box information
@@ -361,8 +357,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       setAnimationRunning(false);
       setLoading(false);
-
-      setHeatmapEnabled(true);
     }
   }, [
     animationRunning,
@@ -513,10 +507,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Uploads the score to the database
    */
   const uploadScore = async () => {
-    if (username === "") {
-      return;
-    }
-
     const date = new Date();
     const entry = {
       user: username,
@@ -529,12 +519,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       year: date.getFullYear(),
     };
 
-    let leaderboard;
-    if (gameMode === 0) {
-      leaderboard = DbUtils.LEADERBOARD_CASUAL;
-    } else {
-      leaderboard = DbUtils.LEADERBOARD_COMPETITIVE;
-    }
+    const leaderboard =
+      gameMode === 0 ? DbUtils.LEADERBOARD_CASUAL : DbUtils.LEADERBOARD_COMPETITIVE;
 
     const entryName = `${entry.year}.${entry.month}.${entry.day}.${entry.user}`;
 
@@ -586,7 +572,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * @param event - username writing event listener
    */
   const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
-    setSubmitEnabled(event.target.value !== "");
     setUsername(event.target.value);
   };
 
@@ -597,7 +582,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Scores uploaded into Firebase
    */
   const onSubmitScore = async () => {
-    setSubmitEnabled(false);
+    setLoading(true);
     await uploadScore();
     setRoute("home");
     enqueueSnackbar("Score successfully submitted!");
@@ -666,7 +651,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           variant="contained"
           color="primary"
           size="large"
-          disabled={running || loading || !submitEnabled}
+          disabled={running || loading || username === ""}
           onClick={onSubmitScore}
         >
           Submit Score
@@ -701,7 +686,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               color="primary"
               size="large"
               onClick={() => {
-                setIsGameModeSelected(true);
+                setGameModeSelected(true);
                 setGameMode(0);
               }}
             >
@@ -712,7 +697,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
               color="primary"
               size="large"
               onClick={() => {
-                setIsGameModeSelected(true);
+                setGameModeSelected(true);
                 setGameMode(1);
               }}
             >
@@ -819,7 +804,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           <Typography>Spot the Lesion</Typography>
           <Button
             hidden={isGameModeSelected}
-            disabled={!heatmapEnable}
+            disabled={round === 0 || running || loading}
             variant="contained"
             color="primary"
             size="large"
