@@ -59,7 +59,7 @@ const useStyles = makeStyles((theme: Theme) =>
         flex: 1,
       },
     },
-    timerCanvasContainer: {
+    upperBarCanvasContainer: {
       display: "flex",
       flexDirection: "column",
       justifyContent: "space-evenly",
@@ -795,197 +795,171 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </>
       );
     }
-    // competitive game
-    if (gameMode === 1) {
-      return (
-        <>
-          <div className={classes.container}>
-            <div className={classes.emptyDiv} />
-
-            <div className={classes.timerCanvasContainer}>
-              <Card className={classes.timerContainer}>
-                <Typography
-                  className={classes.timerText}
-                  variant="h4"
-                  style={{ color: timerColor }}
-                >
-                  Time remaining: {(roundTime / 1000).toFixed(1)}s
-                </Typography>
-
-                <ColoredLinearProgress
-                  barColor={timerColor}
-                  variant="determinate"
-                  value={roundTime / 100}
-                />
-              </Card>
-
-              <Card className={classes.canvasContainer}>
-                <canvas
-                  className={classes.canvas}
-                  ref={canvasRef}
-                  width={MAX_CANVAS_SIZE}
-                  height={MAX_CANVAS_SIZE}
-                />
-
-                <canvas
-                  className={classes.canvas}
-                  ref={animationCanvasRef}
-                  width={MAX_CANVAS_SIZE}
-                  height={MAX_CANVAS_SIZE}
-                  onClick={onCanvasClick}
-                />
-              </Card>
-            </div>
-
-            <div className={classes.sideContainer}>
-              <Card className={classes.sideCard}>
-                <div className={classes.flexButton}>
-                  <Typography className={classes.result} variant="h4">
-                    You:
-                  </Typography>
-
-                  <div className={classes.result}>{displayCorrect(playerCorrect)}</div>
-                </div>
-
-                <div className={classes.flexButton}>
-                  <Typography className={classes.result} variant="h4">
-                    {playerScore} vs {aiScore}
-                  </Typography>
-                </div>
-
-                <div className={classes.flexButton}>
-                  <Typography className={classes.result} variant="h4">
-                    AI:
-                  </Typography>
-
-                  <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
-                </div>
-                <div className={classes.result}>{dialogAction()}</div>
-              </Card>
-            </div>
-
-            <Dialog fullScreen open={heatmapDialogOpen} onClose={openHeatmap}>
-              <AppBar position="sticky">
-                <Toolbar variant="dense">
-                  <IconButton
-                    edge="start"
-                    color="inherit"
-                    onClick={closeHeatmap}
-                    aria-label="close"
-                  >
-                    <Close />
-                  </IconButton>
-                </Toolbar>
-              </AppBar>
-
-              <Heatmap currentImageId={imageId} />
-            </Dialog>
-          </div>
-        </>
-      );
-    }
-    // casual game
+    // Game mode selected. Display the actual game content
     return (
       <>
         <div className={classes.container}>
           <div className={classes.emptyDiv} />
-          <div className={classes.timerCanvasContainer}>
-            <Card className={classes.hintButtonContainer}>
-              <Button
-                className={classes.displayHintButton}
-                onClick={displayHint}
-                disabled={round === 0 || loading || hinted || !roundRunning}
-              >
-                Show hint
-              </Button>
-            </Card>
-            <Card className={classes.canvasContainer}>
-              <canvas
-                className={classes.canvas}
-                ref={canvasRef}
-                width={MAX_CANVAS_SIZE}
-                height={MAX_CANVAS_SIZE}
-              />
-
-              <canvas
-                className={classes.canvas}
-                ref={animationCanvasRef}
-                width={MAX_CANVAS_SIZE}
-                height={MAX_CANVAS_SIZE}
-                onClick={onCanvasClick}
-              />
-            </Card>
-          </div>
-
-          <div className={classes.sideContainer}>
-            <Card className={classes.sideCard}>
-              <div className={classes.flexButton}>
-                <Typography className={classes.result} variant="h4">
-                  You:
-                </Typography>
-
-                <div className={classes.result}>{displayCorrect(playerCorrect)}</div>
-              </div>
-
-              <div className={classes.flexButton}>
-                <Typography className={classes.result} variant="h4">
-                  {playerCorrectAnswers} vs {aiCorrectAnswers}
-                </Typography>
-              </div>
-
-              <div className={classes.flexButton}>
-                <Typography className={classes.result} variant="h4">
-                  AI:
-                </Typography>
-
-                <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
-              </div>
-              <div className={classes.result}>{dialogAction()}</div>
-              <>
-                <TwitterShareButton
-                  url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
-                  title={`I got ${playerScore} points in Spot-the-Lesion! Can you beat my score?`}
-                >
-                  <TwitterIcon size="50px" round />
-                </TwitterShareButton>
-
-                <TextField
-                  label="Username"
-                  variant="outlined"
-                  value={username}
-                  onChange={onChangeUsername}
-                />
-                <div />
-                <Button
-                  variant="contained"
-                  color="primary"
-                  size="large"
-                  disabled={roundRunning || loading || username === "" || round === 0}
-                  onClick={onSubmitScore}
-                  style={{ marginTop: 8 }}
-                >
-                  Submit Score
-                </Button>
-              </>
-            </Card>
-          </div>
-
-          <Dialog fullScreen open={heatmapDialogOpen} onClose={openHeatmap}>
-            <AppBar position="sticky">
-              <Toolbar variant="dense">
-                <IconButton edge="start" color="inherit" onClick={closeHeatmap} aria-label="close">
-                  <Close />
-                </IconButton>
-              </Toolbar>
-            </AppBar>
-
-            <Heatmap currentImageId={imageId} />
-          </Dialog>
+          {displayGame()}
+          {displayScoreCard()}
+          {displayHeatmapDialog()}
         </div>
       </>
     );
   };
 
+  /**
+   * Function for displaying the actual Game
+   * Display Show Hint button for Casual Mode (gameMode === 0)
+   * Display Timer Bar for Competitive Mode (gameMode === 1)
+   */
+  const displayGame = () => {
+    return gameMode === 0 ? (
+      <div className={classes.upperBarCanvasContainer}>
+        <Card className={classes.hintButtonContainer}>
+          <Button
+            className={classes.displayHintButton}
+            onClick={displayHint}
+            disabled={round === 0 || loading || hinted || !roundRunning}
+          >
+            Show hint
+          </Button>
+        </Card>
+        {displayGameCanvas()}
+      </div>
+    ) : (
+      <div className={classes.upperBarCanvasContainer}>
+        <Card className={classes.timerContainer}>
+          <Typography className={classes.timerText} variant="h4" style={{ color: timerColor }}>
+            Time remaining: {(roundTime / 1000).toFixed(1)}s
+          </Typography>
+
+          <ColoredLinearProgress
+            barColor={timerColor}
+            variant="determinate"
+            value={roundTime / 100}
+          />
+        </Card>
+        {displayGameCanvas()}
+      </div>
+    );
+  };
+
+  /**
+   * Function for displaying the side Score Card
+   */
+  const displayScoreCard = () => {
+    return (
+      <div className={classes.sideContainer}>
+        <Card className={classes.sideCard}>
+          <div className={classes.flexButton}>
+            <Typography className={classes.result} variant="h4">
+              You:
+            </Typography>
+
+            <div className={classes.result}>{displayCorrect(playerCorrect)}</div>
+          </div>
+
+          <div className={classes.flexButton}>
+            <Typography className={classes.result} variant="h4">
+              {playerCorrectAnswers} vs {aiCorrectAnswers}
+            </Typography>
+          </div>
+
+          <div className={classes.flexButton}>
+            <Typography className={classes.result} variant="h4">
+              AI:
+            </Typography>
+
+            <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
+          </div>
+          <div className={classes.result}>{dialogAction()}</div>
+          {displaySubmitButton()}
+        </Card>
+      </div>
+    );
+  };
+
+  /**
+   * Function for displaying the Heatmap Dialog Window
+   */
+  const displayHeatmapDialog = () => {
+    return (
+      <Dialog fullScreen open={heatmapDialogOpen} onClose={openHeatmap}>
+        <AppBar position="sticky">
+          <Toolbar variant="dense">
+            <IconButton edge="start" color="inherit" onClick={closeHeatmap} aria-label="close">
+              <Close />
+            </IconButton>
+          </Toolbar>
+        </AppBar>
+
+        <Heatmap currentImageId={imageId} />
+      </Dialog>
+    );
+  };
+
+  /**
+   * Function for displaying the game main canvas
+   */
+  const displayGameCanvas = () => {
+    return (
+      <Card className={classes.canvasContainer}>
+        <canvas
+          className={classes.canvas}
+          ref={canvasRef}
+          width={MAX_CANVAS_SIZE}
+          height={MAX_CANVAS_SIZE}
+        />
+
+        <canvas
+          className={classes.canvas}
+          ref={animationCanvasRef}
+          width={MAX_CANVAS_SIZE}
+          height={MAX_CANVAS_SIZE}
+          onClick={onCanvasClick}
+        />
+      </Card>
+    );
+  };
+
+  /**
+   * Function for displaying the Submit button for Casual Game Mode
+   * For Competitive Mode, display nothing
+   */
+  const displaySubmitButton = () => {
+    return gameMode === 0 ? (
+      <>
+        <TwitterShareButton
+          url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
+          title={`I got ${playerScore} points in Spot-the-Lesion! Can you beat my score?`}
+        >
+          <TwitterIcon size="50px" round />
+        </TwitterShareButton>
+        <TextField
+          label="Username"
+          variant="outlined"
+          value={username}
+          onChange={onChangeUsername}
+        />
+        <div />
+        <Button
+          variant="contained"
+          color="primary"
+          size="large"
+          disabled={roundRunning || loading || username === "" || round === 0}
+          onClick={onSubmitScore}
+          style={{ marginTop: 8 }}
+        >
+          Submit Score
+        </Button>
+      </>
+    ) : null;
+  };
+
+  /**
+   * Function for displaying the heatmap button after the game mode was selected
+   */
   const showHeatmapButton = () => {
     return isGameModeSelected ? (
       <Button
@@ -1002,6 +976,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     ) : null;
   };
 
+  /**
+   * Main return from the React Functional Component
+   */
   return (
     <>
       <AppBar position="sticky">
