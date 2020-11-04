@@ -26,6 +26,7 @@ import { getImagePath, getIntersectionOverUnion, getJsonPath } from "./GameUitls
 import useInterval from "../../components/useInterval";
 import useCanvasContext from "../../components/useCanvasContext";
 import LoadingButton from "../../components/LoadingButton";
+import Heatmap from "../../components/HeatmapComponent";
 import DbUtils from "../../utils/DbUtils";
 import { db } from "../../firebase/firebaseApp";
 
@@ -205,8 +206,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [isGameModeSelected, setIsGameModeSelected] = useState(false);
 
-  // const [dataPoints, setDataPoints] = useState<[number, number][]>([]);
-
   /**
    * The heatmap dialog box information
    */
@@ -264,8 +263,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       let pointWasClickedBefore = false;
 
       const newClickPoint = {
-        x,
-        y,
+        x: Math.round((x * 10000) / context.canvas.width) / 100,
+        y: Math.round((y * 10000) / context.canvas.height) / 100,
         clickCount: 1,
       };
 
@@ -677,27 +676,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     );
   };
 
-  const getClickedPoints = async () => {
-    const docNameForImage = `image_${imageId}`;
-    const snapshot = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
-    const data = snapshot.data();
-    if (data === undefined) {
-      return;
-    }
-    const clicks: [number, number][] = [];
-    for (let i = 0; i < data.clicks.length; i++) {
-      for (let k = 0; k < data.clicks[i].clickCount; k++) {
-        clicks.push([data.clicks[i].y, data.clicks[i].x]);
-      }
-    }
-    // setDataPoints(clicks);
-  };
-
   /**
    * Function for opening the heatmap tab
    */
   const openHeatmap = () => {
-    getClickedPoints();
     setHeatmapDialogOpen(true);
   };
 
@@ -813,6 +795,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
                 </IconButton>
               </Toolbar>
             </AppBar>
+
+            <Heatmap currentImageId={imageId} />
           </Dialog>
         </div>
       </>

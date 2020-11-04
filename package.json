@@ -27,6 +27,7 @@
     "eslint-plugin-react-hooks": "^4.2.0",
     "firebase": "^8.0.0",
     "fontsource-roboto": "^3.0.3",
+    "heatmap.js": "^2.0.5",
     "leaflet": "^1.7.1",
     "nivo": "^0.31.0",
     "notistack": "^1.0.1",
