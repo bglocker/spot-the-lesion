@@ -227,8 +227,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const drawAiSearch = useCallback(() => {
     enqueueSnackbar("The system is thinking...");
 
-    const cubeSide = animContext.canvas.width / NUM_SEARCH_CUBES;
-
     let i = 0;
 
     const intervalId = window.setInterval(() => {
@@ -240,6 +238,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         return;
       }
 
+      const cubeSide = animContext.canvas.width / NUM_SEARCH_CUBES;
       const baseX = (i % NUM_SEARCH_CUBES) * cubeSide;
       const baseY = Math.floor(i / NUM_SEARCH_CUBES) * cubeSide;
       const cube = [baseX, baseY, baseX + cubeSide, baseY + cubeSide];
@@ -294,7 +293,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       await db.collection(DbUtils.IMAGES).doc(docNameForImage).set(entry);
     },
-    [imageId]
+    [context, imageId]
   );
 
   /**
