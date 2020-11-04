@@ -9,6 +9,7 @@ import {
   Toolbar,
   ButtonGroup,
   Typography,
+  Container,
 } from "@material-ui/core";
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import { KeyboardBackspace, Check, Clear, Close } from "@material-ui/icons";
@@ -58,11 +59,26 @@ const useStyles = makeStyles((theme: Theme) =>
         flex: 1,
       },
     },
-    timerCanvasContainer: {
+    upperBarCanvasContainer: {
       display: "flex",
       flexDirection: "column",
       justifyContent: "space-evenly",
       alignItems: "center",
+    },
+    hintButtonContainer: {
+      [theme.breakpoints.down("sm")]: {
+        width: "80vw",
+        maxWidth: "65vh",
+      },
+      [theme.breakpoints.up("md")]: {
+        width: "70vh",
+        maxWidth: "70vw",
+      },
+      margin: 8,
+      padding: 8,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
     },
     timerContainer: {
       [theme.breakpoints.down("sm")]: {
@@ -120,7 +136,7 @@ const useStyles = makeStyles((theme: Theme) =>
       },
       minWidth: "20vw",
       display: "flex",
-      flexDirection: "row",
+      flexDirection: "column",
       alignItems: "center",
       alignContent: "center",
       margin: 8,
@@ -140,6 +156,41 @@ const useStyles = makeStyles((theme: Theme) =>
     flexButton: {
       flex: 1,
       flexDirection: "column",
+    },
+    gameModeSelectionText: {
+      alignItems: "center",
+      alignSelf: "center",
+      justifyContent: "center",
+      textAlign: "center",
+      margin: 8,
+      fontSize: "250%",
+      fontWeight: "bold",
+      fontFamily: "segoe UI",
+    },
+    displayHintButton: {
+      backgroundColor: "#63A2AB",
+    },
+    gameModeButton: {
+      margin: 8,
+      borderRadius: 20,
+      [theme.breakpoints.only("xs")]: {
+        width: 300,
+        height: 50,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.only("sm")]: {
+        width: 350,
+        height: 58,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        width: 370,
+        height: 61,
+        fontSize: "1.25rem",
+      },
+    },
+    heatmapButton: {
+      backgroundColor: "#021C1E",
     },
     checkGreen: {
       fill: "green",
@@ -224,24 +275,29 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    */
   useInterval(() => setRoundTime((prevState) => prevState - 100), roundRunning ? 100 : null);
 
+  const showHint = useCallback(() => {
+    setHinted(true);
+
+    const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
+    const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
+    const radius = mapToCanvasScale(context, 100);
+
+    drawCircle(context, x, y, radius, 2, INVALID_COLOUR);
+  }, [context, truth]);
+
   /**
    * Round timer based events
    */
   useEffect(() => {
-    if (!roundRunning) {
+    if (!roundRunning || gameMode !== 1) {
       return;
     }
 
     if (roundTime === 5000 && !hinted) {
-      /* 5 seconds left: draw Hint circle, set Timer to orange */
+      /* 5 seconds left: set Timer to orange and show hint */
       setTimerColor("orange");
-      setHinted(true);
 
-      const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
-      const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
-      const radius = mapToCanvasScale(context, 100);
-
-      drawCircle(context, x, y, radius, 2, INVALID_COLOUR);
+      showHint();
     } else if (roundTime === 2000) {
       /* 2 seconds left: set Timer to red */
       setTimerColor("red");
@@ -249,7 +305,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       /* 0 seconds left: start end timer */
       setEndRunning(true);
     }
-  }, [context, hinted, roundTime, roundRunning, truth]);
+  }, [gameMode, hinted, roundRunning, roundTime, showHint]);
 
   /**
    * End timer
@@ -311,6 +367,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
+    // Variable for conditional rendering of AI's prediction and correct answer
+    // If game mode is 0 (Casual), then always check player's click to be not null, before
+    // every timer based render (i.e. wait for player to click,
+    // before displaying the other answers and the AI animation)
+    // If gameMode is 1 (Competitive) then we have no constraint, so make this condition always true
+    const casualModeRenderingCondition = gameMode === 0 ? click : true;
+
     if (endTime === 0) {
       /* 0 seconds passed: draw and upload player click if available, and start the AI search animation */
       setLoading(true);
@@ -321,13 +384,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
         drawCross(context, x, y, 5, DEFAULT_COLOUR);
 
-        uploadPlayerClick(Math.round(x), Math.round(y));
+        uploadPlayerClick(Math.round(x), Math.round(y)).then(() => null);
       }
 
       enqueueSnackbar("The system is thinking...");
 
       setAnimationRunning(true);
-    } else if (endTime === ANIMATION_TIME + 100) {
+    } else if (endTime === ANIMATION_TIME + 100 && casualModeRenderingCondition) {
       /* 5 seconds passed: stop AI search animation, draw predicted rectangle in default color */
       setAnimationRunning(false);
 
@@ -335,7 +398,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     } else if (endTime === ANIMATION_TIME + 500) {
       /* 5.5 seconds passed: draw truth rectangle */
       drawRectangle(context, truth, TRUE_COLOUR, 3);
-    } else if (endTime === ANIMATION_TIME + 1000 && click) {
+    } else if (endTime === ANIMATION_TIME + 1000 && click && casualModeRenderingCondition) {
       /* 6 seconds passed: evaluate player click if available  */
       const { x, y } = click;
 
@@ -343,7 +406,15 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       /* Player was successful if the click coordinates are inside the truth rectangle */
       if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
-        const roundScore = (roundTime / 1000) * (hinted ? 10 : 20);
+        // For Casual Mode: if Hint was shown, receive half a point; otherwise receive full point
+        const casualIncreaseRate = hinted ? 0.5 : 1;
+
+        // For Competitive Mode: round time taken doubled if no hint provided
+        const competitiveIncreaseRate = (roundTime / 1000) * (hinted ? 10 : 20);
+
+        // If gameMode === 1, increase score according to Competitive Mode rate,
+        // otherwise with the Casual Mode rate
+        const roundScore = gameMode === 1 ? competitiveIncreaseRate : casualIncreaseRate;
 
         setPlayerScore((prevState) => prevState + roundScore);
         setPlayerCorrectAnswers((prevState) => prevState + 1);
@@ -353,7 +424,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       } else {
         drawCross(context, x, y, 5, INVALID_COLOUR);
       }
-    } else if (endTime === ANIMATION_TIME + 1500) {
+    } else if (endTime === ANIMATION_TIME + 1500 && casualModeRenderingCondition) {
       /* 6.5 seconds passed: evaluate AI prediction */
       const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
 
@@ -379,6 +450,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     endRunning,
     endTime,
     enqueueSnackbar,
+    gameMode,
     hinted,
     predicted,
     roundTime,
@@ -688,126 +760,240 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    */
   const onCloseHeatmap = () => setShowHeatmap(false);
 
-  const gameContent = () => {
+  /**
+   * Function for displaying the game content
+   * First display the game mode selection, then the game content
+   */
+  const displayGame = () => {
     if (!isGameModeSelected) {
       return (
         <>
-          <Typography>Choose a game mode</Typography>
+          <Container className={classes.container} style={{ flexDirection: "column" }}>
+            <Typography className={classes.gameModeSelectionText}>Choose a game mode</Typography>
 
-          <ButtonGroup>
-            <Button
-              variant="contained"
-              color="primary"
-              size="large"
-              onClick={() => {
-                setGameModeSelected(true);
-                setGameMode(0);
-              }}
-            >
-              Casual
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              size="large"
-              onClick={() => {
-                setGameModeSelected(true);
-                setGameMode(1);
-              }}
-            >
-              Competitive
-            </Button>
-          </ButtonGroup>
+            <ButtonGroup orientation="vertical">
+              <Button
+                className={classes.gameModeButton}
+                variant="contained"
+                color="primary"
+                size="large"
+                onClick={() => {
+                  setGameModeSelected(true);
+                  setGameMode(0);
+                }}
+              >
+                Casual
+              </Button>
+              <Button
+                className={classes.gameModeButton}
+                variant="contained"
+                color="primary"
+                size="large"
+                onClick={() => {
+                  setGameModeSelected(true);
+                  setGameMode(1);
+                }}
+              >
+                Competitive
+              </Button>
+            </ButtonGroup>
+          </Container>
         </>
       );
     }
 
+    // Game mode selected. Display the actual game content
     return (
-      <div className={classes.container}>
-        <div className={classes.emptyDiv} />
-
-        <div className={classes.timerCanvasContainer}>
-          <Card className={classes.timerContainer}>
-            <Typography className={classes.timer} variant="h4">
-              Time remaining: {(roundTime / 1000).toFixed(1)}s
-            </Typography>
-
-            <ColoredLinearProgress
-              barColor={timerColor}
-              variant="determinate"
-              value={roundTime / 100}
-            />
-          </Card>
-
-          <Card className={classes.canvasContainer}>
-            <canvas
-              className={classes.canvas}
-              ref={canvasRef}
-              width={MAX_CANVAS_SIZE}
-              height={MAX_CANVAS_SIZE}
-            />
-
-            <canvas
-              className={classes.canvas}
-              ref={animationCanvasRef}
-              width={MAX_CANVAS_SIZE}
-              height={MAX_CANVAS_SIZE}
-              onClick={onCanvasClick}
-            />
-          </Card>
+      <>
+        <div className={classes.container}>
+          <div className={classes.emptyDiv} />
+          {displayGameContent()}
+          {displayScoreCard()}
+          {displayHeatmapDialog()}
         </div>
+      </>
+    );
+  };
 
-        <div className={classes.sideContainer}>
-          <Card className={classes.sideCard}>
-            <div className={classes.flexButton}>
-              <Typography className={classes.result} variant="h4">
-                You
-              </Typography>
+  /**
+   * Function for displaying the actual Game Content
+   * Display Show Hint button for Casual Mode (gameMode === 0)
+   * Display Timer Bar for Competitive Mode (gameMode === 1)
+   */
+  const displayGameContent = () => {
+    return gameMode === 0 ? (
+      <div className={classes.upperBarCanvasContainer}>
+        <Card className={classes.hintButtonContainer}>
+          <Button
+            className={classes.displayHintButton}
+            onClick={showHint}
+            disabled={round === 0 || loading || hinted || !roundRunning}
+          >
+            Show hint
+          </Button>
+        </Card>
+        {displayGameCanvas()}
+      </div>
+    ) : (
+      <div className={classes.upperBarCanvasContainer}>
+        <Card className={classes.timerContainer}>
+          <Typography className={classes.timer} variant="h4" style={{ color: timerColor }}>
+            Time remaining: {(roundTime / 1000).toFixed(1)}s
+          </Typography>
 
-              <div className={classes.result}>{showCorrect(playerCorrect)}</div>
-            </div>
-
-            <div className={classes.flexButton} style={{ whiteSpace: "nowrap" }}>
-              <Typography className={classes.result} variant="h4">
-                {playerScore} vs {aiScore}
-              </Typography>
-
-              <div className={classes.result}>{sideAction()}</div>
-            </div>
-
-            <div className={classes.flexButton}>
-              <Typography className={classes.result} variant="h4">
-                AI
-              </Typography>
-
-              <div className={classes.result}>{showCorrect(aiCorrect)}</div>
-            </div>
-          </Card>
-        </div>
-
-        <Dialog fullScreen open={showHeatmap} onClose={onShowHeatmap}>
-          <AppBar position="sticky">
-            <Toolbar variant="dense">
-              <IconButton
-                className={classes.backButton}
-                edge="start"
-                color="inherit"
-                aria-label="close"
-                onClick={onCloseHeatmap}
-              >
-                <Close />
-              </IconButton>
-
-              <Typography>Heatmap</Typography>
-            </Toolbar>
-          </AppBar>
-
-          <HeatmapDisplay imageId={imageId} />
-        </Dialog>
+          <ColoredLinearProgress
+            barColor={timerColor}
+            variant="determinate"
+            value={roundTime / 100}
+          />
+        </Card>
+        {displayGameCanvas()}
       </div>
     );
   };
 
+  /**
+   * Function for displaying the side Score Card
+   */
+  const displayScoreCard = () => {
+    return (
+      <div className={classes.sideContainer}>
+        <Card className={classes.sideCard}>
+          <div className={classes.flexButton}>
+            <Typography className={classes.result} variant="h4">
+              You
+            </Typography>
+
+            <div className={classes.result}>{showCorrect(playerCorrect)}</div>
+          </div>
+
+          <div className={classes.flexButton}>
+            <Typography className={classes.result} variant="h4">
+              {playerScore} vs {gameMode === 0 ? aiCorrectAnswers : aiScore}
+            </Typography>
+          </div>
+
+          <div className={classes.flexButton}>
+            <Typography className={classes.result} variant="h4">
+              AI
+            </Typography>
+
+            <div className={classes.result}>{showCorrect(aiCorrect)}</div>
+          </div>
+          <div className={classes.result}>{sideAction()}</div>
+          {displaySubmitButton()}
+        </Card>
+      </div>
+    );
+  };
+
+  /**
+   * Function for displaying the Heatmap Dialog Window
+   */
+  const displayHeatmapDialog = () => {
+    return (
+      <Dialog fullScreen open={showHeatmap} onClose={onShowHeatmap}>
+        <AppBar position="sticky">
+          <Toolbar variant="dense">
+            <IconButton
+              className={classes.backButton}
+              edge="start"
+              color="inherit"
+              aria-label="close"
+              onClick={onCloseHeatmap}
+            >
+              <Close />
+            </IconButton>
+
+            <Typography>Heatmap</Typography>
+          </Toolbar>
+        </AppBar>
+
+        <HeatmapDisplay imageId={imageId} />
+      </Dialog>
+    );
+  };
+
+  /**
+   * Function for displaying the game main canvas
+   */
+  const displayGameCanvas = () => {
+    return (
+      <Card className={classes.canvasContainer}>
+        <canvas
+          className={classes.canvas}
+          ref={canvasRef}
+          width={MAX_CANVAS_SIZE}
+          height={MAX_CANVAS_SIZE}
+        />
+
+        <canvas
+          className={classes.canvas}
+          ref={animationCanvasRef}
+          width={MAX_CANVAS_SIZE}
+          height={MAX_CANVAS_SIZE}
+          onClick={onCanvasClick}
+        />
+      </Card>
+    );
+  };
+
+  /**
+   * Function for displaying the Submit button for Casual Game Mode
+   * For Competitive Mode, display nothing
+   */
+  const displaySubmitButton = () => {
+    return gameMode === 0 ? (
+      <>
+        <TwitterShareButton
+          url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
+          title={`I got ${playerScore} points in Spot-the-Lesion! Can you beat my score?`}
+        >
+          <TwitterIcon size="50px" round />
+        </TwitterShareButton>
+        <TextField
+          label="Username"
+          variant="outlined"
+          value={username}
+          onChange={onChangeUsername}
+        />
+        <div />
+        <Button
+          variant="contained"
+          color="primary"
+          size="large"
+          disabled={roundRunning || loading || username === "" || round === 0}
+          onClick={onSubmitScore}
+          style={{ marginTop: 8 }}
+        >
+          Submit Score
+        </Button>
+      </>
+    ) : null;
+  };
+
+  /**
+   * Function for displaying the heatmap button after the game mode was selected
+   */
+  const showHeatmapButton = () => {
+    if (!isGameModeSelected) {
+      return null;
+    }
+
+    return (
+      <Button
+        disabled={round === 0 || roundRunning || loading}
+        color="inherit"
+        onClick={onShowHeatmap}
+      >
+        Show Heatmap
+      </Button>
+    );
+  };
+
+  /**
+   * Main return from the React Functional Component
+   */
   return (
     <>
       <AppBar position="sticky">
@@ -824,17 +1010,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
           <Typography className={classes.title}>Spot the Lesion</Typography>
 
-          <Button
-            disabled={round === 0 || roundRunning || loading}
-            color="inherit"
-            onClick={onShowHeatmap}
-          >
-            Show Heatmap
-          </Button>
+          {showHeatmapButton()}
         </Toolbar>
       </AppBar>
-
-      {gameContent()}
+      {displayGame()}
     </>
   );
 };
