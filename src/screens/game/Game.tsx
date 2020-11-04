@@ -15,6 +15,10 @@ import { KeyboardBackspace, Check, Clear, Close } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
+import LoadingButton from "../../components/LoadingButton";
+import HeatmapDisplay from "../../components/HeatmapDisplay";
+import useInterval from "../../components/useInterval";
+import useCanvasContext from "../../components/useCanvasContext";
 import {
   drawCross,
   drawCircle,
@@ -23,10 +27,6 @@ import {
   mapToCanvasScale,
 } from "../../components/CanvasUtils";
 import { getImagePath, getIntersectionOverUnion, getJsonPath } from "./GameUitls";
-import useInterval from "../../components/useInterval";
-import useCanvasContext from "../../components/useCanvasContext";
-import LoadingButton from "../../components/LoadingButton";
-import Heatmap from "../../components/HeatmapComponent";
 import DbUtils from "../../utils/DbUtils";
 import { db } from "../../firebase/firebaseApp";
 
@@ -34,6 +34,9 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     backButton: {
       marginRight: 8,
+    },
+    title: {
+      flexGrow: 1,
     },
     container: {
       height: "100%",
@@ -73,10 +76,11 @@ const useStyles = makeStyles((theme: Theme) =>
       margin: 8,
       padding: 8,
     },
-    timerText: {
+    timer: {
       marginBottom: 8,
       textAlign: "center",
       fontSize: "1.5rem",
+      color: (props: Record<string, string>) => props.timerColor,
     },
     canvasContainer: {
       [theme.breakpoints.down("sm")]: {
@@ -166,8 +170,6 @@ const MAX_FILE_NUMBER = 100;
 type JsonData = { truth: number[]; predicted: number[] };
 
 const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
-  const classes = useStyles();
-
   const seenFiles = new Set<number>();
 
   const [context, canvasRef] = useCanvasContext();
@@ -207,7 +209,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [gameMode, setGameMode] = useState(0);
   const [isGameModeSelected, setGameModeSelected] = useState(false);
 
-  const [heatmapDialogOpen, setHeatmapDialogOpen] = useState(false);
+  const [showHeatmap, setShowHeatmap] = useState(false);
+
+  const classes = useStyles({ timerColor });
 
   /* TODO: check if upload to database fails to give different message */
   const { enqueueSnackbar } = useSnackbar();
@@ -675,18 +679,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   /**
-   * Function for opening the heatmap tab
+   * Called when the Show Heatmap button is clicked
    */
-  const openHeatmap = () => {
-    setHeatmapDialogOpen(true);
-  };
+  const onShowHeatmap = () => setShowHeatmap(true);
 
   /**
-   * Function for closing the heatmap tab
+   * Called when the Show Heatmap Dialog is closed
    */
-  const closeHeatmap = () => {
-    setHeatmapDialogOpen(false);
-  };
+  const onCloseHeatmap = () => setShowHeatmap(false);
 
   const displayGameContent = () => {
     if (!isGameModeSelected) {
@@ -721,83 +721,90 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </>
       );
     }
-    return (
-      <>
-        <div className={classes.container}>
-          <div className={classes.emptyDiv} />
 
-          <div className={classes.timerCanvasContainer}>
-            <Card className={classes.timerContainer}>
-              <Typography className={classes.timerText} variant="h4" style={{ color: timerColor }}>
-                Time remaining: {(roundTime / 1000).toFixed(1)}s
+    return (
+      <div className={classes.container}>
+        <div className={classes.emptyDiv} />
+
+        <div className={classes.timerCanvasContainer}>
+          <Card className={classes.timerContainer}>
+            <Typography className={classes.timer} variant="h4">
+              Time remaining: {(roundTime / 1000).toFixed(1)}s
+            </Typography>
+
+            <ColoredLinearProgress
+              barColor={timerColor}
+              variant="determinate"
+              value={roundTime / 100}
+            />
+          </Card>
+
+          <Card className={classes.canvasContainer}>
+            <canvas
+              className={classes.canvas}
+              ref={canvasRef}
+              width={MAX_CANVAS_SIZE}
+              height={MAX_CANVAS_SIZE}
+            />
+
+            <canvas
+              className={classes.canvas}
+              ref={animationCanvasRef}
+              width={MAX_CANVAS_SIZE}
+              height={MAX_CANVAS_SIZE}
+              onClick={onCanvasClick}
+            />
+          </Card>
+        </div>
+
+        <div className={classes.sideContainer}>
+          <Card className={classes.sideCard}>
+            <div className={classes.flexButton}>
+              <Typography className={classes.result} variant="h4">
+                You:
               </Typography>
 
-              <ColoredLinearProgress
-                barColor={timerColor}
-                variant="determinate"
-                value={roundTime / 100}
-              />
-            </Card>
+              <div className={classes.result}>{displayCorrect(playerCorrect)}</div>
+            </div>
 
-            <Card className={classes.canvasContainer}>
-              <canvas
-                className={classes.canvas}
-                ref={canvasRef}
-                width={MAX_CANVAS_SIZE}
-                height={MAX_CANVAS_SIZE}
-              />
+            <div className={classes.flexButton}>
+              <Typography className={classes.result} variant="h4">
+                {playerScore} vs {aiScore}
+              </Typography>
 
-              <canvas
-                className={classes.canvas}
-                ref={animationCanvasRef}
-                width={MAX_CANVAS_SIZE}
-                height={MAX_CANVAS_SIZE}
-                onClick={onCanvasClick}
-              />
-            </Card>
-          </div>
+              <div className={classes.result}>{dialogAction()}</div>
+            </div>
 
-          <div className={classes.sideContainer}>
-            <Card className={classes.sideCard}>
-              <div className={classes.flexButton}>
-                <Typography className={classes.result} variant="h4">
-                  You:
-                </Typography>
+            <div className={classes.flexButton}>
+              <Typography className={classes.result} variant="h4">
+                AI:
+              </Typography>
 
-                <div className={classes.result}>{displayCorrect(playerCorrect)}</div>
-              </div>
-
-              <div className={classes.flexButton}>
-                <Typography className={classes.result} variant="h4">
-                  {playerScore} vs {aiScore}
-                </Typography>
-
-                <div className={classes.result}>{dialogAction()}</div>
-              </div>
-
-              <div className={classes.flexButton}>
-                <Typography className={classes.result} variant="h4">
-                  AI:
-                </Typography>
-
-                <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
-              </div>
-            </Card>
-          </div>
-
-          <Dialog fullScreen open={heatmapDialogOpen} onClose={openHeatmap}>
-            <AppBar position="sticky">
-              <Toolbar variant="dense">
-                <IconButton edge="start" color="inherit" onClick={closeHeatmap} aria-label="close">
-                  <Close />
-                </IconButton>
-              </Toolbar>
-            </AppBar>
-
-            <Heatmap currentImageId={imageId} />
-          </Dialog>
+              <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
+            </div>
+          </Card>
         </div>
-      </>
+
+        <Dialog fullScreen open={showHeatmap} onClose={onShowHeatmap}>
+          <AppBar position="sticky">
+            <Toolbar variant="dense">
+              <IconButton
+                className={classes.backButton}
+                edge="start"
+                color="inherit"
+                aria-label="close"
+                onClick={onCloseHeatmap}
+              >
+                <Close />
+              </IconButton>
+
+              <Typography>Heatmap</Typography>
+            </Toolbar>
+          </AppBar>
+
+          <HeatmapDisplay imageId={imageId} />
+        </Dialog>
+      </div>
     );
   };
 
@@ -815,19 +822,18 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
             <KeyboardBackspace />
           </IconButton>
 
-          <Typography>Spot the Lesion</Typography>
+          <Typography className={classes.title}>Spot the Lesion</Typography>
+
           <Button
-            hidden={isGameModeSelected}
             disabled={round === 0 || roundRunning || loading}
-            variant="contained"
-            color="primary"
-            size="large"
-            onClick={openHeatmap}
+            color="inherit"
+            onClick={onShowHeatmap}
           >
-            See the heatmap
+            Show Heatmap
           </Button>
         </Toolbar>
       </AppBar>
+
       {displayGameContent()}
     </>
   );
