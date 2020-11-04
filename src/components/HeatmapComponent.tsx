@@ -45,14 +45,32 @@ const Heatmap: React.FC<HeatmapParams> = ({ currentImageId }: HeatmapParams) => 
     setDataPoints(clicks);
   };
 
+  const [height, setHeight] = useState(window.innerHeight);
+  const [width, setWidth] = useState(window.innerWidth);
+
+  window.addEventListener("resize", () => {
+    setWidth(window.innerWidth);
+    setHeight(window.innerHeight);
+  });
+
+  const [heatmapInstance, setHeatmapInstance] = useState<h337>(null!);
+
   useEffect(() => {
     const div = document.getElementById("heatmapContainer");
 
-    // minimal heatmap instance configuration
-    const heatmapInstance = h337.create({
-      // only container is required, the rest will be defaults
-      container: div,
-    });
+    if (heatmapInstance === null) {
+      setHeatmapInstance(
+        h337.create({
+          container: div,
+        })
+      );
+      return;
+    }
+
+    // eslint-disable-next-line no-console
+    console.log(div);
+    // eslint-disable-next-line no-console
+    console.log(heatmapInstance);
 
     if (!getClicks) {
       getClickedPoints(currentImageId);
@@ -71,10 +89,8 @@ const Heatmap: React.FC<HeatmapParams> = ({ currentImageId }: HeatmapParams) => 
     };
     // eslint-disable-next-line no-console
     console.log(data);
-    // if you have a set of datapoints always use setData instead of addData
-    // for data initialization
     heatmapInstance.setData(data);
-  }, [dataPoints]);
+  }, [dataPoints, heatmapInstance, height, width]);
 
   return (
     <div className={classes.heatmapContainer} id="heatmapContainer">
