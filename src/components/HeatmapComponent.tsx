@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import h337 from "heatmap.js";
 import { db } from "../firebase/firebaseApp";
@@ -31,7 +31,7 @@ const Heatmap: React.FC<HeatmapParams> = ({ currentImageId }: HeatmapParams) => 
   const getImagePath = (fileNumber: number) =>
     `${process.env.PUBLIC_URL}/content/images/${fileNumber}.png`;
 
-  const getClickedPoints = async () => {
+  const getClickedPoints = useCallback(async () => {
     const docNameForImage = `image_${currentImageId}`;
     const snapshot = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
     const data = snapshot.data();
@@ -43,7 +43,7 @@ const Heatmap: React.FC<HeatmapParams> = ({ currentImageId }: HeatmapParams) => 
       clicks.push({ x: data.clicks[i].x, y: data.clicks[i].y, value: data.clicks[i].clickCount });
     }
     setDataPoints(clicks);
-  };
+  }, []);
 
   const [height, setHeight] = useState(window.innerHeight);
   const [width, setWidth] = useState(window.innerWidth);
