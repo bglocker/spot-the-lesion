@@ -271,7 +271,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    */
   useInterval(() => setRoundTime((prevState) => prevState - 100), roundRunning ? 100 : null);
 
-  const displayHint = useCallback(() => {
+  const showHint = useCallback(() => {
     setHinted(true);
 
     const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
@@ -290,9 +290,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
 
     if (roundTime === 5000 && !hinted) {
-      /* 5 seconds left: draw Hint circle, set Timer to orange */
+      /* 5 seconds left: set Timer to orange and show hint */
       setTimerColor("orange");
-      displayHint();
+
+      showHint();
     } else if (roundTime === 2000) {
       /* 2 seconds left: set Timer to red */
       setTimerColor("red");
@@ -300,7 +301,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       /* 0 seconds left: start end timer */
       setEndRunning(true);
     }
-  }, [context, hinted, roundTime, roundRunning, truth, gameMode, displayHint]);
+  }, [gameMode, hinted, roundRunning, roundTime, showHint]);
 
   /**
    * End timer
@@ -827,7 +828,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         <Card className={classes.hintButtonContainer}>
           <Button
             className={classes.displayHintButton}
-            onClick={displayHint}
+            onClick={showHint}
             disabled={round === 0 || loading || hinted || !roundRunning}
           >
             Show hint
