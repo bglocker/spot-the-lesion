@@ -149,8 +149,12 @@ const DEFAULT_COLOUR = "yellow";
 const TRUE_COLOUR = "blue";
 const INITIAL_TIMER_COLOR = "#373737";
 
-const NUMBER_OF_ROUNDS = 10;
-const TOTAL_TIME_MS = 10000;
+const NUM_ROUNDS = 10;
+
+const ROUND_START_TIME = 10000;
+
+const ANIMATION_TIME = 5000;
+
 const AI_SCORE_INCREASE_RATE = 75;
 
 const NUM_SEARCH_CUBES = 10;
@@ -167,24 +171,27 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const seenFiles = new Set<number>();
 
   const [context, canvasRef] = useCanvasContext();
-  const [animContext, animCanvasRef] = useCanvasContext();
+  const [animationContext, animationCanvasRef] = useCanvasContext();
 
-  const [round, setRound] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const [hinted, setHinted] = useState(false);
-
-  const [running, setRunning] = useState(false);
+  const [roundRunning, setRoundRunning] = useState(false);
+  const [endRunning, setEndRunning] = useState(false);
   const [animationRunning, setAnimationRunning] = useState(false);
 
-  const [roundTime, setRoundTime] = useState(TOTAL_TIME_MS);
-  const [animationTime, setAnimationTime] = useState(0);
+  const [roundTime, setRoundTime] = useState(ROUND_START_TIME);
+  const [endTime, setEndTime] = useState(0);
+  const [animationPosition, setAnimationPosition] = useState(0);
 
+  const [hinted, setHinted] = useState(false);
   const [timerColor, setTimerColor] = useState(INITIAL_TIMER_COLOR);
 
-  const [click, setClick] = useState<{ x: number; y: number } | null>(null);
+  const [imageId, setImageId] = useState(0);
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
+  const [click, setClick] = useState<{ x: number; y: number } | null>(null);
+
+  const [round, setRound] = useState(0);
 
   const [playerScore, setPlayerScore] = useState(0);
   const [aiScore, setAiScore] = useState(0);
@@ -197,53 +204,50 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [username, setUsername] = useState("");
 
-  const [imageId, setImageId] = useState(0);
-
   const [gameMode, setGameMode] = useState(0);
   const [isGameModeSelected, setGameModeSelected] = useState(false);
 
-  /**
-   * The heatmap dialog box information
-   */
   const [heatmapDialogOpen, setHeatmapDialogOpen] = useState(false);
 
   /* TODO: check if upload to database fails to give different message */
   const { enqueueSnackbar } = useSnackbar();
 
-  useInterval(() => setRoundTime((prevState) => prevState - 100), running ? 100 : null);
-
-  useInterval(
-    () => setAnimationTime((prevState) => prevState + 100),
-    animationRunning ? 100 : null
-  );
+  /**
+   * Round timer
+   */
+  useInterval(() => setRoundTime((prevState) => prevState - 100), roundRunning ? 100 : null);
 
   /**
-   * Draw an AI search animation
+   * Round timer based events
    */
-  const drawAiSearch = useCallback(() => {
-    enqueueSnackbar("The system is thinking...");
+  useEffect(() => {
+    if (!roundRunning) {
+      return;
+    }
 
-    let i = 0;
+    if (roundTime === 5000 && !hinted) {
+      /* 5 seconds left: draw Hint circle, set Timer to orange */
+      setTimerColor("orange");
+      setHinted(true);
 
-    const intervalId = window.setInterval(() => {
-      /* Clear previous cube */
-      animContext.clearRect(0, 0, animContext.canvas.width, animContext.canvas.height);
+      const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
+      const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
+      const radius = mapToCanvasScale(context, 100);
 
-      if (i === NUM_SEARCH_CUBES * NUM_SEARCH_CUBES) {
-        clearInterval(intervalId);
-        return;
-      }
+      drawCircle(context, x, y, radius, 2, INVALID_COLOUR);
+    } else if (roundTime === 2000) {
+      /* 2 seconds left: set Timer to red */
+      setTimerColor("red");
+    } else if (roundTime === 0) {
+      /* 0 seconds left: start end timer */
+      setEndRunning(true);
+    }
+  }, [context, hinted, roundTime, roundRunning, truth]);
 
-      const cubeSide = animContext.canvas.width / NUM_SEARCH_CUBES;
-      const baseX = (i % NUM_SEARCH_CUBES) * cubeSide;
-      const baseY = Math.floor(i / NUM_SEARCH_CUBES) * cubeSide;
-      const cube = [baseX, baseY, baseX + cubeSide, baseY + cubeSide];
-
-      drawRectangle(animContext, cube, VALID_COLOUR, 3);
-
-      i += 1;
-    }, 5000 / (NUM_SEARCH_CUBES * NUM_SEARCH_CUBES));
-  }, [animContext, enqueueSnackbar]);
+  /**
+   * End timer
+   */
+  useInterval(() => setEndTime((prevState) => prevState + 100), endRunning ? 100 : null);
 
   /**
    * Upload the player click, in order to gather statistics and generate heatmaps
@@ -293,19 +297,17 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   );
 
   /**
-   * Track animationTime based events
+   * End timer based events
    */
   useEffect(() => {
-    if (!animationRunning) {
+    if (!endRunning) {
       return;
     }
 
-    if (animationTime === 0) {
-      /* 0 seconds passed: start AI search animation, draw and upload player click if available */
+    if (endTime === 0) {
+      /* 0 seconds passed: draw and upload player click if available, and start the AI search animation */
       setLoading(true);
-      setRunning(false);
-
-      drawAiSearch();
+      setRoundRunning(false);
 
       if (click) {
         const { x, y } = click;
@@ -314,13 +316,19 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
         uploadPlayerClick(Math.round(x), Math.round(y));
       }
-    } else if (animationTime === 5100) {
-      /* 5 seconds passed: draw predicted rectangle in default color */
+
+      enqueueSnackbar("The system is thinking...");
+
+      setAnimationRunning(true);
+    } else if (endTime === ANIMATION_TIME + 100) {
+      /* 5 seconds passed: stop AI search animation, draw predicted rectangle in default color */
+      setAnimationRunning(false);
+
       drawRectangle(context, predicted, DEFAULT_COLOUR, 3);
-    } else if (animationTime === 5500) {
+    } else if (endTime === ANIMATION_TIME + 500) {
       /* 5.5 seconds passed: draw truth rectangle */
       drawRectangle(context, truth, TRUE_COLOUR, 3);
-    } else if (animationTime === 6000 && click) {
+    } else if (endTime === ANIMATION_TIME + 1000 && click) {
       /* 6 seconds passed: evaluate player click if available  */
       const { x, y } = click;
 
@@ -338,7 +346,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       } else {
         drawCross(context, x, y, 5, INVALID_COLOUR);
       }
-    } else if (animationTime === 6500) {
+    } else if (endTime === ANIMATION_TIME + 1500) {
       /* 6.5 seconds passed: evaluate AI prediction */
       const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
 
@@ -355,15 +363,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         drawRectangle(context, predicted, INVALID_COLOUR, 3);
       }
 
-      setAnimationRunning(false);
+      setEndRunning(false);
       setLoading(false);
     }
   }, [
-    animationRunning,
-    animationTime,
     click,
     context,
-    drawAiSearch,
+    endRunning,
+    endTime,
     enqueueSnackbar,
     hinted,
     predicted,
@@ -373,35 +380,36 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   ]);
 
   /**
-   * Track roundTime based events
+   * Animation timer
+   */
+  useInterval(
+    () => setAnimationPosition((prevState) => prevState + 1),
+    animationRunning ? ANIMATION_TIME / (NUM_SEARCH_CUBES * NUM_SEARCH_CUBES) : null
+  );
+
+  /**
+   * Animation timer based events
    */
   useEffect(() => {
-    if (!running) {
+    if (!animationRunning) {
       return;
     }
 
-    if (roundTime === 10000) {
-      /* 10 seconds left: set Timer to initial color */
-      setTimerColor(INITIAL_TIMER_COLOR);
-    }
-    if (roundTime === 5000 && !hinted) {
-      /* 5 seconds left: draw Hint circle, set Timer to orange */
-      setTimerColor("orange");
-      setHinted(true);
+    /* Clear previous cube */
+    animationContext.clearRect(0, 0, animationContext.canvas.width, animationContext.canvas.height);
 
-      const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
-      const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
-      const radius = mapToCanvasScale(context, 100);
-
-      drawCircle(context, x, y, radius, 2, INVALID_COLOUR);
-    } else if (roundTime === 2000) {
-      /* 2 seconds left: set Timer to red */
-      setTimerColor("red");
-    } else if (roundTime === 0) {
-      /* 0 seconds left: start animation timer */
-      setAnimationRunning(true);
+    /* Stop when all cube positions were reached */
+    if (animationPosition === NUM_SEARCH_CUBES * NUM_SEARCH_CUBES) {
+      return;
     }
-  }, [context, hinted, roundTime, running, truth]);
+
+    const cubeSide = animationContext.canvas.width / NUM_SEARCH_CUBES;
+    const baseX = (animationPosition % NUM_SEARCH_CUBES) * cubeSide;
+    const baseY = Math.floor(animationPosition / NUM_SEARCH_CUBES) * cubeSide;
+    const cube = [baseX, baseY, baseX + cubeSide, baseY + cubeSide];
+
+    drawRectangle(animationContext, cube, VALID_COLOUR, 3);
+  }, [animationContext, animationPosition, animationRunning]);
 
   /**
    * Called when the canvas is clicked
@@ -409,12 +417,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * @param event Mouse event, used to get click position
    */
   const onCanvasClick = (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
-    if (!running) {
+    if (!roundRunning) {
       return;
     }
 
     setClick(mapClickToCanvas(context, event));
-    setAnimationRunning(true);
+    setEndRunning(true);
   };
 
   /**
@@ -491,18 +499,24 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     await loadJson(fileNumber);
     await loadImage(fileNumber);
 
-    setRound((prevState) => prevState + 1);
-    setRoundTime(TOTAL_TIME_MS);
-    setAnimationTime(0);
+    setRoundTime(ROUND_START_TIME);
+    setEndTime(0);
+    setAnimationPosition(0);
+
     setHinted(false);
+    setTimerColor(INITIAL_TIMER_COLOR);
+
     setClick(null);
+
+    setRound((prevState) => prevState + 1);
+
     setPlayerCorrect(false);
     setAiCorrect(false);
-    setRunning(true);
+
+    setRoundRunning(true);
     setLoading(false);
   };
 
-  // <editor-fold>
   /**
    * Uploads the score to the database
    */
@@ -556,7 +570,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * @param correct - true if answer was correct, false otherwise
    */
   const displayCorrect = (correct: boolean) => {
-    if (round === 0 || running || loading) {
+    if (round === 0 || roundRunning || loading) {
       return null;
     }
 
@@ -618,11 +632,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Function for displaying the side dialog box with game results and start/next/submit buttons
    */
   const dialogAction = () => {
-    if (round < NUMBER_OF_ROUNDS || running || loading) {
+    if (round < NUM_ROUNDS || roundRunning || loading) {
       return (
         <LoadingButton
           loading={loading}
-          buttonDisabled={running || loading}
+          buttonDisabled={roundRunning || loading}
           onButtonClick={startRound}
           buttonText={round === 0 ? "START" : "NEXT"}
         />
@@ -651,7 +665,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           variant="contained"
           color="primary"
           size="large"
-          disabled={running || loading || username === ""}
+          disabled={roundRunning || loading || username === ""}
           onClick={onSubmitScore}
         >
           Submit Score
@@ -735,7 +749,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
               <canvas
                 className={classes.canvas}
-                ref={animCanvasRef}
+                ref={animationCanvasRef}
                 width={MAX_CANVAS_SIZE}
                 height={MAX_CANVAS_SIZE}
                 onClick={onCanvasClick}
@@ -804,7 +818,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           <Typography>Spot the Lesion</Typography>
           <Button
             hidden={isGameModeSelected}
-            disabled={round === 0 || running || loading}
+            disabled={round === 0 || roundRunning || loading}
             variant="contained"
             color="primary"
             size="large"
@@ -817,7 +831,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       {displayGameContent()}
     </>
   );
-  // </editor-fold>
 };
 
 export default Game;
