@@ -285,11 +285,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Round timer based events
    */
   useEffect(() => {
-    if (!roundRunning) {
+    if (!roundRunning || gameMode !== 1) {
       return;
     }
 
-    if (roundTime === 5000 && !hinted && gameMode === 1) {
+    if (roundTime === 5000 && !hinted) {
       /* 5 seconds left: draw Hint circle, set Timer to orange */
       setTimerColor("orange");
       displayHint();
@@ -362,6 +362,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
+    // Variable for conditional rendering of AI's prediction and correct answer
+    // If game mode is 0 (Casual), then always check player's click to be not null, before
+    // every timer based render (i.e. wait for player to click,
+    // before displaying the other answers and the AI animation)
+    // If gameMode is 1 (Competitive) then we have no constraint, so make this condition always true
+    const casualModeRenderingCondition = gameMode === 0 ? click : true;
+
     if (endTime === 0) {
       /* 0 seconds passed: draw and upload player click if available, and start the AI search animation */
       setLoading(true);
@@ -378,7 +385,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       enqueueSnackbar("The system is thinking...");
 
       setAnimationRunning(true);
-    } else if (endTime === ANIMATION_TIME + 100) {
+    } else if (endTime === ANIMATION_TIME + 100 && casualModeRenderingCondition) {
       /* 5 seconds passed: stop AI search animation, draw predicted rectangle in default color */
       setAnimationRunning(false);
 
@@ -386,7 +393,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     } else if (endTime === ANIMATION_TIME + 500) {
       /* 5.5 seconds passed: draw truth rectangle */
       drawRectangle(context, truth, TRUE_COLOUR, 3);
-    } else if (endTime === ANIMATION_TIME + 1000 && click) {
+    } else if (endTime === ANIMATION_TIME + 1000 && click && casualModeRenderingCondition) {
       /* 6 seconds passed: evaluate player click if available  */
       const { x, y } = click;
 
@@ -404,7 +411,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       } else {
         drawCross(context, x, y, 5, INVALID_COLOUR);
       }
-    } else if (endTime === ANIMATION_TIME + 1500) {
+    } else if (endTime === ANIMATION_TIME + 1500 && casualModeRenderingCondition) {
       /* 6.5 seconds passed: evaluate AI prediction */
       const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
 
@@ -430,6 +437,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     endRunning,
     endTime,
     enqueueSnackbar,
+    gameMode,
     hinted,
     predicted,
     roundTime,
