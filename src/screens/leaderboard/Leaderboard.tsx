@@ -90,7 +90,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
 
     switch (table) {
       case "daily-scores":
-        snapshot = snapshot.where("day", "==", date.getDate());
+        snapshot = snapshot
+          .where("day", "==", date.getDate())
+          .where("year", "==", date.getFullYear())
+          .where("month", "==", DbUtils.monthNames[date.getMonth()]);
         break;
       case "monthly-scores":
         snapshot = snapshot
@@ -101,7 +104,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
         break;
     }
 
-    snapshot = await snapshot.orderBy("score", "desc").limit(100).get();
+    snapshot = await snapshot.orderBy("score", "desc").get();
     snapshot.forEach((doc) => {
       if (!uniqueUsersMap.has(doc.data().user)) {
         // Current user's highest score - add to result set
