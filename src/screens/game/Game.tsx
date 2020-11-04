@@ -756,9 +756,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   /**
    * Function for displaying the game content
-   * First display the game mode selection, then begin
+   * First display the game mode selection, then the game content
    */
-  const displayGameContent = () => {
+  const displayGame = () => {
     if (!isGameModeSelected) {
       return (
         <>
@@ -800,7 +800,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       <>
         <div className={classes.container}>
           <div className={classes.emptyDiv} />
-          {displayGame()}
+          {displayGameContent()}
           {displayScoreCard()}
           {displayHeatmapDialog()}
         </div>
@@ -809,11 +809,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   /**
-   * Function for displaying the actual Game
+   * Function for displaying the actual Game Content
    * Display Show Hint button for Casual Mode (gameMode === 0)
    * Display Timer Bar for Competitive Mode (gameMode === 1)
    */
-  const displayGame = () => {
+  const displayGameContent = () => {
     return gameMode === 0 ? (
       <div className={classes.upperBarCanvasContainer}>
         <Card className={classes.hintButtonContainer}>
@@ -997,7 +997,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </Toolbar>
         {showHeatmapButton()}
       </AppBar>
-      {displayGameContent()}
+      {displayGame()}
     </>
   );
 };
