@@ -170,6 +170,9 @@ const useStyles = makeStyles((theme: Theme) =>
         fontSize: "1.25rem",
       },
     },
+    heatmapButton: {
+      backgroundColor: "#021C1E",
+    },
   })
 );
 
@@ -839,6 +842,22 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     );
   };
 
+  const showHeatmapButton = () => {
+    return isGameModeSelected ? (
+      <Button
+        disableElevation
+        className={classes.heatmapButton}
+        disabled={round === 0 || roundRunning || loading}
+        variant="contained"
+        color="primary"
+        size="large"
+        onClick={openHeatmap}
+      >
+        See the heatmap
+      </Button>
+    ) : null;
+  };
+
   return (
     <>
       <AppBar position="sticky">
@@ -854,16 +873,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           </IconButton>
 
           <Typography>Spot the Lesion</Typography>
-          <Button
-            hidden={isGameModeSelected}
-            disabled={round === 0 || roundRunning || loading}
-            variant="contained"
-            color="primary"
-            size="large"
-            onClick={openHeatmap}
-          >
-            See the heatmap
-          </Button>
+          {showHeatmapButton()}
         </Toolbar>
       </AppBar>
       {displayGameContent()}
