@@ -65,6 +65,21 @@ const useStyles = makeStyles((theme: Theme) =>
       justifyContent: "space-evenly",
       alignItems: "center",
     },
+    hintButtonContainer: {
+      [theme.breakpoints.down("sm")]: {
+        width: "80vw",
+        maxWidth: "65vh",
+      },
+      [theme.breakpoints.up("md")]: {
+        width: "70vh",
+        maxWidth: "70vw",
+      },
+      margin: 8,
+      padding: 8,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    },
     timerContainer: {
       [theme.breakpoints.down("sm")]: {
         width: "80vw",
@@ -153,6 +168,9 @@ const useStyles = makeStyles((theme: Theme) =>
       fontSize: "250%",
       fontWeight: "bold",
       fontFamily: "segoe UI",
+    },
+    displayHintButton: {
+      backgroundColor: "#63A2AB",
     },
     gameModeButton: {
       margin: 8,
@@ -253,6 +271,16 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    */
   useInterval(() => setRoundTime((prevState) => prevState - 100), roundRunning ? 100 : null);
 
+  const displayHint = () => {
+    setHinted(true);
+
+    const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
+    const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
+    const radius = mapToCanvasScale(context, 100);
+
+    drawCircle(context, x, y, radius, 2, INVALID_COLOUR);
+  };
+
   /**
    * Round timer based events
    */
@@ -261,16 +289,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
-    if (roundTime === 5000 && !hinted) {
+    if (roundTime === 5000 && !hinted && gameMode === 1) {
       /* 5 seconds left: draw Hint circle, set Timer to orange */
       setTimerColor("orange");
-      setHinted(true);
-
-      const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
-      const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
-      const radius = mapToCanvasScale(context, 100);
-
-      drawCircle(context, x, y, radius, 2, INVALID_COLOUR);
+      displayHint();
     } else if (roundTime === 2000) {
       /* 2 seconds left: set Timer to red */
       setTimerColor("red");
@@ -278,7 +300,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       /* 0 seconds left: start end timer */
       setEndRunning(true);
     }
-  }, [context, hinted, roundTime, roundRunning, truth]);
+  }, [context, hinted, roundTime, roundRunning, truth, gameMode]);
 
   /**
    * End timer
@@ -765,24 +787,111 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         </>
       );
     }
+    // competitive game
+    if (gameMode === 1) {
+      return (
+        <>
+          <div className={classes.container}>
+            <div className={classes.emptyDiv} />
+
+            <div className={classes.timerCanvasContainer}>
+              <Card className={classes.timerContainer}>
+                <Typography
+                  className={classes.timerText}
+                  variant="h4"
+                  style={{ color: timerColor }}
+                >
+                  Time remaining: {(roundTime / 1000).toFixed(1)}s
+                </Typography>
+
+                <ColoredLinearProgress
+                  barColor={timerColor}
+                  variant="determinate"
+                  value={roundTime / 100}
+                />
+              </Card>
+
+              <Card className={classes.canvasContainer}>
+                <canvas
+                  className={classes.canvas}
+                  ref={canvasRef}
+                  width={MAX_CANVAS_SIZE}
+                  height={MAX_CANVAS_SIZE}
+                />
+
+                <canvas
+                  className={classes.canvas}
+                  ref={animationCanvasRef}
+                  width={MAX_CANVAS_SIZE}
+                  height={MAX_CANVAS_SIZE}
+                  onClick={onCanvasClick}
+                />
+              </Card>
+            </div>
+
+            <div className={classes.sideContainer}>
+              <Card className={classes.sideCard}>
+                <div className={classes.flexButton}>
+                  <Typography className={classes.result} variant="h4">
+                    You:
+                  </Typography>
+
+                  <div className={classes.result}>{displayCorrect(playerCorrect)}</div>
+                </div>
+
+                <div className={classes.flexButton}>
+                  <Typography className={classes.result} variant="h4">
+                    {playerScore} vs {aiScore}
+                  </Typography>
+
+                  <div className={classes.result}>{dialogAction()}</div>
+                </div>
+
+                <div className={classes.flexButton}>
+                  <Typography className={classes.result} variant="h4">
+                    AI:
+                  </Typography>
+
+                  <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
+                </div>
+              </Card>
+            </div>
+
+            <Dialog fullScreen open={heatmapDialogOpen} onClose={openHeatmap}>
+              <AppBar position="sticky">
+                <Toolbar variant="dense">
+                  <IconButton
+                    edge="start"
+                    color="inherit"
+                    onClick={closeHeatmap}
+                    aria-label="close"
+                  >
+                    <Close />
+                  </IconButton>
+                </Toolbar>
+              </AppBar>
+
+              <Heatmap currentImageId={imageId} />
+            </Dialog>
+          </div>
+        </>
+      );
+    }
+    // casual game
     return (
       <>
         <div className={classes.container}>
           <div className={classes.emptyDiv} />
-
           <div className={classes.timerCanvasContainer}>
-            <Card className={classes.timerContainer}>
-              <Typography className={classes.timerText} variant="h4" style={{ color: timerColor }}>
-                Time remaining: {(roundTime / 1000).toFixed(1)}s
-              </Typography>
-
-              <ColoredLinearProgress
-                barColor={timerColor}
-                variant="determinate"
-                value={roundTime / 100}
-              />
+            <Card className={classes.hintButtonContainer}>
+              <Button
+                className={classes.displayHintButton}
+                onClick={displayHint}
+                disabled={round === 0 || loading || hinted || !roundRunning}
+              >
+                Show hint
+              </Button>
             </Card>
-
             <Card className={classes.canvasContainer}>
               <canvas
                 className={classes.canvas}
@@ -813,7 +922,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
               <div className={classes.flexButton}>
                 <Typography className={classes.result} variant="h4">
-                  {playerScore} vs {aiScore}
+                  {playerCorrectAnswers} vs {aiCorrectAnswers}
                 </Typography>
 
                 <div className={classes.result}>{dialogAction()}</div>
