@@ -67,11 +67,6 @@ const Heatmap: React.FC<HeatmapParams> = ({ currentImageId }: HeatmapParams) => 
       return;
     }
 
-    // eslint-disable-next-line no-console
-    console.log(div);
-    // eslint-disable-next-line no-console
-    console.log(heatmapInstance);
-
     if (!getClicks) {
       getClickedPoints(currentImageId);
       setGetClicks(true);
@@ -87,8 +82,6 @@ const Heatmap: React.FC<HeatmapParams> = ({ currentImageId }: HeatmapParams) => 
         };
       }),
     };
-    // eslint-disable-next-line no-console
-    console.log(data);
     heatmapInstance.setData(data);
   }, [dataPoints, heatmapInstance, height, width]);
 

@@ -498,8 +498,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     let pointWasClickedBefore = false;
 
     const newClickPoint = {
-      x: (xCoord * 100) / context.canvas.width,
-      y: (yCoord * 100) / context.canvas.height,
+      x: Math.round((xCoord * 10000) / context.canvas.width) / 100,
+      y: Math.round((yCoord * 10000) / context.canvas.height) / 100,
       clickCount: 1,
     };
 
