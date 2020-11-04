@@ -43,7 +43,7 @@ const Heatmap: React.FC<HeatmapParams> = ({ currentImageId }: HeatmapParams) => 
       clicks.push({ x: data.clicks[i].x, y: data.clicks[i].y, value: data.clicks[i].clickCount });
     }
     setDataPoints(clicks);
-  }, []);
+  }, [currentImageId, db, setDataPoints]);
 
   const [height, setHeight] = useState(window.innerHeight);
   const [width, setWidth] = useState(window.innerWidth);
