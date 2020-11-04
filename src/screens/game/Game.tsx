@@ -9,6 +9,7 @@ import {
   Toolbar,
   ButtonGroup,
   Typography,
+  Container,
 } from "@material-ui/core";
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import { KeyboardBackspace, Check, Clear, Close } from "@material-ui/icons";
@@ -139,6 +140,35 @@ const useStyles = makeStyles((theme: Theme) =>
     flexButton: {
       flex: 1,
       flexDirection: "column",
+    },
+    gameModeSelectionText: {
+      alignItems: "center",
+      alignSelf: "center",
+      justifyContent: "center",
+      textAlign: "center",
+      margin: 8,
+      fontSize: "250%",
+      fontWeight: "bold",
+      fontFamily: "segoe UI",
+    },
+    gameModeButton: {
+      margin: 8,
+      borderRadius: 20,
+      [theme.breakpoints.only("xs")]: {
+        width: 300,
+        height: 50,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.only("sm")]: {
+        width: 350,
+        height: 58,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        width: 370,
+        height: 61,
+        fontSize: "1.25rem",
+      },
     },
   })
 );
@@ -696,32 +726,36 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     if (!isGameModeSelected) {
       return (
         <>
-          <Typography>Choose a game mode</Typography>
+          <Container className={classes.container} style={{ flexDirection: "column" }}>
+            <Typography className={classes.gameModeSelectionText}>Choose a game mode</Typography>
 
-          <ButtonGroup>
-            <Button
-              variant="contained"
-              color="primary"
-              size="large"
-              onClick={() => {
-                setGameModeSelected(true);
-                setGameMode(0);
-              }}
-            >
-              Casual
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              size="large"
-              onClick={() => {
-                setGameModeSelected(true);
-                setGameMode(1);
-              }}
-            >
-              Competitive
-            </Button>
-          </ButtonGroup>
+            <ButtonGroup orientation="vertical">
+              <Button
+                className={classes.gameModeButton}
+                variant="contained"
+                color="primary"
+                size="large"
+                onClick={() => {
+                  setGameModeSelected(true);
+                  setGameMode(0);
+                }}
+              >
+                Casual
+              </Button>
+              <Button
+                className={classes.gameModeButton}
+                variant="contained"
+                color="primary"
+                size="large"
+                onClick={() => {
+                  setGameModeSelected(true);
+                  setGameMode(1);
+                }}
+              >
+                Competitive
+              </Button>
+            </ButtonGroup>
+          </Container>
         </>
       );
     }
