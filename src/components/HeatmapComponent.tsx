@@ -83,7 +83,7 @@ const Heatmap: React.FC<HeatmapParams> = ({ currentImageId }: HeatmapParams) => 
       }),
     };
     heatmapInstance.setData(data);
-  }, [dataPoints, getClicks, heatmapInstance, height, width]);
+  }, [dataPoints, getClicks, getClickedPoints, heatmapInstance, height, setGetClicks, width]);
 
   return (
     <div className={classes.heatmapContainer} id="heatmapContainer">
