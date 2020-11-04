@@ -688,6 +688,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setHeatmapDialogOpen(false);
   };
 
+  /**
+   * Function for displaying the game content
+   * First display the game mode selection, then begin
+   */
   const displayGameContent = () => {
     if (!isGameModeSelected) {
       return (
