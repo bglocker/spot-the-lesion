@@ -240,6 +240,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [animationPosition, setAnimationPosition] = useState(0);
 
   const [hinted, setHinted] = useState(false);
+  const [hintedAtLeastOnce, setHintedAtLeastOnce] = useState(false);
+
   const [timerColor, setTimerColor] = useState(INITIAL_TIMER_COLOR);
 
   const [imageId, setImageId] = useState(0);
@@ -287,6 +289,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    */
   const showHint = useCallback(() => {
     setHinted(true);
+    setHintedAtLeastOnce(true);
 
     const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
     const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
@@ -653,6 +656,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       score: playerScore,
       ai_score: aiScore,
       correct_player_answers: playerCorrectAnswers,
+      usedHints: hintedAtLeastOnce,
       correct_ai_answers: aiCorrectAnswers,
       day: date.getDate(),
       month: DbUtils.monthNames[date.getMonth()],
