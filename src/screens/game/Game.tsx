@@ -304,15 +304,28 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
 
     if (roundTime === 5000 && !hinted) {
-      /* 5 seconds left: set Timer to orange and show hint */
+      /*
+       * 5 seconds left
+       *
+       * set Timer to orange
+       * show hint
+       */
       setTimerColor("orange");
 
       showHint();
     } else if (roundTime === 2000) {
-      /* 2 seconds left: set Timer to red */
+      /*
+       * 2 seconds left
+       *
+       * set Timer to red
+       */
       setTimerColor("red");
     } else if (roundTime === 0) {
-      /* 0 seconds left: start end timer */
+      /*
+       * 0 seconds left
+       *
+       * start end timer
+       */
       setEndRunning(true);
     }
   }, [hinted, roundRunning, roundTime, showHint]);
@@ -383,8 +396,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     if (endTime === 0) {
       /*
-       * 0 seconds passed: draw and upload player click if available,
-       * start animationTimer and pause endTimer while animationTimer is running
+       * 0 seconds passed
+       *
+       * set loading true and stop round timer
+       * draw and upload player click (if available)
+       * start animation timer and pause end timer
        */
       setLoading(true);
       setRoundRunning(false);
@@ -402,13 +418,25 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       setAnimationRunning(true);
       setEndRunning(false);
     } else if (endTime === 100) {
-      /* 0.1 seconds passed: draw predicted rectangle in default color */
+      /*
+       * 0.1 seconds passed
+       *
+       * draw predicted rectangle in default color
+       */
       drawRectangle(context, predicted, DEFAULT_COLOUR, 3);
     } else if (endTime === 500) {
-      /* 1 second passed: draw truth rectangle */
+      /*
+       * 1 second passed
+       *
+       * draw truth rectangle
+       */
       drawRectangle(context, truth, TRUE_COLOUR, 3);
     } else if (endTime === 1000 && click) {
-      /* 6 seconds passed: evaluate player click if available  */
+      /*
+       * 1 second passed
+       *
+       * evaluate player click (if available)
+       */
       const { x, y } = click;
 
       enqueueSnackbar("Checking results...");
@@ -432,7 +460,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         drawCross(context, x, y, 5, INVALID_COLOUR);
       }
     } else if (endTime === 1500) {
-      /* 1.5 seconds passed: evaluate AI prediction */
+      /*
+       * 1.5 seconds passed
+       *
+       * evaluate AI prediction
+       * stop end timer and set loading false
+       */
       const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
 
       /* AI was successful if the ratio of the intersection over the union is greater than 0.5 */
@@ -488,7 +521,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     /* Clear previous cube */
     animationContext.clearRect(0, 0, animationContext.canvas.width, animationContext.canvas.height);
 
-    /* Stop when all cube positions were reached, and resume endTimer with one tick passed */
+    /* Stop when all cube positions were reached, and resume end timer with one tick passed */
     if (animationPosition === NUM_SEARCH_CUBES * NUM_SEARCH_CUBES) {
       setAnimationRunning(false);
       setEndTime((prevState) => prevState + 100);
