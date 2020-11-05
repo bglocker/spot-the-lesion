@@ -10,7 +10,7 @@ import {
   Typography,
 } from "@material-ui/core";
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
-import { KeyboardBackspace, Check, Clear, Close } from "@material-ui/icons";
+import { KeyboardBackspace, Close } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
@@ -64,21 +64,11 @@ const useStyles = makeStyles((theme: Theme) =>
       alignItems: "center",
     },
     hintButtonContainer: {
-      [theme.breakpoints.down("sm")]: {
-        width: "80vw",
-        maxWidth: "65vh",
-      },
-      [theme.breakpoints.up("md")]: {
-        width: "70vh",
-        maxWidth: "70vw",
-      },
       margin: 8,
       padding: 8,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-    },
-    timerContainer: {
       [theme.breakpoints.down("sm")]: {
         width: "80vw",
         maxWidth: "65vh",
@@ -87,8 +77,18 @@ const useStyles = makeStyles((theme: Theme) =>
         width: "70vh",
         maxWidth: "70vw",
       },
+    },
+    timerContainer: {
       margin: 8,
       padding: 8,
+      [theme.breakpoints.down("sm")]: {
+        width: "80vw",
+        maxWidth: "65vh",
+      },
+      [theme.breakpoints.up("md")]: {
+        width: "70vh",
+        maxWidth: "70vw",
+      },
     },
     timer: {
       marginBottom: 8,
@@ -97,6 +97,8 @@ const useStyles = makeStyles((theme: Theme) =>
       color: (props: Record<string, string>) => props.timerColor,
     },
     canvasContainer: {
+      display: "grid",
+      padding: 8,
       [theme.breakpoints.down("sm")]: {
         height: "80vw",
         width: "80vw",
@@ -109,8 +111,6 @@ const useStyles = makeStyles((theme: Theme) =>
         maxWidth: "70vw",
         maxHeight: "70vw",
       },
-      display: "grid",
-      padding: 8,
     },
     canvas: {
       gridColumnStart: 1,
@@ -120,18 +120,14 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     sideContainer: {
       [theme.breakpoints.up("md")]: {
-        flex: 1,
         height: "100%",
+        flex: 1,
+        display: "flex",
         justifyContent: "flex-end",
         alignItems: "center",
       },
-      display: "flex",
     },
     sideCard: {
-      [theme.breakpoints.down("sm")]: {
-        width: "80vw",
-        maxWidth: "65vh",
-      },
       minWidth: "20vw",
       display: "flex",
       flexDirection: "column",
@@ -139,24 +135,24 @@ const useStyles = makeStyles((theme: Theme) =>
       alignContent: "center",
       margin: 8,
       padding: 8,
+      [theme.breakpoints.down("sm")]: {
+        width: "80vw",
+        maxWidth: "65vh",
+      },
     },
     result: {
       [theme.breakpoints.down("sm")]: {
-        fontSize: 20,
+        fontSize: "1.5rem",
       },
       [theme.breakpoints.up("md")]: {
-        marginTop: 8,
-        marginBottom: 8,
-        fontSize: 34,
+        fontSize: "2rem",
       },
-      textAlign: "center",
     },
     flexButton: {
       flex: 1,
-      flexDirection: "column",
     },
-    displayHintButton: {
-      backgroundColor: "#63A2AB",
+    showHintButton: {
+      backgroundColor: "#63a2ab",
     },
     checkGreen: {
       fill: "green",
@@ -218,8 +214,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   const [playerScore, setPlayerScore] = useState(0);
   const [aiScore, setAiScore] = useState(0);
 
-  const [playerCorrect, setPlayerCorrect] = useState(false);
-  const [aiCorrect, setAiCorrect] = useState(false);
+  const [playerRoundScore, setPlayerRoundScore] = useState(0);
+  const [aiRoundScore, setAiRoundScore] = useState(0);
 
   const [playerCorrectAnswers, setPlayerCorrectAnswers] = useState(0);
   const [aiCorrectAnswers, setAiCorrectAnswers] = useState(0);
@@ -414,9 +410,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
         const roundScore = gameMode === "casual" ? casualRoundScore : competitiveRoundScore;
 
-        setPlayerScore((prevState) => prevState + roundScore);
+        setPlayerRoundScore(roundScore);
         setPlayerCorrectAnswers((prevState) => prevState + 1);
-        setPlayerCorrect(true);
 
         drawCross(context, x, y, 5, VALID_COLOUR);
       } else {
@@ -441,9 +436,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
         const roundScore = gameMode === "casual" ? casualRoundScore : competitiveRoundScore;
 
-        setAiScore((prevState) => prevState + roundScore);
+        setAiRoundScore(roundScore);
         setAiCorrectAnswers((prevState) => prevState + 1);
-        setAiCorrect(true);
 
         drawRectangle(context, predicted, VALID_COLOUR, 3);
       } else {
@@ -586,14 +580,20 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
    * Starts a new round, loading a new image and its corresponding JSON data
    */
   const startRound = async () => {
+    /* Update scores with last round scores */
+    setPlayerScore((prevState) => prevState + playerRoundScore);
+    setAiScore((prevState) => prevState + aiRoundScore);
+
     setLoading(true);
 
+    /* Get a new file number and load the corresponding json and image */
     const fileNumber = getNewFileNumber();
     setImageId(fileNumber);
 
     await loadJson(fileNumber);
     await loadImage(fileNumber);
 
+    /* Reset game state */
     setRoundTime(ROUND_START_TIME);
     setEndTime(0);
     setAnimationPosition(0);
@@ -603,10 +603,10 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
     setClick(null);
 
-    setRound((prevState) => prevState + 1);
+    setPlayerRoundScore(0);
+    setAiRoundScore(0);
 
-    setPlayerCorrect(false);
-    setAiCorrect(false);
+    setRound((prevState) => prevState + 1);
 
     setRoundRunning(true);
     setLoading(false);
@@ -661,20 +661,18 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   };
 
   /**
-   * Display a green Check or red Clear based on correct (only after first round, and between rounds)
+   * Display the round score in green if positive, or red if 0
    *
-   * @param correct Boolean for icon picking
+   * @param roundScore Score for the current round
    */
-  const showCorrect = (correct: boolean) => {
+  const showRoundScore = (roundScore: number) => {
     if (round === 0 || roundRunning || loading) {
       return null;
     }
 
-    return correct ? (
-      <Check className={classes.checkGreen} fontSize="large" />
-    ) : (
-      <Clear className={classes.clearRed} fontSize="large" />
-    );
+    const color = roundScore > 0 ? VALID_COLOUR : INVALID_COLOUR;
+
+    return <span style={{ color }}>+{roundScore}</span>;
   };
 
   /**
@@ -777,39 +775,45 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   const onCloseHeatmap = () => setShowHeatmap(false);
 
   /**
-   * Function for displaying the actual Game Content
-   * Display Show Hint button for Casual Mode
-   * Display Timer for Competitive Mode
+   * Display game Top Bar
+   *
+   * Casual Mode: Hint Button
+   * Competitive Mode: Timer
    */
-  const displayGameContent = () => {
-    const topBar =
-      gameMode === "casual" ? (
+  const displayTopBar = () => {
+    if (gameMode === "casual") {
+      return (
         <Card className={classes.hintButtonContainer}>
           <Button
-            className={classes.displayHintButton}
+            className={classes.showHintButton}
             onClick={showHint}
             disabled={round === 0 || loading || hinted || !roundRunning}
           >
             Show hint
           </Button>
         </Card>
-      ) : (
-        <Card className={classes.timerContainer}>
-          <Typography className={classes.timer} variant="h4">
-            Time remaining: {(roundTime / 1000).toFixed(1)}s
-          </Typography>
-
-          <ColoredLinearProgress
-            barColor={timerColor}
-            variant="determinate"
-            value={roundTime / 100}
-          />
-        </Card>
       );
+    }
 
     return (
+      <Card className={classes.timerContainer}>
+        <Typography className={classes.timer} variant="h4">
+          Time remaining: {(roundTime / 1000).toFixed(1)}s
+        </Typography>
+
+        <ColoredLinearProgress
+          barColor={timerColor}
+          variant="determinate"
+          value={roundTime / 100}
+        />
+      </Card>
+    );
+  };
+
+  const displayGameContent = () => {
+    return (
       <div className={classes.topBarCanvasContainer}>
-        {topBar}
+        {displayTopBar()}
 
         <Card className={classes.canvasContainer}>
           <canvas
@@ -834,31 +838,28 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   /**
    * Function for displaying the side Score Card
    */
-  const displayScoreCard = () => {
+  const displaySideCard = () => {
     return (
       <div className={classes.sideContainer}>
         <Card className={classes.sideCard}>
           <div className={classes.flexButton}>
             <Typography className={classes.result} variant="h4">
-              You
-            </Typography>
-
-            <div className={classes.result}>{showCorrect(playerCorrect)}</div>
-          </div>
-
-          <div className={classes.flexButton}>
-            <Typography className={classes.result} variant="h4">
-              {playerScore} vs {aiScore}
+              You: {playerScore} {showRoundScore(playerRoundScore)}
             </Typography>
           </div>
 
           <div className={classes.flexButton}>
             <Typography className={classes.result} variant="h4">
-              AI
+              vs
             </Typography>
-
-            <div className={classes.result}>{showCorrect(aiCorrect)}</div>
           </div>
+
+          <div className={classes.flexButton}>
+            <Typography className={classes.result} variant="h4">
+              AI: {aiScore} {showRoundScore(aiRoundScore)}
+            </Typography>
+          </div>
+
           <div className={classes.result}>{sideAction()}</div>
 
           {displaySubmitButton()}
@@ -969,7 +970,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
         {displayGameContent()}
 
-        {displayScoreCard()}
+        {displaySideCard()}
 
         {displayHeatmapDialog()}
       </div>
