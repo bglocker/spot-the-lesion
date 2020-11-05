@@ -273,7 +273,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   /**
    * Round timer
    */
-  useInterval(() => setRoundTime((prevState) => prevState - 100), roundRunning ? 100 : null);
+  useInterval(
+    () => setRoundTime((prevState) => prevState - 100),
+    roundRunning && gameMode === "competitive" ? 100 : null
+  );
 
   const showHint = useCallback(() => {
     setHinted(true);
@@ -289,8 +292,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Round timer based events
    */
   useEffect(() => {
-    /* TODO: remove gameMode check from here */
-    if (!roundRunning || gameMode === "casual") {
+    if (!roundRunning) {
       return;
     }
 
@@ -306,7 +308,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       /* 0 seconds left: start end timer */
       setEndRunning(true);
     }
-  }, [gameMode, hinted, roundRunning, roundTime, showHint]);
+  }, [hinted, roundRunning, roundTime, showHint]);
 
   /**
    * End timer
@@ -711,7 +713,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           loading={loading}
           buttonDisabled={roundRunning || loading}
           onButtonClick={startRound}
-          buttonText={round === 0 ? "START" : "NEXT"}
+          buttonText={round === 0 ? "Start" : "Next"}
         />
       );
     }
