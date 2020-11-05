@@ -1,18 +1,7 @@
-import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
-import {
-  AppBar,
-  Button,
-  Card,
-  Dialog,
-  IconButton,
-  TextField,
-  Toolbar,
-  ButtonGroup,
-  Typography,
-  Container,
-} from "@material-ui/core";
+import React, { useCallback, useEffect, useState } from "react";
+import { AppBar, Button, Card, Dialog, IconButton, Toolbar, Typography } from "@material-ui/core";
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
-import { KeyboardBackspace, Check, Clear, Close } from "@material-ui/icons";
+import { KeyboardBackspace, Close } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
@@ -30,6 +19,7 @@ import {
 import { getImagePath, getIntersectionOverUnion, getJsonPath } from "./GameUitls";
 import DbUtils from "../../utils/DbUtils";
 import { db } from "../../firebase/firebaseApp";
+import SubmitScoreDialog from "./SubmitScoreDialog";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -59,38 +49,41 @@ const useStyles = makeStyles((theme: Theme) =>
         flex: 1,
       },
     },
-    upperBarCanvasContainer: {
+    topBarCanvasContainer: {
       display: "flex",
       flexDirection: "column",
       justifyContent: "space-evenly",
       alignItems: "center",
     },
     hintButtonContainer: {
-      [theme.breakpoints.down("sm")]: {
-        width: "80vw",
-        maxWidth: "65vh",
-      },
-      [theme.breakpoints.up("md")]: {
-        width: "70vh",
-        maxWidth: "70vw",
-      },
       margin: 8,
       padding: 8,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-    },
-    timerContainer: {
       [theme.breakpoints.down("sm")]: {
         width: "80vw",
-        maxWidth: "65vh",
+        maxWidth: "60vh",
       },
       [theme.breakpoints.up("md")]: {
         width: "70vh",
         maxWidth: "70vw",
       },
+    },
+    showHintButton: {
+      backgroundColor: "#63a2ab",
+    },
+    timerContainer: {
       margin: 8,
       padding: 8,
+      [theme.breakpoints.down("sm")]: {
+        width: "80vw",
+        maxWidth: "60vh",
+      },
+      [theme.breakpoints.up("md")]: {
+        width: "70vh",
+        maxWidth: "70vw",
+      },
     },
     timer: {
       marginBottom: 8,
@@ -99,11 +92,13 @@ const useStyles = makeStyles((theme: Theme) =>
       color: (props: Record<string, string>) => props.timerColor,
     },
     canvasContainer: {
+      display: "grid",
+      padding: 8,
       [theme.breakpoints.down("sm")]: {
         height: "80vw",
         width: "80vw",
-        maxWidth: "65vh",
-        maxHeight: "65vh",
+        maxWidth: "60vh",
+        maxHeight: "60vh",
       },
       [theme.breakpoints.up("md")]: {
         height: "70vh",
@@ -111,8 +106,6 @@ const useStyles = makeStyles((theme: Theme) =>
         maxWidth: "70vw",
         maxHeight: "70vw",
       },
-      display: "grid",
-      padding: 8,
     },
     canvas: {
       gridColumnStart: 1,
@@ -122,81 +115,54 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     sideContainer: {
       [theme.breakpoints.up("md")]: {
-        flex: 1,
         height: "100%",
+        flex: 1,
+        display: "flex",
         justifyContent: "flex-end",
         alignItems: "center",
       },
-      display: "flex",
     },
     sideCard: {
-      [theme.breakpoints.down("sm")]: {
-        width: "80vw",
-        maxWidth: "65vh",
-      },
-      minWidth: "20vw",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       alignContent: "center",
       margin: 8,
       padding: 8,
-    },
-    result: {
       [theme.breakpoints.down("sm")]: {
-        fontSize: 20,
+        width: "80vw",
+        maxWidth: "60vh",
       },
       [theme.breakpoints.up("md")]: {
-        marginTop: 8,
-        marginBottom: 8,
-        fontSize: 34,
+        minWidth: "20vw",
       },
-      textAlign: "center",
     },
-    flexButton: {
-      flex: 1,
-      flexDirection: "column",
+    scoresContainer: {
+      display: "flex",
+      [theme.breakpoints.down("sm")]: {
+        width: "100%",
+        flexDirection: "row",
+        justifyContent: "space-evenly",
+      },
+      [theme.breakpoints.up("md")]: {
+        flexDirection: "column",
+        alignItems: "center",
+      },
     },
-    gameModeSelectionText: {
+    sideCardText: {
+      [theme.breakpoints.down("sm")]: {
+        fontSize: "1.5rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        fontSize: "2rem",
+      },
+    },
+    submitShareContainer: {
+      width: "100%",
+      display: "flex",
+      flexDirection: "row",
+      justifyContent: "space-evenly",
       alignItems: "center",
-      alignSelf: "center",
-      justifyContent: "center",
-      textAlign: "center",
-      margin: 8,
-      fontSize: "250%",
-      fontWeight: "bold",
-      fontFamily: "segoe UI",
-    },
-    displayHintButton: {
-      backgroundColor: "#63A2AB",
-    },
-    gameModeButton: {
-      margin: 8,
-      borderRadius: 20,
-      [theme.breakpoints.only("xs")]: {
-        width: 300,
-        height: 50,
-        fontSize: "1rem",
-      },
-      [theme.breakpoints.only("sm")]: {
-        width: 350,
-        height: 58,
-        fontSize: "1rem",
-      },
-      [theme.breakpoints.up("md")]: {
-        width: 370,
-        height: 61,
-        fontSize: "1.25rem",
-      },
-    },
-    heatmapButton: {
-      backgroundColor: "#021C1E",
-    },
-    checkGreen: {
-      fill: "green",
-    },
-    clearRed: {
-      fill: "red",
     },
   })
 );
@@ -223,7 +189,7 @@ const MAX_FILE_NUMBER = 100;
 
 type JsonData = { truth: number[]; predicted: number[] };
 
-const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
+const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   const seenFiles = new Set<number>();
 
   const [context, canvasRef] = useCanvasContext();
@@ -240,6 +206,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [animationPosition, setAnimationPosition] = useState(0);
 
   const [hinted, setHinted] = useState(false);
+  const [hintedAtLeastOnce, setHintedAtLeastOnce] = useState(false);
+
   const [timerColor, setTimerColor] = useState(INITIAL_TIMER_COLOR);
 
   const [imageId, setImageId] = useState(0);
@@ -252,18 +220,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [playerScore, setPlayerScore] = useState(0);
   const [aiScore, setAiScore] = useState(0);
 
-  const [playerCorrect, setPlayerCorrect] = useState(false);
-  const [aiCorrect, setAiCorrect] = useState(false);
+  const [playerRoundScore, setPlayerRoundScore] = useState(0);
+  const [aiRoundScore, setAiRoundScore] = useState(0);
 
   const [playerCorrectAnswers, setPlayerCorrectAnswers] = useState(0);
   const [aiCorrectAnswers, setAiCorrectAnswers] = useState(0);
 
-  const [username, setUsername] = useState("");
-
-  const [gameMode, setGameMode] = useState<GameMode>("casual");
-  const [isGameModeSelected, setGameModeSelected] = useState(false);
-
   const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showSubmit, setShowSubmit] = useState(false);
 
   const classes = useStyles({ timerColor });
 
@@ -272,14 +236,22 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   /**
    * Round timer
+   *
+   * Decrement roundTime by 100, every 100ms
+   *
+   * Running only in competitive mode, while roundRunning is true
    */
   useInterval(
     () => setRoundTime((prevState) => prevState - 100),
     roundRunning && gameMode === "competitive" ? 100 : null
   );
 
+  /**
+   * Draw the hint circle
+   */
   const showHint = useCallback(() => {
     setHinted(true);
+    setHintedAtLeastOnce(true);
 
     const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
     const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
@@ -297,21 +269,38 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
 
     if (roundTime === 5000 && !hinted) {
-      /* 5 seconds left: set Timer to orange and show hint */
+      /*
+       * 5 seconds left
+       *
+       * set Timer to orange
+       * show hint
+       */
       setTimerColor("orange");
 
       showHint();
     } else if (roundTime === 2000) {
-      /* 2 seconds left: set Timer to red */
+      /*
+       * 2 seconds left
+       *
+       * set Timer to red
+       */
       setTimerColor("red");
     } else if (roundTime === 0) {
-      /* 0 seconds left: start end timer */
+      /*
+       * 0 seconds left
+       *
+       * start end timer
+       */
       setEndRunning(true);
     }
   }, [hinted, roundRunning, roundTime, showHint]);
 
   /**
    * End timer
+   *
+   * Increment roundTime by 100, every 100ms
+   *
+   * Running only while endRunning is true
    */
   useInterval(() => setEndTime((prevState) => prevState + 100), endRunning ? 100 : null);
 
@@ -372,8 +361,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     if (endTime === 0) {
       /*
-       * 0 seconds passed: draw and upload player click if available,
-       * start animationTimer and pause endTimer while animationTimer is running
+       * 0 seconds passed
+       *
+       * set loading true and stop round timer
+       * draw and upload player click (if available)
+       * start animation timer and pause end timer
        */
       setLoading(true);
       setRoundRunning(false);
@@ -391,46 +383,67 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       setAnimationRunning(true);
       setEndRunning(false);
     } else if (endTime === 100) {
-      /* 0.1 seconds passed: draw predicted rectangle in default color */
+      /*
+       * 0.1 seconds passed
+       *
+       * draw predicted rectangle in default color
+       */
       drawRectangle(context, predicted, DEFAULT_COLOUR, 3);
     } else if (endTime === 500) {
-      /* 1 second passed: draw truth rectangle */
+      /*
+       * 1 second passed
+       *
+       * draw truth rectangle
+       */
       drawRectangle(context, truth, TRUE_COLOUR, 3);
     } else if (endTime === 1000 && click) {
-      /* 6 seconds passed: evaluate player click if available  */
+      /*
+       * 1 second passed
+       *
+       * evaluate player click (if available)
+       */
       const { x, y } = click;
 
       enqueueSnackbar("Checking results...");
 
       /* Player was successful if the click coordinates are inside the truth rectangle */
       if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
-        /* For Casual Mode: if Hint was shown, receive half a point; otherwise receive full point */
+        /* Casual Mode: half a point, doubled if no hint received */
         const casualRoundScore = hinted ? 0.5 : 1;
 
-        /* For Competitive Mode: round time taken doubled if no hint provided */
+        /* Competitive Mode: function of round time left, doubled if no hint received */
         const competitiveRoundScore = (roundTime / 1000) * (hinted ? 10 : 20);
 
         const roundScore = gameMode === "casual" ? casualRoundScore : competitiveRoundScore;
 
-        setPlayerScore((prevState) => prevState + roundScore);
+        setPlayerRoundScore(roundScore);
         setPlayerCorrectAnswers((prevState) => prevState + 1);
-        setPlayerCorrect(true);
 
         drawCross(context, x, y, 5, VALID_COLOUR);
       } else {
         drawCross(context, x, y, 5, INVALID_COLOUR);
       }
     } else if (endTime === 1500) {
-      /* 1.5 seconds passed: evaluate AI prediction */
+      /*
+       * 1.5 seconds passed
+       *
+       * evaluate AI prediction
+       * stop end timer and set loading false
+       */
       const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
 
       /* AI was successful if the ratio of the intersection over the union is greater than 0.5 */
       if (intersectionOverUnion > 0.5) {
-        const roundScore = Math.round(intersectionOverUnion * AI_SCORE_INCREASE_RATE);
+        /* Casual mode: one point */
+        const casualRoundScore = 1;
 
-        setAiScore((prevState) => prevState + roundScore);
+        /* Competitive mode: function of prediction accuracy and constant increase rate */
+        const competitiveRoundScore = Math.round(intersectionOverUnion * AI_SCORE_INCREASE_RATE);
+
+        const roundScore = gameMode === "casual" ? casualRoundScore : competitiveRoundScore;
+
+        setAiRoundScore(roundScore);
         setAiCorrectAnswers((prevState) => prevState + 1);
-        setAiCorrect(true);
 
         drawRectangle(context, predicted, VALID_COLOUR, 3);
       } else {
@@ -456,6 +469,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   /**
    * Animation timer
+   *
+   * Increment animationPosition by 1 (tempo based on set animation time and number of search cubes)
+   *
+   * Running only while animationRunning is true
    */
   useInterval(
     () => setAnimationPosition((prevState) => prevState + 1),
@@ -473,7 +490,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     /* Clear previous cube */
     animationContext.clearRect(0, 0, animationContext.canvas.width, animationContext.canvas.height);
 
-    /* Stop when all cube positions were reached, and resume endTimer with one tick passed */
+    /* Stop when all cube positions were reached, and resume end timer with one tick passed */
     if (animationPosition === NUM_SEARCH_CUBES * NUM_SEARCH_CUBES) {
       setAnimationRunning(false);
       setEndTime((prevState) => prevState + 100);
@@ -569,14 +586,20 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Starts a new round, loading a new image and its corresponding JSON data
    */
   const startRound = async () => {
+    /* Update scores with last round scores */
+    setPlayerScore((prevState) => prevState + playerRoundScore);
+    setAiScore((prevState) => prevState + aiRoundScore);
+
     setLoading(true);
 
+    /* Get a new file number and load the corresponding json and image */
     const fileNumber = getNewFileNumber();
     setImageId(fileNumber);
 
     await loadJson(fileNumber);
     await loadImage(fileNumber);
 
+    /* Reset game state */
     setRoundTime(ROUND_START_TIME);
     setEndTime(0);
     setAnimationPosition(0);
@@ -586,25 +609,31 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
     setClick(null);
 
-    setRound((prevState) => prevState + 1);
+    setPlayerRoundScore(0);
+    setAiRoundScore(0);
 
-    setPlayerCorrect(false);
-    setAiCorrect(false);
+    setRound((prevState) => prevState + 1);
 
     setRoundRunning(true);
     setLoading(false);
   };
 
   /**
-   * Uploads the score to the database
+   * Function for triggering the effects associated with submitting the score
+   * Submit button becomes disabled
+   * Snackbar triggered
+   * Scores uploaded into Firebase
    */
-  const uploadScore = async () => {
+  const onSubmitScore = async (username: string) => {
+    setLoading(true);
+
     const date = new Date();
     const entry = {
       user: username,
       score: playerScore,
       ai_score: aiScore,
       correct_player_answers: playerCorrectAnswers,
+      usedHints: hintedAtLeastOnce,
       correct_ai_answers: aiCorrectAnswers,
       day: date.getDate(),
       month: DbUtils.monthNames[date.getMonth()],
@@ -641,112 +670,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         await db.collection(leaderboard).doc(entryName).set(entry);
       }
     }
-  };
 
-  /**
-   * Display a green Check or red Clear based on correct (only after first round, and between rounds)
-   *
-   * @param correct Boolean for icon picking
-   */
-  const showCorrect = (correct: boolean) => {
-    if (round === 0 || roundRunning || loading) {
-      return null;
-    }
-
-    return correct ? (
-      <Check className={classes.checkGreen} fontSize="large" />
-    ) : (
-      <Clear className={classes.clearRed} fontSize="large" />
-    );
-  };
-
-  /**
-   * Function for filling up the username field before submitting score
-   * @param event - username writing event listener
-   */
-  const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
-    setUsername(event.target.value);
-  };
-
-  /**
-   * Display the winner
-   */
-  const showWinner = () => {
-    let text: string;
-    let color: string;
-
-    if (playerScore > aiScore) {
-      text = "You won!";
-      color = VALID_COLOUR;
-    } else if (playerScore < aiScore) {
-      text = "AI won!";
-      color = INVALID_COLOUR;
-    } else {
-      text = "It was a draw!";
-      color = DEFAULT_COLOUR;
-    }
-
-    return (
-      <Typography className={classes.result} variant="h6" style={{ color }}>
-        {text}
-      </Typography>
-    );
-  };
-
-  /**
-   * Function for triggering the effects associated with submitting the score
-   * Submit button becomes disabled
-   * Snackbar triggered
-   * Scores uploaded into Firebase
-   */
-  const onSubmitScore = async () => {
-    setLoading(true);
-    await uploadScore();
     setRoute("home");
     enqueueSnackbar("Score successfully submitted!");
-  };
-
-  const sideAction = () => {
-    if (round < NUM_ROUNDS || roundRunning || loading) {
-      return (
-        <LoadingButton
-          loading={loading}
-          buttonDisabled={roundRunning || loading}
-          onButtonClick={startRound}
-          buttonText={round === 0 ? "Start" : "Next"}
-        />
-      );
-    }
-
-    return (
-      <>
-        <TwitterShareButton
-          url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
-          title={`I got ${playerScore} points in Spot-the-Lesion! Can you beat my score?`}
-        >
-          <TwitterIcon size="50px" round />
-        </TwitterShareButton>
-
-        <TextField
-          label="Username"
-          variant="outlined"
-          value={username}
-          onChange={onChangeUsername}
-        />
-
-        {showWinner()}
-
-        <Button
-          variant="contained"
-          color="primary"
-          size="large"
-          disabled={roundRunning || loading || username === ""}
-          onClick={onSubmitScore}
-        >
-          Submit Score
-        </Button>
-      </>
-    );
   };
 
   /**
@@ -759,135 +685,196 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    */
   const onCloseHeatmap = () => setShowHeatmap(false);
 
+  const onShowSubmit = () => setShowSubmit(true);
+
+  const onCloseSubmit = () => setShowSubmit(false);
+
   /**
-   * Function for displaying the game content
-   * First display the game mode selection, then the game content
+   * Display the winner (only on competitive mode, after last round)
    */
-  const displayGame = () => {
-    if (!isGameModeSelected) {
-      return (
-        <>
-          <Container className={classes.container} style={{ flexDirection: "column" }}>
-            <Typography className={classes.gameModeSelectionText}>Choose a game mode</Typography>
-
-            <ButtonGroup orientation="vertical">
-              <Button
-                className={classes.gameModeButton}
-                variant="contained"
-                color="primary"
-                size="large"
-                onClick={() => {
-                  setGameModeSelected(true);
-                  setGameMode("casual");
-                }}
-              >
-                Casual
-              </Button>
-
-              <Button
-                className={classes.gameModeButton}
-                variant="contained"
-                color="primary"
-                size="large"
-                onClick={() => {
-                  setGameModeSelected(true);
-                  setGameMode("competitive");
-                }}
-              >
-                Competitive
-              </Button>
-            </ButtonGroup>
-          </Container>
-        </>
-      );
+  const showWinner = () => {
+    if (
+      gameMode === "casual" ||
+      (gameMode === "competitive" && round < NUM_ROUNDS) ||
+      roundRunning ||
+      loading
+    ) {
+      return null;
     }
 
-    // Game mode selected. Display the actual game content
+    let text: string;
+    let color: string;
+
+    const endPlayerScore = playerScore + playerRoundScore;
+    const endAiScore = aiScore + aiRoundScore;
+
+    if (endPlayerScore > endAiScore) {
+      text = "You won!";
+      color = VALID_COLOUR;
+    } else if (endPlayerScore < endAiScore) {
+      text = "AI won!";
+      color = INVALID_COLOUR;
+    } else {
+      text = "It was a draw!";
+      color = DEFAULT_COLOUR;
+    }
+
     return (
-      <>
-        <div className={classes.container}>
-          <div className={classes.emptyDiv} />
+      <Typography className={classes.sideCardText} variant="h6" style={{ color }}>
+        {text}
+      </Typography>
+    );
+  };
 
-          {displayGameContent()}
+  const displayStartRoundButton = () => {
+    if (gameMode === "competitive" && round === NUM_ROUNDS) {
+      return null;
+    }
 
-          {displayScoreCard()}
+    return (
+      <LoadingButton
+        loading={loading}
+        buttonDisabled={roundRunning || loading}
+        onButtonClick={startRound}
+        buttonText={round === 0 ? "Start" : "Next"}
+      />
+    );
+  };
 
-          {displayHeatmapDialog()}
-        </div>
-      </>
+  const displaySubmitShare = () => {
+    if (
+      (gameMode === "casual" && round === 0) ||
+      (gameMode === "competitive" && round < NUM_ROUNDS) ||
+      roundRunning ||
+      loading
+    ) {
+      return null;
+    }
+
+    return (
+      <div className={classes.submitShareContainer}>
+        <Button
+          variant="contained"
+          color="primary"
+          size="large"
+          disabled={roundRunning || loading}
+          onClick={onShowSubmit}
+        >
+          Submit Score
+        </Button>
+
+        <TwitterShareButton
+          url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
+          title={`I got ${playerScore} points in Spot-the-Lesion! Can you beat my score?`}
+        >
+          <TwitterIcon size="50px" round />
+        </TwitterShareButton>
+      </div>
     );
   };
 
   /**
-   * Function for displaying the actual Game Content
-   * Display Show Hint button for Casual Mode (gameMode === 0)
-   * Display Timer Bar for Competitive Mode (gameMode === 1)
+   * Display game Top Bar
+   *
+   * Casual Mode: Hint Button
+   * Competitive Mode: Timer
    */
-  const displayGameContent = () => {
-    return gameMode === "casual" ? (
-      <div className={classes.upperBarCanvasContainer}>
+  const displayTopBar = () => {
+    if (gameMode === "casual") {
+      return (
         <Card className={classes.hintButtonContainer}>
           <Button
-            className={classes.displayHintButton}
+            className={classes.showHintButton}
             onClick={showHint}
             disabled={round === 0 || loading || hinted || !roundRunning}
           >
             Show hint
           </Button>
         </Card>
+      );
+    }
 
-        {displayGameCanvas()}
-      </div>
-    ) : (
-      <div className={classes.upperBarCanvasContainer}>
-        <Card className={classes.timerContainer}>
-          <Typography className={classes.timer} variant="h4" style={{ color: timerColor }}>
-            Time remaining: {(roundTime / 1000).toFixed(1)}s
-          </Typography>
+    return (
+      <Card className={classes.timerContainer}>
+        <Typography className={classes.timer} variant="h4">
+          Time remaining: {(roundTime / 1000).toFixed(1)}s
+        </Typography>
 
-          <ColoredLinearProgress
-            barColor={timerColor}
-            variant="determinate"
-            value={roundTime / 100}
+        <ColoredLinearProgress
+          barColor={timerColor}
+          variant="determinate"
+          value={roundTime / 100}
+        />
+      </Card>
+    );
+  };
+
+  const displayGameContent = () => {
+    return (
+      <div className={classes.topBarCanvasContainer}>
+        {displayTopBar()}
+
+        <Card className={classes.canvasContainer}>
+          <canvas
+            className={classes.canvas}
+            ref={canvasRef}
+            width={MAX_CANVAS_SIZE}
+            height={MAX_CANVAS_SIZE}
+          />
+
+          <canvas
+            className={classes.canvas}
+            ref={animationCanvasRef}
+            width={MAX_CANVAS_SIZE}
+            height={MAX_CANVAS_SIZE}
+            onClick={onCanvasClick}
           />
         </Card>
-
-        {displayGameCanvas()}
       </div>
     );
   };
 
   /**
+   * Display the round score in green if positive, or red if 0
+   *
+   * @param roundScore Score for the current round
+   */
+  const showRoundScore = (roundScore: number) => {
+    if (round === 0 || roundRunning || loading) {
+      return null;
+    }
+
+    const color = roundScore > 0 ? VALID_COLOUR : INVALID_COLOUR;
+
+    return <span style={{ color }}>+{roundScore}</span>;
+  };
+
+  /**
    * Function for displaying the side Score Card
    */
-  const displayScoreCard = () => {
+  const displaySideCard = () => {
     return (
       <div className={classes.sideContainer}>
         <Card className={classes.sideCard}>
-          <div className={classes.flexButton}>
-            <Typography className={classes.result} variant="h4">
-              You
+          <div className={classes.scoresContainer}>
+            <Typography className={classes.sideCardText} variant="h4">
+              You: {playerScore} {showRoundScore(playerRoundScore)}
             </Typography>
 
-            <div className={classes.result}>{showCorrect(playerCorrect)}</div>
-          </div>
+            <Typography className={classes.sideCardText} variant="h4">
+              vs
+            </Typography>
 
-          <div className={classes.flexButton}>
-            <Typography className={classes.result} variant="h4">
-              {playerScore} vs {gameMode === "casual" ? aiCorrectAnswers : aiScore}
+            <Typography className={classes.sideCardText} variant="h4">
+              AI: {aiScore} {showRoundScore(aiRoundScore)}
             </Typography>
           </div>
 
-          <div className={classes.flexButton}>
-            <Typography className={classes.result} variant="h4">
-              AI
-            </Typography>
+          {showWinner()}
 
-            <div className={classes.result}>{showCorrect(aiCorrect)}</div>
-          </div>
-          <div className={classes.result}>{sideAction()}</div>
+          {displayStartRoundButton()}
 
-          {displaySubmitButton()}
+          {displaySubmitShare()}
         </Card>
       </div>
     );
@@ -898,7 +885,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    */
   const displayHeatmapDialog = () => {
     return (
-      <Dialog fullScreen open={showHeatmap} onClose={onShowHeatmap}>
+      <Dialog fullScreen open={showHeatmap}>
         <AppBar position="sticky">
           <Toolbar variant="dense">
             <IconButton
@@ -921,86 +908,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   /**
-   * Function for displaying the game main canvas
-   */
-  const displayGameCanvas = () => {
-    return (
-      <Card className={classes.canvasContainer}>
-        <canvas
-          className={classes.canvas}
-          ref={canvasRef}
-          width={MAX_CANVAS_SIZE}
-          height={MAX_CANVAS_SIZE}
-        />
-
-        <canvas
-          className={classes.canvas}
-          ref={animationCanvasRef}
-          width={MAX_CANVAS_SIZE}
-          height={MAX_CANVAS_SIZE}
-          onClick={onCanvasClick}
-        />
-      </Card>
-    );
-  };
-
-  /**
-   * Function for displaying the Submit button for Casual Game Mode
-   * For Competitive Mode, display nothing
-   */
-  const displaySubmitButton = () => {
-    return gameMode === "casual" ? (
-      <>
-        <TwitterShareButton
-          url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
-          title={`I got ${playerScore} points in Spot-the-Lesion! Can you beat my score?`}
-        >
-          <TwitterIcon size="50px" round />
-        </TwitterShareButton>
-
-        <TextField
-          label="Username"
-          variant="outlined"
-          value={username}
-          onChange={onChangeUsername}
-        />
-
-        <div />
-
-        <Button
-          variant="contained"
-          color="primary"
-          size="large"
-          disabled={roundRunning || loading || username === "" || round === 0}
-          onClick={onSubmitScore}
-          style={{ marginTop: 8 }}
-        >
-          Submit Score
-        </Button>
-      </>
-    ) : null;
-  };
-
-  /**
-   * Function for displaying the heatmap button after the game mode was selected
-   */
-  const showHeatmapButton = () => {
-    if (!isGameModeSelected) {
-      return null;
-    }
-
-    return (
-      <Button
-        disabled={round === 0 || roundRunning || loading}
-        color="inherit"
-        onClick={onShowHeatmap}
-      >
-        Show Heatmap
-      </Button>
-    );
-  };
-
-  /**
    * Main return from the React Functional Component
    */
   return (
@@ -1019,11 +926,27 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
           <Typography className={classes.title}>Spot the Lesion</Typography>
 
-          {showHeatmapButton()}
+          <Button
+            disabled={round === 0 || roundRunning || loading}
+            color="inherit"
+            onClick={onShowHeatmap}
+          >
+            Show Heatmap
+          </Button>
         </Toolbar>
       </AppBar>
 
-      {displayGame()}
+      <div className={classes.container}>
+        <div className={classes.emptyDiv} />
+
+        {displayGameContent()}
+
+        {displaySideCard()}
+      </div>
+
+      {displayHeatmapDialog()}
+
+      <SubmitScoreDialog open={showSubmit} onClose={onCloseSubmit} onSubmit={onSubmitScore} />
     </>
   );
 };

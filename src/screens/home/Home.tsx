@@ -1,12 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   AppBar,
   Button,
   ButtonGroup,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Theme,
   Toolbar,
   Typography,
-  Theme,
 } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import logo from "../../res/images/home/logo.gif";
@@ -69,6 +74,17 @@ const useStyles = makeStyles((theme: Theme) =>
 const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
   const classes = useStyles();
 
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const suggestTutorialIfFirstTimePlaying = () => {
+    if (localStorage.getItem("firstSession")) {
+      setRoute("game");
+    } else {
+      setDialogOpen(true);
+      localStorage.setItem("firstSession", "true");
+    }
+  };
+
   return (
     <>
       <AppBar position="sticky">
@@ -89,7 +105,7 @@ const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => setRoute("game")}
+              onClick={() => suggestTutorialIfFirstTimePlaying()}
             >
               Play
             </Button>
@@ -147,6 +163,25 @@ const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
 
           <img className={classes.image} src={brain} alt="Brain" />
         </div>
+
+        <Dialog open={dialogOpen} aria-labelledby="form-dialog-title">
+          <DialogTitle id="form-dialog-title">What about a short tutorial?</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Hey. We have noticed that this is your first time playing on this browser. We want to
+              make sure you get a feeling of what is going on before jumping in the game, so we
+              suggest you take a look at the tutorial.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setRoute("tutorial")} color="primary">
+              Show me the tutorial
+            </Button>
+            <Button onClick={() => setRoute("game")} color="primary">
+              I just want to play
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </>
   );
