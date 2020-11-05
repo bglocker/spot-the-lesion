@@ -684,16 +684,28 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   };
 
   /**
-   * Display the winner
+   * Display the winner (only on competitive mode, after last round)
    */
   const showWinner = () => {
+    if (
+      gameMode === "casual" ||
+      (gameMode === "competitive" && round < NUM_ROUNDS) ||
+      roundRunning ||
+      loading
+    ) {
+      return null;
+    }
+
     let text: string;
     let color: string;
 
-    if (playerScore > aiScore) {
+    const endPlayerScore = playerScore + playerRoundScore;
+    const endAiScore = aiScore + aiRoundScore;
+
+    if (endPlayerScore > endAiScore) {
       text = "You won!";
       color = VALID_COLOUR;
-    } else if (playerScore < aiScore) {
+    } else if (endPlayerScore < endAiScore) {
       text = "AI won!";
       color = INVALID_COLOUR;
     } else {
@@ -721,16 +733,29 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
     enqueueSnackbar("Score successfully submitted!");
   };
 
-  const sideAction = () => {
-    if (round < NUM_ROUNDS || roundRunning || loading) {
-      return (
-        <LoadingButton
-          loading={loading}
-          buttonDisabled={roundRunning || loading}
-          onButtonClick={startRound}
-          buttonText={round === 0 ? "Start" : "Next"}
-        />
-      );
+  const displayStartRoundButton = () => {
+    if (gameMode === "competitive" && round === NUM_ROUNDS) {
+      return null;
+    }
+
+    return (
+      <LoadingButton
+        loading={loading}
+        buttonDisabled={roundRunning || loading}
+        onButtonClick={startRound}
+        buttonText={round === 0 ? "Start" : "Next"}
+      />
+    );
+  };
+
+  const displayOutOfRoundActions = () => {
+    if (
+      (gameMode === "casual" && round === 0) ||
+      (gameMode === "competitive" && round < NUM_ROUNDS) ||
+      roundRunning ||
+      loading
+    ) {
+      return null;
     }
 
     return (
@@ -748,8 +773,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
           value={username}
           onChange={onChangeUsername}
         />
-
-        {showWinner()}
 
         <Button
           variant="contained"
@@ -860,9 +883,11 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
             </Typography>
           </div>
 
-          <div className={classes.result}>{sideAction()}</div>
+          {showWinner()}
 
-          {displaySubmitButton()}
+          {displayStartRoundButton()}
+
+          {displayOutOfRoundActions()}
         </Card>
       </div>
     );
@@ -892,47 +917,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
         <HeatmapDisplay imageId={imageId} />
       </Dialog>
-    );
-  };
-
-  /**
-   * Function for displaying the Submit button for Casual Game Mode
-   * For Competitive Mode, display nothing
-   */
-  const displaySubmitButton = () => {
-    if (gameMode === "competitive") {
-      return null;
-    }
-
-    return (
-      <>
-        <TwitterShareButton
-          url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
-          title={`I got ${playerScore} points in Spot-the-Lesion! Can you beat my score?`}
-        >
-          <TwitterIcon size="50px" round />
-        </TwitterShareButton>
-
-        <TextField
-          label="Username"
-          variant="outlined"
-          value={username}
-          onChange={onChangeUsername}
-        />
-
-        <div />
-
-        <Button
-          variant="contained"
-          color="primary"
-          size="large"
-          disabled={round === 0 || roundRunning || loading || username === ""}
-          onClick={onSubmitScore}
-          style={{ marginTop: 8 }}
-        >
-          Submit Score
-        </Button>
-      </>
     );
   };
 
