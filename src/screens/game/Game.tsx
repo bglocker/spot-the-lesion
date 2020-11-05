@@ -7,9 +7,7 @@ import {
   IconButton,
   TextField,
   Toolbar,
-  ButtonGroup,
   Typography,
-  Container,
 } from "@material-ui/core";
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import { KeyboardBackspace, Check, Clear, Close } from "@material-ui/icons";
@@ -157,40 +155,8 @@ const useStyles = makeStyles((theme: Theme) =>
       flex: 1,
       flexDirection: "column",
     },
-    gameModeSelectionText: {
-      alignItems: "center",
-      alignSelf: "center",
-      justifyContent: "center",
-      textAlign: "center",
-      margin: 8,
-      fontSize: "250%",
-      fontWeight: "bold",
-      fontFamily: "segoe UI",
-    },
     displayHintButton: {
       backgroundColor: "#63A2AB",
-    },
-    gameModeButton: {
-      margin: 8,
-      borderRadius: 20,
-      [theme.breakpoints.only("xs")]: {
-        width: 300,
-        height: 50,
-        fontSize: "1rem",
-      },
-      [theme.breakpoints.only("sm")]: {
-        width: 350,
-        height: 58,
-        fontSize: "1rem",
-      },
-      [theme.breakpoints.up("md")]: {
-        width: 370,
-        height: 61,
-        fontSize: "1.25rem",
-      },
-    },
-    heatmapButton: {
-      backgroundColor: "#021C1E",
     },
     checkGreen: {
       fill: "green",
@@ -223,7 +189,7 @@ const MAX_FILE_NUMBER = 100;
 
 type JsonData = { truth: number[]; predicted: number[] };
 
-const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
+const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   const seenFiles = new Set<number>();
 
   const [context, canvasRef] = useCanvasContext();
@@ -259,9 +225,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [aiCorrectAnswers, setAiCorrectAnswers] = useState(0);
 
   const [username, setUsername] = useState("");
-
-  const [gameMode, setGameMode] = useState<GameMode>("casual");
-  const [isGameModeSelected, setGameModeSelected] = useState(false);
 
   const [showHeatmap, setShowHeatmap] = useState(false);
 
@@ -808,65 +771,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const onCloseHeatmap = () => setShowHeatmap(false);
 
   /**
-   * Function for displaying the game content
-   * First display the game mode selection, then the game content
-   */
-  const displayGame = () => {
-    if (!isGameModeSelected) {
-      return (
-        <>
-          <Container className={classes.container} style={{ flexDirection: "column" }}>
-            <Typography className={classes.gameModeSelectionText}>Choose a game mode</Typography>
-
-            <ButtonGroup orientation="vertical">
-              <Button
-                className={classes.gameModeButton}
-                variant="contained"
-                color="primary"
-                size="large"
-                onClick={() => {
-                  setGameModeSelected(true);
-                  setGameMode("casual");
-                }}
-              >
-                Casual
-              </Button>
-
-              <Button
-                className={classes.gameModeButton}
-                variant="contained"
-                color="primary"
-                size="large"
-                onClick={() => {
-                  setGameModeSelected(true);
-                  setGameMode("competitive");
-                }}
-              >
-                Competitive
-              </Button>
-            </ButtonGroup>
-          </Container>
-        </>
-      );
-    }
-
-    // Game mode selected. Display the actual game content
-    return (
-      <>
-        <div className={classes.container}>
-          <div className={classes.emptyDiv} />
-
-          {displayGameContent()}
-
-          {displayScoreCard()}
-
-          {displayHeatmapDialog()}
-        </div>
-      </>
-    );
-  };
-
-  /**
    * Function for displaying the actual Game Content
    * Display Show Hint button for Casual Mode (gameMode === 0)
    * Display Timer Bar for Competitive Mode (gameMode === 1)
@@ -1030,25 +934,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   /**
-   * Function for displaying the heatmap button after the game mode was selected
-   */
-  const showHeatmapButton = () => {
-    if (!isGameModeSelected) {
-      return null;
-    }
-
-    return (
-      <Button
-        disabled={round === 0 || roundRunning || loading}
-        color="inherit"
-        onClick={onShowHeatmap}
-      >
-        Show Heatmap
-      </Button>
-    );
-  };
-
-  /**
    * Main return from the React Functional Component
    */
   return (
@@ -1067,11 +952,25 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
           <Typography className={classes.title}>Spot the Lesion</Typography>
 
-          {showHeatmapButton()}
+          <Button
+            disabled={round === 0 || roundRunning || loading}
+            color="inherit"
+            onClick={onShowHeatmap}
+          >
+            Show Heatmap
+          </Button>
         </Toolbar>
       </AppBar>
 
-      {displayGame()}
+      <div className={classes.container}>
+        <div className={classes.emptyDiv} />
+
+        {displayGameContent()}
+
+        {displayScoreCard()}
+
+        {displayHeatmapDialog()}
+      </div>
     </>
   );
 };
