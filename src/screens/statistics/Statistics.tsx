@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   AppBar,
   Button,
@@ -328,31 +328,13 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     setSlideDirection(direction);
     setSlideIn(false);
 
-    window.setTimeout(() => {
+    window.setTimeout(async () => {
       setSlideIndex(newIndex);
       setSlideDirection(oppDirection);
       setSlideIn(true);
+      await retrieveStatistics(currentGameModeIndex, slideIndex);
     }, 500);
   };
-
-  /**
-   * useEffect hook for changing stats tabs with the arrow keys
-   */
-  useEffect(() => {
-    const onKeyDown = (e: { keyCode: number }) => {
-      if (e.keyCode === 37) {
-        onArrowClick("left");
-      }
-
-      if (e.keyCode === 39) {
-        onArrowClick("right");
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-
-    return () => window.removeEventListener("keydown", onKeyDown);
-  });
 
   /**
    * Function for displaying the slideshow buttons after the game mode was selected
