@@ -22,6 +22,7 @@ const useStyles = makeStyles((theme: Theme) =>
     selectText: {
       fontSize: "3rem",
       fontWeight: "bold",
+      textAlign: "center",
     },
     gameModeButton: {
       margin: 8,

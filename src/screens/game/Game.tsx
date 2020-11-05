@@ -128,7 +128,6 @@ const useStyles = makeStyles((theme: Theme) =>
       },
     },
     sideCard: {
-      minWidth: "20vw",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
@@ -139,8 +138,11 @@ const useStyles = makeStyles((theme: Theme) =>
         width: "80vw",
         maxWidth: "65vh",
       },
+      [theme.breakpoints.up("md")]: {
+        minWidth: "20vw",
+      },
     },
-    result: {
+    sideCardText: {
       [theme.breakpoints.down("sm")]: {
         fontSize: "1.5rem",
       },
@@ -148,17 +150,20 @@ const useStyles = makeStyles((theme: Theme) =>
         fontSize: "2rem",
       },
     },
-    flexButton: {
-      flex: 1,
+    scoresContainer: {
+      display: "flex",
+      [theme.breakpoints.down("sm")]: {
+        width: "100%",
+        flexDirection: "row",
+        justifyContent: "space-evenly",
+      },
+      [theme.breakpoints.up("md")]: {
+        flexDirection: "column",
+        alignItems: "center",
+      },
     },
     showHintButton: {
       backgroundColor: "#63a2ab",
-    },
-    checkGreen: {
-      fill: "green",
-    },
-    clearRed: {
-      fill: "red",
     },
   })
 );
@@ -169,7 +174,7 @@ const DEFAULT_COLOUR = "yellow";
 const TRUE_COLOUR = "blue";
 const INITIAL_TIMER_COLOR = "#373737";
 
-const NUM_ROUNDS = 10;
+const NUM_ROUNDS = 1;
 
 const ROUND_START_TIME = 10000;
 
@@ -714,7 +719,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
     }
 
     return (
-      <Typography className={classes.result} variant="h6" style={{ color }}>
+      <Typography className={classes.sideCardText} variant="h6" style={{ color }}>
         {text}
       </Typography>
     );
@@ -865,20 +870,16 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
     return (
       <div className={classes.sideContainer}>
         <Card className={classes.sideCard}>
-          <div className={classes.flexButton}>
-            <Typography className={classes.result} variant="h4">
+          <div className={classes.scoresContainer}>
+            <Typography className={classes.sideCardText} variant="h4">
               You: {playerScore} {showRoundScore(playerRoundScore)}
             </Typography>
-          </div>
 
-          <div className={classes.flexButton}>
-            <Typography className={classes.result} variant="h4">
+            <Typography className={classes.sideCardText} variant="h4">
               vs
             </Typography>
-          </div>
 
-          <div className={classes.flexButton}>
-            <Typography className={classes.result} variant="h4">
+            <Typography className={classes.sideCardText} variant="h4">
               AI: {aiScore} {showRoundScore(aiRoundScore)}
             </Typography>
           </div>
