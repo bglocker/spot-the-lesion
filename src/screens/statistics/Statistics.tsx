@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AppBar, Card, CircularProgress, IconButton, Toolbar, Typography } from "@material-ui/core";
+import { AppBar, Card, IconButton, Tab, Tabs, Toolbar, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { ResponsivePie } from "@nivo/pie";
@@ -28,6 +28,16 @@ const useStyles = makeStyles(() =>
       alignItems: "center",
       overflow: "hidden",
     },
+    gameTypeAppBar: {
+      alignItems: "center",
+      backgroundColor: "#003B46",
+    },
+    tab: {
+      fontSize: "1.5rem",
+    },
+    tabIndicator: {
+      backgroundColor: "#C4DFE6",
+    },
   })
 );
 
@@ -37,13 +47,16 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
   /**
    * Loading flag to enable waiting
    */
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
 
   /**
-   * Retrieves the data from the databse to display into the pie-chart and graph
+   * Retrieves the data from the database to display into the pie-chart and graph
    */
   const [aiWins, setAiWins] = useState(0);
   const [humanWins, setHumanWins] = useState(0);
+
+  const [currentLeaderboardIndex, setCurrentLeaderBoardIndex] = useState(0);
+  const [firstTimeOpened, setFirstTimeOpened] = useState(true);
 
   const retrieveStatistics = async () => {
     const snapshot = await db.collection(DbUtils.LEADERBOARD).get();
@@ -61,52 +74,20 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     setHumanWins(noOfHumanWins);
     setAiWins(noOfAiWins);
 
-    setLoading(false);
+    // setLoading(false);
   };
 
-  if (loading) {
-    retrieveStatistics();
+  const onGameTabChange = async (newLeaderboardIndex: number) => {
+    setCurrentLeaderBoardIndex(newLeaderboardIndex);
+    setFirstTimeOpened(false);
+    await retrieveStatistics();
+  };
+
+  const displayStats = () => {
+    if (firstTimeOpened) {
+      return null;
+    }
     return (
-      <>
-        <AppBar position="sticky">
-          <Toolbar variant="dense">
-            <IconButton
-              className={classes.backButton}
-              edge="start"
-              color="inherit"
-              aria-label="Back"
-              onClick={() => setRoute("home")}
-            >
-              <KeyboardBackspace />
-            </IconButton>
-
-            <Typography>Spot the Lesion</Typography>
-          </Toolbar>
-        </AppBar>
-
-        <CircularProgress />
-      </>
-    );
-  }
-
-  return (
-    <>
-      <AppBar position="sticky">
-        <Toolbar variant="dense">
-          <IconButton
-            className={classes.backButton}
-            edge="start"
-            color="inherit"
-            aria-label="Back"
-            onClick={() => setRoute("home")}
-          >
-            <KeyboardBackspace />
-          </IconButton>
-
-          <Typography>Spot the Lesion</Typography>
-        </Toolbar>
-      </AppBar>
-
       <div className={classes.container}>
         <Card className={classes.card}>
           <ResponsivePie
@@ -202,6 +183,75 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
           />
         </Card>
       </div>
+    );
+  };
+
+  // if (loading) {
+  //   retrieveStatistics();
+  //   return (
+  //     <>
+  //       <AppBar position="sticky">
+  //         <Toolbar variant="dense">
+  //           <IconButton
+  //             className={classes.backButton}
+  //             edge="start"
+  //             color="inherit"
+  //             aria-label="Back"
+  //             onClick={() => setRoute("home")}
+  //           >
+  //             <KeyboardBackspace />
+  //           </IconButton>
+  //
+  //           <Typography>Spot the Lesion</Typography>
+  //         </Toolbar>
+  //       </AppBar>
+  //
+  //       <CircularProgress />
+  //     </>
+  //   );
+  // }
+
+  return (
+    <>
+      <AppBar position="sticky">
+        <Toolbar variant="dense">
+          <IconButton
+            className={classes.backButton}
+            edge="start"
+            color="inherit"
+            aria-label="Back"
+            onClick={() => setRoute("home")}
+          >
+            <KeyboardBackspace />
+          </IconButton>
+
+          <Typography>Spot the Lesion</Typography>
+        </Toolbar>
+      </AppBar>
+
+      <AppBar className={classes.gameTypeAppBar} position="sticky">
+        <Tabs
+          value={currentLeaderboardIndex}
+          onChange={(_, newLeaderboardIndex) => onGameTabChange(newLeaderboardIndex)}
+          aria-label="Gametypes"
+          classes={{ indicator: classes.tabIndicator }}
+        >
+          <Tab
+            className={classes.tab}
+            label="Casual"
+            id="gametype-0"
+            aria-controls="gametype-view-0"
+          />
+
+          <Tab
+            className={classes.tab}
+            label="Competitive"
+            id="gametype-1"
+            aria-controls="gametype-view-1"
+          />
+        </Tabs>
+      </AppBar>
+      {displayStats()}
     </>
   );
 };
