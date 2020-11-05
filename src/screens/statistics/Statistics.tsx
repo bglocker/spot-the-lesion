@@ -116,6 +116,8 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
    * @param gameModeIndex - the index of the game mode for which the stats are retrieved
    *                      - 0 for Casual, 1 for Competitive
    * @param statsIndex - the index of the specific Stats page to display
+   *                   - 0 for 'Human vs AI wins'
+   *                   - 1 for 'How many players used hints'
    */
   const retrieveStatistics = async (gameModeIndex: number, statsIndex: number) => {
     const leaderboard =
@@ -123,6 +125,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     const snapshot = await db.collection(leaderboard).get();
 
     if (statsIndex === 0) {
+      // Statistics: Human vs AI wins
       let noOfHumanWins = 0;
       let noOfAiWins = 0;
       let noOfDraws = 0;
@@ -143,6 +146,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
       setAiWins(noOfAiWins);
       setDraws(noOfDraws);
     } else if (statsIndex === 1) {
+      // Statistics: How many players used hints
       let withHints = 0;
       snapshot.forEach((doc) => {
         withHints += doc.data().usedHints ? 1 : 0;
@@ -180,6 +184,10 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     return displayStatsPage(statsIndex);
   };
 
+  /**
+   * Function for displaying a single Stats page (slide)
+   * @param statsIndex - index of the stats page (slide) to display
+   */
   const displayStatsPage = (statsIndex: number) => {
     if (statsIndex === 0) {
       const data = [
@@ -228,6 +236,11 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     return <div className={classes.emptyDiv} />;
   };
 
+  /**
+   * Function for displaying a Pie Chart with statistics
+   * @param title - Title of the stats page to be displayed
+   * @param data - the user statistics to be displayed
+   */
   const displayPieChart = (
     title: string,
     data: { id: string; label: string; value: number; color: string }[]
