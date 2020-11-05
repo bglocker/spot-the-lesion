@@ -68,16 +68,22 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
 
   /**
    * Function used for retrieving the statistics for the current game mode
+   * @param statsIndex - the index of the game mode for which the stats are retrieved
+   *                   - 0 for Casual, 1 for Competitive
    */
-  const retrieveStatistics = async () => {
-    const snapshot = await db.collection(DbUtils.LEADERBOARD).get();
+  const retrieveStatistics = async (statsIndex: number) => {
+    const leaderboard =
+      statsIndex === 0 ? DbUtils.LEADERBOARD_CASUAL : DbUtils.LEADERBOARD_COMPETITIVE;
+    const snapshot = await db.collection(leaderboard).get();
     let noOfHumanWins = 0;
     let noOfAiWins = 0;
 
     snapshot.forEach((doc) => {
-      if (doc.data().correct_player_answers > doc.data().correct_ai_answers) {
+      const playerScore = doc.data().score;
+      const aiScore = statsIndex === 0 ? doc.data().correct_ai_answers : doc.data().ai_score;
+      if (playerScore > aiScore) {
         noOfHumanWins += 1;
-      } else {
+      } else if (aiScore > playerScore) {
         noOfAiWins += 1;
       }
     });
@@ -93,7 +99,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
   const onGameTabChange = async (newStatisticsIndex: number) => {
     setCurrentStatsIndex(newStatisticsIndex);
     setGameModeSelected(true);
-    await retrieveStatistics();
+    await retrieveStatistics(newStatisticsIndex);
   };
 
   /**
