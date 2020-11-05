@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AppBar, Card, IconButton, Tab, Tabs, Toolbar, Typography } from "@material-ui/core";
+import { AppBar, Card, Grid, IconButton, Tab, Tabs, Toolbar, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { ResponsivePie } from "@nivo/pie";
@@ -38,6 +38,11 @@ const useStyles = makeStyles(() =>
     tabIndicator: {
       backgroundColor: "#C4DFE6",
     },
+    gameModeSelectionText: {
+      fontSize: "150%",
+      fontWeight: "bold",
+      fontFamily: "segoe UI",
+    },
   })
 );
 
@@ -45,19 +50,25 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
   const classes = useStyles();
 
   /**
-   * Loading flag to enable waiting
-   */
-  // const [loading, setLoading] = useState(true);
-
-  /**
    * Retrieves the data from the database to display into the pie-chart and graph
    */
   const [aiWins, setAiWins] = useState(0);
   const [humanWins, setHumanWins] = useState(0);
 
-  const [currentLeaderboardIndex, setCurrentLeaderBoardIndex] = useState(0);
-  const [firstTimeOpened, setFirstTimeOpened] = useState(true);
+  /**
+   * Index for the current Statistics page
+   * Casual Mode - index 0; Competitive Mode - index 1
+   */
+  const [currentStatsIndex, setCurrentStatsIndex] = useState(0);
 
+  /**
+   * Hook used for prompting the user to select the game mode
+   */
+  const [gameModeSelected, setGameModeSelected] = useState(false);
+
+  /**
+   * Function used for retrieving the statistics for the current game mode
+   */
   const retrieveStatistics = async () => {
     const snapshot = await db.collection(DbUtils.LEADERBOARD).get();
     let noOfHumanWins = 0;
@@ -73,19 +84,30 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
 
     setHumanWins(noOfHumanWins);
     setAiWins(noOfAiWins);
-
-    // setLoading(false);
   };
 
-  const onGameTabChange = async (newLeaderboardIndex: number) => {
-    setCurrentLeaderBoardIndex(newLeaderboardIndex);
-    setFirstTimeOpened(false);
+  /**
+   * Function for triggering the re-render of the statistics according to the new stats index
+   * @param newStatisticsIndex
+   */
+  const onGameTabChange = async (newStatisticsIndex: number) => {
+    setCurrentStatsIndex(newStatisticsIndex);
+    setGameModeSelected(true);
     await retrieveStatistics();
   };
 
+  /**
+   * Function for displaying the Statistics for Casual or Competitive Game Mode
+   * If game mode not selected yet, prompt the user to do so
+   * Otherwise, show corresponding stats
+   */
   const displayStats = () => {
-    if (firstTimeOpened) {
-      return null;
+    if (!gameModeSelected) {
+      return (
+        <Grid container justify="center">
+          <Typography className={classes.gameModeSelectionText}>SELECT A GAME MODE</Typography>
+        </Grid>
+      );
     }
     return (
       <div className={classes.container}>
@@ -186,31 +208,9 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     );
   };
 
-  // if (loading) {
-  //   retrieveStatistics();
-  //   return (
-  //     <>
-  //       <AppBar position="sticky">
-  //         <Toolbar variant="dense">
-  //           <IconButton
-  //             className={classes.backButton}
-  //             edge="start"
-  //             color="inherit"
-  //             aria-label="Back"
-  //             onClick={() => setRoute("home")}
-  //           >
-  //             <KeyboardBackspace />
-  //           </IconButton>
-  //
-  //           <Typography>Spot the Lesion</Typography>
-  //         </Toolbar>
-  //       </AppBar>
-  //
-  //       <CircularProgress />
-  //     </>
-  //   );
-  // }
-
+  /**
+   * Main return from the Statistics Functional Component
+   */
   return (
     <>
       <AppBar position="sticky">
@@ -231,8 +231,8 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
 
       <AppBar className={classes.gameTypeAppBar} position="sticky">
         <Tabs
-          value={currentLeaderboardIndex}
-          onChange={(_, newLeaderboardIndex) => onGameTabChange(newLeaderboardIndex)}
+          value={currentStatsIndex}
+          onChange={(_, newStatisticsIndex) => onGameTabChange(newStatisticsIndex)}
           aria-label="Gametypes"
           classes={{ indicator: classes.tabIndicator }}
         >
