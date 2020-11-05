@@ -57,7 +57,7 @@ const useStyles = makeStyles((theme: Theme) =>
         flex: 1,
       },
     },
-    upperBarCanvasContainer: {
+    topBarCanvasContainer: {
       display: "flex",
       flexDirection: "column",
       justifyContent: "space-evenly",
@@ -406,10 +406,10 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
       /* Player was successful if the click coordinates are inside the truth rectangle */
       if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
-        /* For Casual Mode: if Hint was shown, receive half a point; otherwise receive full point */
+        /* Casual Mode: half a point, doubled if no hint received */
         const casualRoundScore = hinted ? 0.5 : 1;
 
-        /* For Competitive Mode: round time taken doubled if no hint provided */
+        /* Competitive Mode: function of round time left, doubled if no hint received */
         const competitiveRoundScore = (roundTime / 1000) * (hinted ? 10 : 20);
 
         const roundScore = gameMode === "casual" ? casualRoundScore : competitiveRoundScore;
@@ -433,7 +433,13 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
       /* AI was successful if the ratio of the intersection over the union is greater than 0.5 */
       if (intersectionOverUnion > 0.5) {
-        const roundScore = Math.round(intersectionOverUnion * AI_SCORE_INCREASE_RATE);
+        /* Casual mode: one point */
+        const casualRoundScore = 1;
+
+        /* Competitive mode: function of prediction accuracy and constant increase rate */
+        const competitiveRoundScore = Math.round(intersectionOverUnion * AI_SCORE_INCREASE_RATE);
+
+        const roundScore = gameMode === "casual" ? casualRoundScore : competitiveRoundScore;
 
         setAiScore((prevState) => prevState + roundScore);
         setAiCorrectAnswers((prevState) => prevState + 1);
@@ -772,12 +778,12 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
   /**
    * Function for displaying the actual Game Content
-   * Display Show Hint button for Casual Mode (gameMode === 0)
-   * Display Timer Bar for Competitive Mode (gameMode === 1)
+   * Display Show Hint button for Casual Mode
+   * Display Timer for Competitive Mode
    */
   const displayGameContent = () => {
-    return gameMode === "casual" ? (
-      <div className={classes.upperBarCanvasContainer}>
+    const topBar =
+      gameMode === "casual" ? (
         <Card className={classes.hintButtonContainer}>
           <Button
             className={classes.displayHintButton}
@@ -787,13 +793,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
             Show hint
           </Button>
         </Card>
-
-        {displayGameCanvas()}
-      </div>
-    ) : (
-      <div className={classes.upperBarCanvasContainer}>
+      ) : (
         <Card className={classes.timerContainer}>
-          <Typography className={classes.timer} variant="h4" style={{ color: timerColor }}>
+          <Typography className={classes.timer} variant="h4">
             Time remaining: {(roundTime / 1000).toFixed(1)}s
           </Typography>
 
@@ -803,8 +805,28 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
             value={roundTime / 100}
           />
         </Card>
+      );
 
-        {displayGameCanvas()}
+    return (
+      <div className={classes.topBarCanvasContainer}>
+        {topBar}
+
+        <Card className={classes.canvasContainer}>
+          <canvas
+            className={classes.canvas}
+            ref={canvasRef}
+            width={MAX_CANVAS_SIZE}
+            height={MAX_CANVAS_SIZE}
+          />
+
+          <canvas
+            className={classes.canvas}
+            ref={animationCanvasRef}
+            width={MAX_CANVAS_SIZE}
+            height={MAX_CANVAS_SIZE}
+            onClick={onCanvasClick}
+          />
+        </Card>
       </div>
     );
   };
@@ -826,7 +848,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
           <div className={classes.flexButton}>
             <Typography className={classes.result} variant="h4">
-              {playerScore} vs {gameMode === "casual" ? aiCorrectAnswers : aiScore}
+              {playerScore} vs {aiScore}
             </Typography>
           </div>
 
@@ -873,35 +895,15 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   };
 
   /**
-   * Function for displaying the game main canvas
-   */
-  const displayGameCanvas = () => {
-    return (
-      <Card className={classes.canvasContainer}>
-        <canvas
-          className={classes.canvas}
-          ref={canvasRef}
-          width={MAX_CANVAS_SIZE}
-          height={MAX_CANVAS_SIZE}
-        />
-
-        <canvas
-          className={classes.canvas}
-          ref={animationCanvasRef}
-          width={MAX_CANVAS_SIZE}
-          height={MAX_CANVAS_SIZE}
-          onClick={onCanvasClick}
-        />
-      </Card>
-    );
-  };
-
-  /**
    * Function for displaying the Submit button for Casual Game Mode
    * For Competitive Mode, display nothing
    */
   const displaySubmitButton = () => {
-    return gameMode === "casual" ? (
+    if (gameMode === "competitive") {
+      return null;
+    }
+
+    return (
       <>
         <TwitterShareButton
           url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
@@ -923,14 +925,14 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
           variant="contained"
           color="primary"
           size="large"
-          disabled={roundRunning || loading || username === "" || round === 0}
+          disabled={round === 0 || roundRunning || loading || username === ""}
           onClick={onSubmitScore}
           style={{ marginTop: 8 }}
         >
           Submit Score
         </Button>
       </>
-    ) : null;
+    );
   };
 
   /**
