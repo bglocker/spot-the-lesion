@@ -630,8 +630,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
     const date = new Date();
     const entry = {
       user: username,
-      score: playerScore,
-      ai_score: aiScore,
+      score: playerScore + playerRoundScore,
+      ai_score: aiScore + aiRoundScore,
       correct_player_answers: playerCorrectAnswers,
       usedHints: hintedAtLeastOnce,
       correct_ai_answers: aiCorrectAnswers,
