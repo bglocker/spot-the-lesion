@@ -369,7 +369,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     }
 
     if (endTime === 0) {
-      /* 0 seconds passed: draw and upload player click if available, and start the AI search animation */
+      /*
+       * 0 seconds passed: draw and upload player click if available,
+       * start animationTimer and pause endTimer while animationTimer is running
+       */
       setLoading(true);
       setRoundRunning(false);
 
@@ -384,15 +387,14 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       enqueueSnackbar("The system is thinking...");
 
       setAnimationRunning(true);
-    } else if (endTime === ANIMATION_TIME + 100) {
-      /* 5 seconds passed: stop AI search animation, draw predicted rectangle in default color */
-      setAnimationRunning(false);
-
+      setEndRunning(false);
+    } else if (endTime === 100) {
+      /* 0.1 seconds passed: draw predicted rectangle in default color */
       drawRectangle(context, predicted, DEFAULT_COLOUR, 3);
-    } else if (endTime === ANIMATION_TIME + 500) {
-      /* 5.5 seconds passed: draw truth rectangle */
+    } else if (endTime === 500) {
+      /* 1 second passed: draw truth rectangle */
       drawRectangle(context, truth, TRUE_COLOUR, 3);
-    } else if (endTime === ANIMATION_TIME + 1000 && click) {
+    } else if (endTime === 1000 && click) {
       /* 6 seconds passed: evaluate player click if available  */
       const { x, y } = click;
 
@@ -416,8 +418,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       } else {
         drawCross(context, x, y, 5, INVALID_COLOUR);
       }
-    } else if (endTime === ANIMATION_TIME + 1500) {
-      /* 6.5 seconds passed: evaluate AI prediction */
+    } else if (endTime === 1500) {
+      /* 1.5 seconds passed: evaluate AI prediction */
       const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
 
       /* AI was successful if the ratio of the intersection over the union is greater than 0.5 */
@@ -469,8 +471,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     /* Clear previous cube */
     animationContext.clearRect(0, 0, animationContext.canvas.width, animationContext.canvas.height);
 
-    /* Stop when all cube positions were reached */
+    /* Stop when all cube positions were reached, and resume endTimer with one tick passed */
     if (animationPosition === NUM_SEARCH_CUBES * NUM_SEARCH_CUBES) {
+      setAnimationRunning(false);
+      setEndTime((prevState) => prevState + 100);
+      setEndRunning(true);
       return;
     }
 
