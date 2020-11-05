@@ -57,6 +57,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
    */
   const [aiWins, setAiWins] = useState(0);
   const [humanWins, setHumanWins] = useState(0);
+  const [draws, setDraws] = useState(0);
 
   /**
    * Index for the current Statistics page
@@ -80,6 +81,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     const snapshot = await db.collection(leaderboard).get();
     let noOfHumanWins = 0;
     let noOfAiWins = 0;
+    let noOfDraws = 0;
 
     snapshot.forEach((doc) => {
       const playerScore = doc.data().score;
@@ -88,11 +90,14 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
         noOfHumanWins += 1;
       } else if (aiScore > playerScore) {
         noOfAiWins += 1;
+      } else {
+        noOfDraws += 1;
       }
     });
 
     setHumanWins(noOfHumanWins);
     setAiWins(noOfAiWins);
+    setDraws(noOfDraws);
   };
 
   /**
@@ -135,6 +140,12 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
                 label: "Human Wins",
                 value: humanWins,
                 color: "hsl(194, 70%, 50%)",
+              },
+              {
+                id: "Draws",
+                label: "Draws",
+                value: draws,
+                color: "hsl(124, 43%, 81%)",
               },
             ]}
             margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
