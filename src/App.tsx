@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { makeStyles, createStyles, createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
+import { createMuiTheme, createStyles, makeStyles, ThemeProvider } from "@material-ui/core/styles";
 import { SnackbarProvider } from "notistack";
 import colors from "./res/colors";
 import Home from "./screens/home/Home";

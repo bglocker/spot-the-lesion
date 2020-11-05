@@ -171,7 +171,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
 
       <AppBar className={classes.appBar} position="sticky">
         <Tabs
-          value={currentTableIndex}
+          value={firstTimeOpened ? false : currentTableIndex}
           onChange={(_, newTableIndex) => onTabChange(newTableIndex)}
           aria-label="Leaderboards"
           classes={{ indicator: classes.tabIndicator }}
@@ -200,7 +200,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
       </AppBar>
       <AppBar className={classes.gameTypeAppBar} position="sticky">
         <Tabs
-          value={currentLeaderboardIndex}
+          value={firstTimeOpened ? false : currentLeaderboardIndex}
           onChange={(_, newLeaderboardIndex) => onGameTabChange(newLeaderboardIndex)}
           aria-label="Gametypes"
           classes={{ indicator: classes.tabIndicator }}
