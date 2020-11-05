@@ -1,3 +1,41 @@
+/* Default canvas size, used for scale mapping */
+import React from "react";
+
+const DEFAULT_CANVAS_SIZE = 512;
+
+/**
+ * Maps a given value to the given canvas scale
+ *
+ * @param ctx Canvas context, used to determine canvas size for scaling
+ * @param x   Value to map
+ *
+ * @return Given value, mapped to the canvas scale
+ */
+const mapToCanvasScale = (ctx: CanvasRenderingContext2D, x: number): number =>
+  (x * ctx.canvas.width) / DEFAULT_CANVAS_SIZE;
+
+/**
+ * Maps the click position relative to the canvas
+ *
+ * @param ctx   Canvas context to map relative to
+ * @param event Mouse event, used to get click position
+ *
+ * @return Click coordinates relative to the canvas
+ */
+const mapClickToCanvas = (
+  ctx: CanvasRenderingContext2D,
+  event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
+): { x: number; y: number } => {
+  const rect = ctx.canvas.getBoundingClientRect();
+  const widthScale = ctx.canvas.width / rect.width;
+  const heightScale = ctx.canvas.height / rect.height;
+
+  return {
+    x: (event.clientX - rect.left) * widthScale,
+    y: (event.clientY - rect.top) * heightScale,
+  };
+};
+
 /**
  * Draws a rectangle
  *
@@ -77,4 +115,4 @@ const drawCircle = (
   ctx.stroke();
 };
 
-export { drawCircle, drawCross, drawRectangle };
+export { drawCircle, drawCross, drawRectangle, mapClickToCanvas, mapToCanvasScale };

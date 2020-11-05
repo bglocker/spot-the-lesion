@@ -15,6 +15,10 @@ const useStyles = makeStyles(() =>
     },
     appBar: {
       alignItems: "center",
+      backgroundColor: "#004445",
+    },
+    gameTypeAppBar: {
+      alignItems: "center",
       backgroundColor: "#003B46",
     },
     tabIndicator: {
@@ -32,7 +36,8 @@ const useStyles = makeStyles(() =>
 const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps) => {
   const classes = useStyles();
 
-  const [currentTabIndex, setCurrentTabIndex] = React.useState(0);
+  const [currentTableIndex, setCurrentTableIndex] = React.useState(0);
+  const [currentLeaderboardIndex, setCurrentLeaderboardIndex] = React.useState(0);
   const [firstTimeOpened, setFirstTimeOpened] = React.useState(true);
 
   const [scores, setScores] = useState<ScoreType[]>([]);
@@ -58,9 +63,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
    * Function for creating the Leaderboard
    * and fetching the Leaderboard data from Firebase in real time
    * @param tableIndex - index of the table in DB to display
-   * tableIndex = 0 for Daily, 1 for Monthly, 2 for Alltime
+   * tableIndex = 0 for Daily, 1 for Monthly, 2 for All Time
+   * @param leaderboardIndex - index of the game table in DB to display
+   * gameIndex = 0 for casual, 1 for competitive
    */
-  async function createLeaderboard(tableIndex: number) {
+  async function createLeaderboard(tableIndex: number, leaderboardIndex: number) {
     const table: string = DbUtils.tableNames[tableIndex];
     const date: Date = new Date();
     const results: ScoreType[] = [];
@@ -72,13 +79,19 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
     // Map for avoiding displaying duplicate entries in Leaderboard
     const uniqueUsersMap: Map<string, boolean> = new Map<string, boolean>();
 
-    const tableRef = db.collection(DbUtils.LEADERBOARD);
+    const leaderboard =
+      leaderboardIndex === 0 ? DbUtils.LEADERBOARD_CASUAL : DbUtils.LEADERBOARD_COMPETITIVE;
+    const leaderboardRef = db.collection(leaderboard);
+
     let snapshot;
-    snapshot = tableRef;
+    snapshot = leaderboardRef;
 
     switch (table) {
       case "daily-scores":
-        snapshot = snapshot.where("day", "==", date.getDate());
+        snapshot = snapshot
+          .where("day", "==", date.getDate())
+          .where("year", "==", date.getFullYear())
+          .where("month", "==", DbUtils.monthNames[date.getMonth()]);
         break;
       case "monthly-scores":
         snapshot = snapshot
@@ -89,7 +102,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
         break;
     }
 
-    snapshot = await snapshot.orderBy("score", "desc").limit(100).get();
+    snapshot = await snapshot.orderBy("score", "desc").get();
     snapshot.forEach((doc) => {
       if (!uniqueUsersMap.has(doc.data().user)) {
         // Current user's highest score - add to result set
@@ -117,14 +130,25 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
   }
 
   /**
-   * Function for triggering the creation of the next Leaderboard, when user changes tabs
-   * e.g.: tab changing from index 0 (Daily) to index 1 (Monthly)
-   * @param newIndex - index of the new table to display
+   * Function for triggering the creation of the next Table for the current leaderboard,
+   * when user changes tabs from Daily to Monthly or All Time
+   * (or any other combination between the three)
+   * @param newTableIndex - index of the new table to display (0 - Daily, 1 - Monthly, 2 - All Time)
    */
-  const onTabChange = async (newIndex: number) => {
-    setCurrentTabIndex(newIndex);
+  const onTabChange = async (newTableIndex: number) => {
+    setCurrentTableIndex(newTableIndex);
     setFirstTimeOpened(false);
-    await createLeaderboard(newIndex);
+    await createLeaderboard(newTableIndex, currentLeaderboardIndex);
+  };
+
+  /**
+   * Function for triggering the creation of the next Leaderboard, when user changes game modes tabs
+   * @param newLeaderboardIndex - index of the new leaderboard to display (0 - Casual or 1 - Competitive)
+   */
+  const onGameTabChange = async (newLeaderboardIndex: number) => {
+    setCurrentLeaderboardIndex(newLeaderboardIndex);
+    setFirstTimeOpened(false);
+    await createLeaderboard(currentTableIndex, newLeaderboardIndex);
   };
 
   return (
@@ -147,8 +171,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
 
       <AppBar className={classes.appBar} position="sticky">
         <Tabs
-          value={currentTabIndex}
-          onChange={(_, newValue) => onTabChange(newValue)}
+          value={currentTableIndex}
+          onChange={(_, newTableIndex) => onTabChange(newTableIndex)}
           aria-label="Leaderboards"
           classes={{ indicator: classes.tabIndicator }}
         >
@@ -171,6 +195,28 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ setRoute }: LeaderboardProps)
             label="All Time"
             id="leaderboard-2"
             aria-controls="leaderboard-view-2"
+          />
+        </Tabs>
+      </AppBar>
+      <AppBar className={classes.gameTypeAppBar} position="sticky">
+        <Tabs
+          value={currentLeaderboardIndex}
+          onChange={(_, newLeaderboardIndex) => onGameTabChange(newLeaderboardIndex)}
+          aria-label="Gametypes"
+          classes={{ indicator: classes.tabIndicator }}
+        >
+          <Tab
+            className={classes.tab}
+            label="Casual"
+            id="gametype-0"
+            aria-controls="gametype-view-0"
+          />
+
+          <Tab
+            className={classes.tab}
+            label="Competitive"
+            id="gametype-1"
+            aria-controls="gametype-view-1"
           />
         </Tabs>
       </AppBar>

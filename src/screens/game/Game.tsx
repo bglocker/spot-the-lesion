@@ -7,17 +7,27 @@ import {
   IconButton,
   TextField,
   Toolbar,
+  ButtonGroup,
   Typography,
+  Container,
 } from "@material-ui/core";
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import { KeyboardBackspace, Check, Clear, Close } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
-import { drawCross, drawCircle, drawRectangle } from "../../components/CanvasUtils";
+import LoadingButton from "../../components/LoadingButton";
+import HeatmapDisplay from "../../components/HeatmapDisplay";
 import useInterval from "../../components/useInterval";
 import useCanvasContext from "../../components/useCanvasContext";
-import LoadingButton from "../../components/LoadingButton";
+import {
+  drawCross,
+  drawCircle,
+  drawRectangle,
+  mapClickToCanvas,
+  mapToCanvasScale,
+} from "../../components/CanvasUtils";
+import { getImagePath, getIntersectionOverUnion, getJsonPath } from "./GameUitls";
 import DbUtils from "../../utils/DbUtils";
 import { db } from "../../firebase/firebaseApp";
 
@@ -25,6 +35,9 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     backButton: {
       marginRight: 8,
+    },
+    title: {
+      flexGrow: 1,
     },
     container: {
       height: "100%",
@@ -46,11 +59,26 @@ const useStyles = makeStyles((theme: Theme) =>
         flex: 1,
       },
     },
-    timerCanvasContainer: {
+    upperBarCanvasContainer: {
       display: "flex",
       flexDirection: "column",
       justifyContent: "space-evenly",
       alignItems: "center",
+    },
+    hintButtonContainer: {
+      [theme.breakpoints.down("sm")]: {
+        width: "80vw",
+        maxWidth: "65vh",
+      },
+      [theme.breakpoints.up("md")]: {
+        width: "70vh",
+        maxWidth: "70vw",
+      },
+      margin: 8,
+      padding: 8,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
     },
     timerContainer: {
       [theme.breakpoints.down("sm")]: {
@@ -64,10 +92,11 @@ const useStyles = makeStyles((theme: Theme) =>
       margin: 8,
       padding: 8,
     },
-    timerText: {
+    timer: {
       marginBottom: 8,
       textAlign: "center",
       fontSize: "1.5rem",
+      color: (props: Record<string, string>) => props.timerColor,
     },
     canvasContainer: {
       [theme.breakpoints.down("sm")]: {
@@ -83,8 +112,6 @@ const useStyles = makeStyles((theme: Theme) =>
         maxHeight: "70vw",
       },
       display: "grid",
-      justifyContent: "center",
-      alignItems: "center",
       padding: 8,
     },
     canvas: {
@@ -94,9 +121,6 @@ const useStyles = makeStyles((theme: Theme) =>
       width: "100%",
     },
     sideContainer: {
-      [theme.breakpoints.down("sm")]: {
-        justifyContent: "center",
-      },
       [theme.breakpoints.up("md")]: {
         flex: 1,
         height: "100%",
@@ -112,7 +136,7 @@ const useStyles = makeStyles((theme: Theme) =>
       },
       minWidth: "20vw",
       display: "flex",
-      flexDirection: "row",
+      flexDirection: "column",
       alignItems: "center",
       alignContent: "center",
       margin: 8,
@@ -133,10 +157,46 @@ const useStyles = makeStyles((theme: Theme) =>
       flex: 1,
       flexDirection: "column",
     },
-    leafletContainer: {
-      height: "90vh",
-      width: "100%",
-      background: "white",
+    gameModeSelectionText: {
+      alignItems: "center",
+      alignSelf: "center",
+      justifyContent: "center",
+      textAlign: "center",
+      margin: 8,
+      fontSize: "250%",
+      fontWeight: "bold",
+      fontFamily: "segoe UI",
+    },
+    displayHintButton: {
+      backgroundColor: "#63A2AB",
+    },
+    gameModeButton: {
+      margin: 8,
+      borderRadius: 20,
+      [theme.breakpoints.only("xs")]: {
+        width: 300,
+        height: 50,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.only("sm")]: {
+        width: 350,
+        height: 58,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        width: 370,
+        height: 61,
+        fontSize: "1.25rem",
+      },
+    },
+    heatmapButton: {
+      backgroundColor: "#021C1E",
+    },
+    checkGreen: {
+      fill: "green",
+    },
+    clearRed: {
+      fill: "red",
     },
   })
 );
@@ -145,39 +205,49 @@ const VALID_COLOUR = "green";
 const INVALID_COLOUR = "red";
 const DEFAULT_COLOUR = "yellow";
 const TRUE_COLOUR = "blue";
+const INITIAL_TIMER_COLOR = "#373737";
 
-const NUMBER_OF_ROUNDS = 10;
-const TOTAL_TIME_MS = 10000;
+const NUM_ROUNDS = 10;
+
+const ROUND_START_TIME = 10000;
+
+const ANIMATION_TIME = 5000;
+
 const AI_SCORE_INCREASE_RATE = 75;
 
-const DEFAULT_CANVAS_SIZE = 512;
+const NUM_SEARCH_CUBES = 10;
+
 const MAX_CANVAS_SIZE = 750;
 
 const MAX_FILE_NUMBER = 100;
-const AI_ANIMATION_TIME = 5000;
 
 type JsonData = { truth: number[]; predicted: number[] };
 
 const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
-  const classes = useStyles();
-
   const seenFiles = new Set<number>();
 
   const [context, canvasRef] = useCanvasContext();
-  const [animContext, animCanvasRef] = useCanvasContext();
+  const [animationContext, animationCanvasRef] = useCanvasContext();
 
-  const [currentRound, setCurrentRound] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [running, setRunning] = useState(false);
+
+  const [roundRunning, setRoundRunning] = useState(false);
+  const [endRunning, setEndRunning] = useState(false);
+  const [animationRunning, setAnimationRunning] = useState(false);
+
+  const [roundTime, setRoundTime] = useState(ROUND_START_TIME);
+  const [endTime, setEndTime] = useState(0);
+  const [animationPosition, setAnimationPosition] = useState(0);
+
   const [hinted, setHinted] = useState(false);
-  const [submitEnabled, setSubmitEnabled] = useState(false);
-  const [heatmapEnable, setHeatmapEnabled] = useState(false);
+  const [timerColor, setTimerColor] = useState(INITIAL_TIMER_COLOR);
 
-  const [timeRemaining, setTimeRemaining] = useState(TOTAL_TIME_MS);
-  const [timerColor, setTimerColor] = useState("#373737");
-
+  const [imageId, setImageId] = useState(0);
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
+  const [click, setClick] = useState<{ x: number; y: number } | null>(null);
+
+  const [round, setRound] = useState(0);
 
   const [playerScore, setPlayerScore] = useState(0);
   const [aiScore, setAiScore] = useState(0);
@@ -185,406 +255,252 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   const [playerCorrect, setPlayerCorrect] = useState(false);
   const [aiCorrect, setAiCorrect] = useState(false);
 
-  const [aiCorrectAnswers, setAiCorrectAnswers] = useState(0);
   const [playerCorrectAnswers, setPlayerCorrectAnswers] = useState(0);
+  const [aiCorrectAnswers, setAiCorrectAnswers] = useState(0);
 
   const [username, setUsername] = useState("");
 
-  const [currentImageId, setCurrentImageId] = useState(0);
+  const [gameMode, setGameMode] = useState<GameMode>("casual");
+  const [isGameModeSelected, setGameModeSelected] = useState(false);
 
-  // const [dataPoints, setDataPoints] = useState<[number, number][]>([]);
+  const [showHeatmap, setShowHeatmap] = useState(false);
 
-  /**
-   * The heatmap dialog box information
-   */
-  const [heatmapDialogOpen, setHeatmapDialogOpen] = useState(false);
+  const classes = useStyles({ timerColor });
 
   /* TODO: check if upload to database fails to give different message */
   const { enqueueSnackbar } = useSnackbar();
 
   /**
-   * Called every 100 milliseconds, while the game is running,
+   * Round timer
    */
-  const timerTick = () => {
-    setTimeRemaining((prevState) => prevState - 100);
-  };
-
-  useInterval(timerTick, running ? 100 : null);
-
-  /**
-   * Stops the timer by stopping the current round.
-   */
-  const stopTimer = () => setRunning(false);
-
-  /**
-   * Maps a given value to the current canvas scale
-   *
-   * @param x Value to map
-   *
-   * @return Given value, mapped to the canvas scale
-   */
-  const mapToCanvasScale = useCallback(
-    (x: number) => {
-      return (x * context.canvas.width) / DEFAULT_CANVAS_SIZE;
-    },
-    [context]
+  useInterval(
+    () => setRoundTime((prevState) => prevState - 100),
+    roundRunning && gameMode === "competitive" ? 100 : null
   );
 
-  const getCube = useCallback((baseCornerX: number, baseCornerY: number, cubeSide: number) => {
-    const cube: number[] = [];
+  const showHint = useCallback(() => {
+    setHinted(true);
 
-    cube[0] = baseCornerX;
-    cube[1] = baseCornerY;
-    cube[2] = cube[0] + cubeSide;
-    cube[3] = cube[1] + cubeSide;
-    return cube;
-  }, []);
+    const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
+    const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
+    const radius = mapToCanvasScale(context, 100);
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const getCornerCube = useCallback(
-    (cubeSide: number) => {
-      return getCube(0, 0, cubeSide);
-    },
-    [getCube]
-  );
-
-  /**
-   * Clears the animation canvas
-   */
-  const clearAnimCanvas = useCallback(() => {
-    animContext.clearRect(0, 0, animContext.canvas.width, animContext.canvas.height);
-  }, [animContext]);
-
-  /**
-   * Draw an AI search animation, rendering cubes on both sides of the canvas,
-   * moving towards their opposite side
-   */
-  const drawAiSearchAnimation = useCallback(() => {
-    enqueueSnackbar("The system is thinking...");
-
-    const animationTime = 5000;
-    const numCubes = 5;
-
-    const canvasWidth = animContext.canvas.width;
-    const canvasHeight = animContext.canvas.height;
-    const cubeSide = canvasWidth / (numCubes * 2);
-    let cube = getCornerCube(cubeSide);
-
-    /* Draw cubes in initial position */
-    drawRectangle(animContext, cube, INVALID_COLOUR, 3);
-
-    const intervalId = window.setInterval(() => {
-      /* Clear previous cubes */
-      clearAnimCanvas();
-
-      /* Advance cube to right */
-      cube[0] += cubeSide;
-      cube[2] += cubeSide;
-
-      drawRectangle(animContext, cube, VALID_COLOUR, 3);
-
-      /* When cube gets to right-most bound, advance cube below & restart */
-      if (cube[2] > canvasWidth) {
-        cube = getCube(-cubeSide, cube[1] + cubeSide, cubeSide);
-      }
-      /* When cube gets out of lower bound, end animation */
-      if (cube[1] > canvasHeight) {
-        clearInterval(intervalId);
-        clearAnimCanvas();
-      }
-    }, animationTime / 100);
-  }, [animContext, clearAnimCanvas, enqueueSnackbar, getCornerCube, getCube]);
-
-  /**
-   * Draws the truth rectangle
-   */
-  const drawTruth = useCallback(() => {
-    drawRectangle(context, truth, TRUE_COLOUR, 3);
+    drawCircle(context, x, y, radius, 2, INVALID_COLOUR);
   }, [context, truth]);
 
   /**
-   * Draws the predicted rectangle
-   * @param strokeStyle Style for drawing the rectangle
+   * Round timer based events
    */
-  const drawPredicted = useCallback(
-    (strokeStyle: string) => {
-      drawRectangle(context, predicted, strokeStyle, 3);
+  useEffect(() => {
+    if (!roundRunning) {
+      return;
+    }
+
+    if (roundTime === 5000 && !hinted) {
+      /* 5 seconds left: set Timer to orange and show hint */
+      setTimerColor("orange");
+
+      showHint();
+    } else if (roundTime === 2000) {
+      /* 2 seconds left: set Timer to red */
+      setTimerColor("red");
+    } else if (roundTime === 0) {
+      /* 0 seconds left: start end timer */
+      setEndRunning(true);
+    }
+  }, [hinted, roundRunning, roundTime, showHint]);
+
+  /**
+   * End timer
+   */
+  useInterval(() => setEndTime((prevState) => prevState + 100), endRunning ? 100 : null);
+
+  /**
+   * Upload the player click, in order to gather statistics and generate heatmaps
+   *
+   * @param x Width coordinate
+   * @param y Height coordinate
+   */
+  const uploadPlayerClick = useCallback(
+    async (x: number, y: number) => {
+      const docNameForImage = `image_${imageId}`;
+      let entry;
+      let pointWasClickedBefore = false;
+
+      const newClickPoint = {
+        x: Math.round((x * 10000) / context.canvas.width) / 100,
+        y: Math.round((y * 10000) / context.canvas.height) / 100,
+        clickCount: 1,
+      };
+
+      const imageDoc = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
+
+      if (!imageDoc.exists) {
+        // First time this image showed up in the game - entry will be singleton array
+        entry = { clicks: [newClickPoint] };
+      } else {
+        const { clicks } = imageDoc.data()!;
+
+        clicks.forEach((clk: { x: number; y: number; count: number }) => {
+          if (clk.x === x && clk.y === y) {
+            clk.count += 1;
+            pointWasClickedBefore = true;
+          }
+        });
+
+        if (!pointWasClickedBefore) {
+          // First time this clicked occurred for this image, Add to this image's clicks array
+          clicks.push(newClickPoint);
+        }
+
+        // Entry in DB will be the updated clicks array
+        entry = { clicks };
+      }
+
+      await db.collection(DbUtils.IMAGES).doc(docNameForImage).set(entry);
     },
-    [context, predicted]
+    [context, imageId]
   );
 
   /**
-   * Draws the hint circle
+   * End timer based events
    */
-  const drawHint = useCallback(() => {
-    const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
-    const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
-    const radius = 100;
-
-    drawCircle(context, x, y, mapToCanvasScale(radius), 2, INVALID_COLOUR);
-  }, [context, mapToCanvasScale, truth]);
-
-  /**
-   * Draws the player click cross
-   *
-   * @param x           Width coordinate
-   * @param y           Height coordinate
-   * @param strokeStyle Style for drawing the cross
-   */
-  const drawPlayerClick = (x: number, y: number, strokeStyle: string) => {
-    drawCross(context, x, y, 5, strokeStyle);
-  };
-
-  /**
-   * Given the coordinates of two rectangles, returns the ratio of their intersection
-   * over their union.
-   *
-   * Used in determining the success of a given AI prediction.
-   *
-   * @param rectA Coordinates for the corners of the first rectangle
-   * @param rectB Coordinates for the corners of the second rectangle
-   *
-   * @return Ratio of intersection area over union area
-   */
-  const getIntersectionOverUnion = (rectA: number[], rectB: number[]): number => {
-    const xA = Math.max(rectA[0], rectB[0]);
-    const xB = Math.min(rectA[2], rectB[2]);
-    const yA = Math.max(rectA[1], rectB[1]);
-    const yB = Math.min(rectA[3], rectB[3]);
-
-    const inter = Math.max(0, xB - xA + 1) * Math.max(0, yB - yA + 1);
-
-    const areaA = (rectA[2] - rectA[0] + 1) * (rectA[3] - rectA[1] + 1);
-    const areaB = (rectB[2] - rectB[0] + 1) * (rectB[3] - rectB[1] + 1);
-
-    const union = areaA + areaB - inter;
-
-    return inter / union;
-  };
-
-  /**
-   * Determines whether the AI prediction was successful, by checking that
-   * the ratio of the intersection over the union of the predicted and truth rectangles
-   * is greater than 0.5
-   *
-   * @return The success value
-   */
-  const isAiPredictionRight = useCallback(() => {
-    return getIntersectionOverUnion(truth, predicted) > 0.5;
-  }, [truth, predicted]);
-
-  /**
-   * Determines whether the player was successful, by checking that the click position
-   * is inside the truth rectangle
-   *
-   * @param x Click coordinate on width
-   * @param y Click coordinate on height
-   *
-   * @return The success value
-   */
-  const isPlayerRight = (x: number, y: number) => {
-    return truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
-  };
-
-  /**
-   * Sets a timeout for animation that shows whether the AI prediction was right or wrong
-   */
-  const drawAIAnswerCheckAnimation = useCallback(() => {
-    setTimeout(() => {
-      if (isAiPredictionRight()) {
-        const scoreObtained = Math.round(
-          getIntersectionOverUnion(truth, predicted) * AI_SCORE_INCREASE_RATE
-        );
-
-        setAiScore((prevState) => prevState + scoreObtained);
-        setAiCorrectAnswers((prevState) => prevState + 1);
-        drawPredicted(VALID_COLOUR);
-        setAiCorrect(true);
-      } else {
-        drawPredicted(INVALID_COLOUR);
-        setAiCorrect(false);
-      }
-
-      setHeatmapEnabled(true);
-      setLoading(false);
-    }, AI_ANIMATION_TIME + 1500);
-  }, [drawPredicted, isAiPredictionRight, predicted, truth]);
-
   useEffect(() => {
-    if (!running) {
+    if (!endRunning) {
       return;
     }
 
-    if (timeRemaining <= 0) {
+    if (endTime === 0) {
+      /*
+       * 0 seconds passed: draw and upload player click if available,
+       * start animationTimer and pause endTimer while animationTimer is running
+       */
       setLoading(true);
-      stopTimer();
+      setRoundRunning(false);
 
-      drawAiSearchAnimation();
+      if (click) {
+        const { x, y } = click;
 
-      setTimeout(() => {
-        drawPredicted(DEFAULT_COLOUR);
-      }, AI_ANIMATION_TIME);
+        drawCross(context, x, y, 5, DEFAULT_COLOUR);
 
-      setTimeout(() => {
-        drawTruth();
-      }, AI_ANIMATION_TIME + 500);
-
-      drawAIAnswerCheckAnimation();
-    } else if (timeRemaining <= 2000) {
-      setTimerColor("red");
-    } else if (timeRemaining <= 5000) {
-      if (hinted) {
-        return;
+        uploadPlayerClick(Math.round(x), Math.round(y)).then(() => null);
       }
 
-      setHinted(true);
+      enqueueSnackbar("The system is thinking...");
 
-      setTimerColor("orange");
+      setAnimationRunning(true);
+      setEndRunning(false);
+    } else if (endTime === 100) {
+      /* 0.1 seconds passed: draw predicted rectangle in default color */
+      drawRectangle(context, predicted, DEFAULT_COLOUR, 3);
+    } else if (endTime === 500) {
+      /* 1 second passed: draw truth rectangle */
+      drawRectangle(context, truth, TRUE_COLOUR, 3);
+    } else if (endTime === 1000 && click) {
+      /* 6 seconds passed: evaluate player click if available  */
+      const { x, y } = click;
 
-      drawHint();
-    } else {
-      setTimerColor("#373737");
+      enqueueSnackbar("Checking results...");
+
+      /* Player was successful if the click coordinates are inside the truth rectangle */
+      if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
+        /* For Casual Mode: if Hint was shown, receive half a point; otherwise receive full point */
+        const casualRoundScore = hinted ? 0.5 : 1;
+
+        /* For Competitive Mode: round time taken doubled if no hint provided */
+        const competitiveRoundScore = (roundTime / 1000) * (hinted ? 10 : 20);
+
+        const roundScore = gameMode === "casual" ? casualRoundScore : competitiveRoundScore;
+
+        setPlayerScore((prevState) => prevState + roundScore);
+        setPlayerCorrectAnswers((prevState) => prevState + 1);
+        setPlayerCorrect(true);
+
+        drawCross(context, x, y, 5, VALID_COLOUR);
+      } else {
+        drawCross(context, x, y, 5, INVALID_COLOUR);
+      }
+    } else if (endTime === 1500) {
+      /* 1.5 seconds passed: evaluate AI prediction */
+      const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
+
+      /* AI was successful if the ratio of the intersection over the union is greater than 0.5 */
+      if (intersectionOverUnion > 0.5) {
+        const roundScore = Math.round(intersectionOverUnion * AI_SCORE_INCREASE_RATE);
+
+        setAiScore((prevState) => prevState + roundScore);
+        setAiCorrectAnswers((prevState) => prevState + 1);
+        setAiCorrect(true);
+
+        drawRectangle(context, predicted, VALID_COLOUR, 3);
+      } else {
+        drawRectangle(context, predicted, INVALID_COLOUR, 3);
+      }
+
+      setEndRunning(false);
+      setLoading(false);
     }
   }, [
-    drawAiSearchAnimation,
-    drawHint,
-    drawPredicted,
-    drawTruth,
+    click,
+    context,
+    endRunning,
+    endTime,
+    enqueueSnackbar,
+    gameMode,
     hinted,
-    isAiPredictionRight,
-    running,
-    timeRemaining,
-    truth,
     predicted,
-    aiCorrectAnswers,
-    drawAIAnswerCheckAnimation,
+    roundTime,
+    truth,
+    uploadPlayerClick,
   ]);
 
   /**
-   * Maps the mouse position relative to the given canvas
-   *
-   * @param clickX Click coordinate on width
-   * @param clickY Click coordinate on height
-   *
-   * @return Click width and height coordinates, relative to the canvas
+   * Animation timer
    */
-  const getClickPositionOnCanvas = (clickX: number, clickY: number) => {
-    const rect = context.canvas.getBoundingClientRect();
-    const widthScale = context.canvas.width / rect.width;
-    const heightScale = context.canvas.height / rect.height;
-
-    return {
-      x: (clickX - rect.left) * widthScale,
-      y: (clickY - rect.top) * heightScale,
-    };
-  };
+  useInterval(
+    () => setAnimationPosition((prevState) => prevState + 1),
+    animationRunning ? ANIMATION_TIME / (NUM_SEARCH_CUBES * NUM_SEARCH_CUBES) : null
+  );
 
   /**
-   * Function for uploading user clicks for a CT scan in Firebase
-   * @param xCoord - x-Coordinate of the click on the image
-   * @param yCoord - y-Coordinate of the click on the image
-   * @param imageId - file number of the CT Scan
+   * Animation timer based events
    */
-  const uploadImageClick = async (xCoord: number, yCoord: number, imageId: number) => {
-    const docNameForImage = `image_${imageId}`;
-    let entry;
-    let pointWasClickedBefore = false;
-
-    const newClickPoint = {
-      x: xCoord,
-      y: yCoord,
-      clickCount: 1,
-    };
-
-    const imageDoc = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
-
-    if (!imageDoc.exists) {
-      // First time this image showed up in the game - entry will be singleton array
-      entry = { clicks: [newClickPoint] };
-    } else {
-      const { clicks } = imageDoc.data()!;
-      clicks.forEach((click: { x: number; y: number; count: number }) => {
-        if (click.x === xCoord && click.y === yCoord) {
-          click.count += 1;
-          pointWasClickedBefore = true;
-        }
-      });
-
-      if (!pointWasClickedBefore) {
-        // First time this clicked occurred for this image, Add to this image's clicks array
-        clicks.push(newClickPoint);
-      }
-      // Entry in DB will be the updated clicks array
-      entry = { clicks };
-    }
-    await db.collection(DbUtils.IMAGES).doc(docNameForImage).set(entry);
-  };
-
-  const getClickedPoints = async (imageId: number) => {
-    const docNameForImage = `image_${imageId}`;
-    const snapshot = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
-    const data = snapshot.data();
-    if (data === undefined) {
+  useEffect(() => {
+    if (!animationRunning) {
       return;
     }
-    const clicks: [number, number][] = [];
-    for (let i = 0; i < data.clicks.length; i++) {
-      for (let k = 0; k < data.clicks[i].clickCount; k++) {
-        clicks.push([data.clicks[i].y, data.clicks[i].x]);
-      }
+
+    /* Clear previous cube */
+    animationContext.clearRect(0, 0, animationContext.canvas.width, animationContext.canvas.height);
+
+    /* Stop when all cube positions were reached, and resume endTimer with one tick passed */
+    if (animationPosition === NUM_SEARCH_CUBES * NUM_SEARCH_CUBES) {
+      setAnimationRunning(false);
+      setEndTime((prevState) => prevState + 100);
+      setEndRunning(true);
+      return;
     }
-    // setDataPoints(clicks);
-  };
+
+    const cubeSide = animationContext.canvas.width / NUM_SEARCH_CUBES;
+    const baseX = (animationPosition % NUM_SEARCH_CUBES) * cubeSide;
+    const baseY = Math.floor(animationPosition / NUM_SEARCH_CUBES) * cubeSide;
+    const cube = [baseX, baseY, baseX + cubeSide, baseY + cubeSide];
+
+    drawRectangle(animationContext, cube, VALID_COLOUR, 3);
+  }, [animationContext, animationPosition, animationRunning]);
 
   /**
    * Called when the canvas is clicked
    *
    * @param event Mouse event, used to get click position
    */
-  const onCanvasClick = async (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
-    if (!running) {
+  const onCanvasClick = (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+    if (!roundRunning) {
       return;
     }
 
-    setLoading(true);
-    stopTimer();
-
-    const [clickX, clickY] = [event.clientX, event.clientY];
-
-    const { x, y } = getClickPositionOnCanvas(clickX, clickY);
-
-    drawPlayerClick(x, y, DEFAULT_COLOUR);
-
-    await uploadImageClick(Math.round(x), Math.round(y), currentImageId);
-
-    drawAiSearchAnimation();
-
-    setTimeout(() => {
-      drawPredicted(DEFAULT_COLOUR);
-    }, AI_ANIMATION_TIME);
-
-    setTimeout(() => {
-      drawTruth();
-    }, AI_ANIMATION_TIME + 500);
-
-    setTimeout(() => {
-      enqueueSnackbar("Checking results...");
-      if (isPlayerRight(x, y)) {
-        const timeRate = timeRemaining / 1000;
-        const increaseRate = hinted ? timeRate * 10 : timeRate * 20;
-
-        setPlayerCorrectAnswers((prevState) => prevState + 1);
-        setPlayerScore((prevState) => prevState + increaseRate);
-        drawPlayerClick(x, y, VALID_COLOUR);
-        setPlayerCorrect(true);
-      } else {
-        drawPlayerClick(x, y, INVALID_COLOUR);
-        setPlayerCorrect(false);
-      }
-    }, AI_ANIMATION_TIME + 1000);
-
-    drawAIAnswerCheckAnimation();
+    setClick(mapClickToCanvas(context, event));
+    setEndRunning(true);
   };
 
   /**
@@ -606,29 +522,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   /**
-   * Returns the path to the json file corresponding to the given fileNumber
-   *
-   * @param fileNumber Number of the file to retrieve
-   */
-  const getJsonPath = (fileNumber: number) =>
-    `${process.env.PUBLIC_URL}/content/annotation/${fileNumber}.json`;
-
-  /**
-   * Returns the path to the image file corresponding to the given fileNumber
-   *
-   * @param fileNumber Number of the file to retrieve
-   */
-  const getImagePath = (fileNumber: number) =>
-    `${process.env.PUBLIC_URL}/content/images/${fileNumber}.png`;
-
-  /**
    * Maps the coordinates of a given rectangle to the current canvas scale
    *
    * @param rect Coordinates for the corners of the rectangle to map
    *
    * @return Given rectangle coordinates, mapped to the canvas scale
    */
-  const mapCoordinates = (rect: number[]) => rect.map(mapToCanvasScale);
+  const mapCoordinates = (rect: number[]) => rect.map((x) => mapToCanvasScale(context, x));
 
   /**
    * Loads the data from the json corresponding to the given fileNumber
@@ -653,8 +553,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       const image = new Image();
 
       image.onload = () => {
-        clearAnimCanvas();
-
         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
         context.drawImage(image, 0, 0, context.canvas.width, context.canvas.height);
 
@@ -668,40 +566,39 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     });
 
   /**
-   * Starts a new round, loading a new image and its corresponding json data
+   * Starts a new round, loading a new image and its corresponding JSON data
    */
-  const startNewRound = async () => {
+  const startRound = async () => {
     setLoading(true);
-    setHinted(false);
-    setHeatmapEnabled(false);
-    setCurrentRound((prevState) => prevState + 1);
 
     const fileNumber = getNewFileNumber();
-    setCurrentImageId(fileNumber);
+    setImageId(fileNumber);
 
     await loadJson(fileNumber);
     await loadImage(fileNumber);
 
-    setTimeRemaining(TOTAL_TIME_MS);
-    setRunning(true);
-    setLoading(false);
-  };
+    setRoundTime(ROUND_START_TIME);
+    setEndTime(0);
+    setAnimationPosition(0);
 
-  /**
-   * Called when the Start/Next button is clicked
-   */
-  const onStartNextClick = async () => {
-    await startNewRound();
+    setHinted(false);
+    setTimerColor(INITIAL_TIMER_COLOR);
+
+    setClick(null);
+
+    setRound((prevState) => prevState + 1);
+
+    setPlayerCorrect(false);
+    setAiCorrect(false);
+
+    setRoundRunning(true);
+    setLoading(false);
   };
 
   /**
    * Uploads the score to the database
    */
   const uploadScore = async () => {
-    if (username === "") {
-      return;
-    }
-
     const date = new Date();
     const entry = {
       user: username,
@@ -714,36 +611,53 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       year: date.getFullYear(),
     };
 
+    const leaderboard =
+      gameMode === "casual" ? DbUtils.LEADERBOARD_CASUAL : DbUtils.LEADERBOARD_COMPETITIVE;
+
     const entryName = `${entry.year}.${entry.month}.${entry.day}.${entry.user}`;
 
     const snapshot = await db
-      .collection(DbUtils.LEADERBOARD)
+      .collection(leaderboard)
       .where("year", "==", entry.year)
       .where("month", "==", entry.month)
       .where("day", "==", entry.day)
       .where("user", "==", username)
-      .where("score", ">", playerScore)
       .get();
 
     if (snapshot.empty) {
-      await db.collection(DbUtils.LEADERBOARD).doc(entryName).set(entry);
+      // First time played today - add this score to DB
+      await db.collection(leaderboard).doc(entryName).set(entry);
+    } else {
+      // Check if this score is better than what this player registered before
+      let newScoreRecord = true;
+      snapshot.forEach((doc) => {
+        if (doc.data().score > entry.score) {
+          newScoreRecord = false;
+        }
+      });
+
+      // Add current score in DB only if it is a new Score Record
+      if (newScoreRecord) {
+        await db.collection(leaderboard).doc(entryName).set(entry);
+      }
     }
   };
 
   /**
-   * Function for displaying a green or red thick depending on the correctness of the answer
-   * @param correct - true if answer was correct, false otherwise
+   * Display a green Check or red Clear based on correct (only after first round, and between rounds)
+   *
+   * @param correct Boolean for icon picking
    */
-  const displayCorrect = (correct: boolean) => {
-    if (currentRound === 0 || running || loading) {
+  const showCorrect = (correct: boolean) => {
+    if (round === 0 || roundRunning || loading) {
       return null;
     }
 
-    if (correct) {
-      return <Check style={{ fontSize: "48", fill: "green", width: 100 }} />;
-    }
-
-    return <Clear style={{ fontSize: "48", fill: "red", width: 100 }} />;
+    return correct ? (
+      <Check className={classes.checkGreen} fontSize="large" />
+    ) : (
+      <Clear className={classes.clearRed} fontSize="large" />
+    );
   };
 
   /**
@@ -751,13 +665,32 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * @param event - username writing event listener
    */
   const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.value !== "") {
-      setSubmitEnabled(true);
-    }
-    if (event.target.value === "") {
-      setSubmitEnabled(false);
-    }
     setUsername(event.target.value);
+  };
+
+  /**
+   * Display the winner
+   */
+  const showWinner = () => {
+    let text: string;
+    let color: string;
+
+    if (playerScore > aiScore) {
+      text = "You won!";
+      color = VALID_COLOUR;
+    } else if (playerScore < aiScore) {
+      text = "AI won!";
+      color = INVALID_COLOUR;
+    } else {
+      text = "It was a draw!";
+      color = DEFAULT_COLOUR;
+    }
+
+    return (
+      <Typography className={classes.result} variant="h6" style={{ color }}>
+        {text}
+      </Typography>
+    );
   };
 
   /**
@@ -767,49 +700,20 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Scores uploaded into Firebase
    */
   const onSubmitScore = async () => {
-    setSubmitEnabled(false);
+    setLoading(true);
     await uploadScore();
     setRoute("home");
     enqueueSnackbar("Score successfully submitted!");
   };
 
-  /**
-   * Function for displaying the result of the game
-   */
-  const decideWinner = () => {
-    if (playerScore > aiScore) {
-      return (
-        <Typography className={classes.result} variant="h6" style={{ color: VALID_COLOUR }}>
-          You Won !
-        </Typography>
-      );
-    }
-    if (aiScore > playerScore) {
-      return (
-        <Typography className={classes.result} variant="h6" style={{ color: INVALID_COLOUR }}>
-          AI won !
-        </Typography>
-      );
-    }
-    // Otherwise it was a draw
-    return (
-      <Typography className={classes.result} variant="h6" style={{ color: DEFAULT_COLOUR }}>
-        It was a draw !
-      </Typography>
-    );
-  };
-
-  /**
-   * Function for displaying the side dialog box with game results and start/next/submit buttons
-   */
-  const dialogAction = () => {
-    if (currentRound < NUMBER_OF_ROUNDS || running || loading) {
+  const sideAction = () => {
+    if (round < NUM_ROUNDS || roundRunning || loading) {
       return (
         <LoadingButton
           loading={loading}
-          buttonDisabled={running || loading}
-          onButtonClick={onStartNextClick}
-          buttonText={currentRound === 0 ? "START" : "NEXT"}
+          buttonDisabled={roundRunning || loading}
+          onButtonClick={startRound}
+          buttonText={round === 0 ? "Start" : "Next"}
         />
       );
     }
@@ -830,13 +734,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           onChange={onChangeUsername}
         />
 
-        {decideWinner()}
+        {showWinner()}
 
         <Button
           variant="contained"
           color="primary"
           size="large"
-          disabled={running || loading || !submitEnabled}
+          disabled={roundRunning || loading || username === ""}
           onClick={onSubmitScore}
         >
           Submit Score
@@ -846,20 +750,259 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
   };
 
   /**
-   * Function for opening the heatmap tab
+   * Called when the Show Heatmap button is clicked
    */
-  const openHeatmap = () => {
-    getClickedPoints(currentImageId);
-    setHeatmapDialogOpen(true);
+  const onShowHeatmap = () => setShowHeatmap(true);
+
+  /**
+   * Called when the Show Heatmap Dialog is closed
+   */
+  const onCloseHeatmap = () => setShowHeatmap(false);
+
+  /**
+   * Function for displaying the game content
+   * First display the game mode selection, then the game content
+   */
+  const displayGame = () => {
+    if (!isGameModeSelected) {
+      return (
+        <>
+          <Container className={classes.container} style={{ flexDirection: "column" }}>
+            <Typography className={classes.gameModeSelectionText}>Choose a game mode</Typography>
+
+            <ButtonGroup orientation="vertical">
+              <Button
+                className={classes.gameModeButton}
+                variant="contained"
+                color="primary"
+                size="large"
+                onClick={() => {
+                  setGameModeSelected(true);
+                  setGameMode("casual");
+                }}
+              >
+                Casual
+              </Button>
+
+              <Button
+                className={classes.gameModeButton}
+                variant="contained"
+                color="primary"
+                size="large"
+                onClick={() => {
+                  setGameModeSelected(true);
+                  setGameMode("competitive");
+                }}
+              >
+                Competitive
+              </Button>
+            </ButtonGroup>
+          </Container>
+        </>
+      );
+    }
+
+    // Game mode selected. Display the actual game content
+    return (
+      <>
+        <div className={classes.container}>
+          <div className={classes.emptyDiv} />
+
+          {displayGameContent()}
+
+          {displayScoreCard()}
+
+          {displayHeatmapDialog()}
+        </div>
+      </>
+    );
   };
 
   /**
-   * Function for closing the heatmap tab
+   * Function for displaying the actual Game Content
+   * Display Show Hint button for Casual Mode (gameMode === 0)
+   * Display Timer Bar for Competitive Mode (gameMode === 1)
    */
-  const closeHeatmap = () => {
-    setHeatmapDialogOpen(false);
+  const displayGameContent = () => {
+    return gameMode === "casual" ? (
+      <div className={classes.upperBarCanvasContainer}>
+        <Card className={classes.hintButtonContainer}>
+          <Button
+            className={classes.displayHintButton}
+            onClick={showHint}
+            disabled={round === 0 || loading || hinted || !roundRunning}
+          >
+            Show hint
+          </Button>
+        </Card>
+
+        {displayGameCanvas()}
+      </div>
+    ) : (
+      <div className={classes.upperBarCanvasContainer}>
+        <Card className={classes.timerContainer}>
+          <Typography className={classes.timer} variant="h4" style={{ color: timerColor }}>
+            Time remaining: {(roundTime / 1000).toFixed(1)}s
+          </Typography>
+
+          <ColoredLinearProgress
+            barColor={timerColor}
+            variant="determinate"
+            value={roundTime / 100}
+          />
+        </Card>
+
+        {displayGameCanvas()}
+      </div>
+    );
   };
 
+  /**
+   * Function for displaying the side Score Card
+   */
+  const displayScoreCard = () => {
+    return (
+      <div className={classes.sideContainer}>
+        <Card className={classes.sideCard}>
+          <div className={classes.flexButton}>
+            <Typography className={classes.result} variant="h4">
+              You
+            </Typography>
+
+            <div className={classes.result}>{showCorrect(playerCorrect)}</div>
+          </div>
+
+          <div className={classes.flexButton}>
+            <Typography className={classes.result} variant="h4">
+              {playerScore} vs {gameMode === "casual" ? aiCorrectAnswers : aiScore}
+            </Typography>
+          </div>
+
+          <div className={classes.flexButton}>
+            <Typography className={classes.result} variant="h4">
+              AI
+            </Typography>
+
+            <div className={classes.result}>{showCorrect(aiCorrect)}</div>
+          </div>
+          <div className={classes.result}>{sideAction()}</div>
+
+          {displaySubmitButton()}
+        </Card>
+      </div>
+    );
+  };
+
+  /**
+   * Function for displaying the Heatmap Dialog Window
+   */
+  const displayHeatmapDialog = () => {
+    return (
+      <Dialog fullScreen open={showHeatmap} onClose={onShowHeatmap}>
+        <AppBar position="sticky">
+          <Toolbar variant="dense">
+            <IconButton
+              className={classes.backButton}
+              edge="start"
+              color="inherit"
+              aria-label="close"
+              onClick={onCloseHeatmap}
+            >
+              <Close />
+            </IconButton>
+
+            <Typography>Heatmap</Typography>
+          </Toolbar>
+        </AppBar>
+
+        <HeatmapDisplay imageId={imageId} />
+      </Dialog>
+    );
+  };
+
+  /**
+   * Function for displaying the game main canvas
+   */
+  const displayGameCanvas = () => {
+    return (
+      <Card className={classes.canvasContainer}>
+        <canvas
+          className={classes.canvas}
+          ref={canvasRef}
+          width={MAX_CANVAS_SIZE}
+          height={MAX_CANVAS_SIZE}
+        />
+
+        <canvas
+          className={classes.canvas}
+          ref={animationCanvasRef}
+          width={MAX_CANVAS_SIZE}
+          height={MAX_CANVAS_SIZE}
+          onClick={onCanvasClick}
+        />
+      </Card>
+    );
+  };
+
+  /**
+   * Function for displaying the Submit button for Casual Game Mode
+   * For Competitive Mode, display nothing
+   */
+  const displaySubmitButton = () => {
+    return gameMode === "casual" ? (
+      <>
+        <TwitterShareButton
+          url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
+          title={`I got ${playerScore} points in Spot-the-Lesion! Can you beat my score?`}
+        >
+          <TwitterIcon size="50px" round />
+        </TwitterShareButton>
+
+        <TextField
+          label="Username"
+          variant="outlined"
+          value={username}
+          onChange={onChangeUsername}
+        />
+
+        <div />
+
+        <Button
+          variant="contained"
+          color="primary"
+          size="large"
+          disabled={roundRunning || loading || username === "" || round === 0}
+          onClick={onSubmitScore}
+          style={{ marginTop: 8 }}
+        >
+          Submit Score
+        </Button>
+      </>
+    ) : null;
+  };
+
+  /**
+   * Function for displaying the heatmap button after the game mode was selected
+   */
+  const showHeatmapButton = () => {
+    if (!isGameModeSelected) {
+      return null;
+    }
+
+    return (
+      <Button
+        disabled={round === 0 || roundRunning || loading}
+        color="inherit"
+        onClick={onShowHeatmap}
+      >
+        Show Heatmap
+      </Button>
+    );
+  };
+
+  /**
+   * Main return from the React Functional Component
+   */
   return (
     <>
       <AppBar position="sticky">
@@ -874,91 +1017,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
             <KeyboardBackspace />
           </IconButton>
 
-          <Typography>Spot the Lesion</Typography>
-          <Button
-            disabled={!heatmapEnable}
-            variant="contained"
-            color="primary"
-            size="large"
-            onClick={openHeatmap}
-          >
-            See the heatmap
-          </Button>
+          <Typography className={classes.title}>Spot the Lesion</Typography>
+
+          {showHeatmapButton()}
         </Toolbar>
       </AppBar>
 
-      <div className={classes.container}>
-        <div className={classes.emptyDiv} />
-
-        <div className={classes.timerCanvasContainer}>
-          <Card className={classes.timerContainer}>
-            <Typography className={classes.timerText} variant="h4" style={{ color: timerColor }}>
-              Time remaining: {(timeRemaining / 1000).toFixed(1)}s
-            </Typography>
-
-            <ColoredLinearProgress
-              barColor={timerColor}
-              variant="determinate"
-              value={timeRemaining / 100}
-            />
-          </Card>
-
-          <Card className={classes.canvasContainer}>
-            <canvas
-              className={classes.canvas}
-              ref={canvasRef}
-              width={MAX_CANVAS_SIZE}
-              height={MAX_CANVAS_SIZE}
-            />
-
-            <canvas
-              className={classes.canvas}
-              ref={animCanvasRef}
-              width={MAX_CANVAS_SIZE}
-              height={MAX_CANVAS_SIZE}
-              onClick={onCanvasClick}
-            />
-          </Card>
-        </div>
-
-        <div className={classes.sideContainer}>
-          <Card className={classes.sideCard}>
-            <div className={classes.flexButton}>
-              <Typography className={classes.result} variant="h4">
-                You:
-              </Typography>
-
-              <div className={classes.result}>{displayCorrect(playerCorrect)}</div>
-            </div>
-
-            <div className={classes.flexButton}>
-              <Typography className={classes.result} variant="h4">
-                {playerScore} vs {aiScore}
-              </Typography>
-
-              <div className={classes.result}>{dialogAction()}</div>
-            </div>
-
-            <div className={classes.flexButton}>
-              <Typography className={classes.result} variant="h4">
-                AI:
-              </Typography>
-
-              <div className={classes.result}>{displayCorrect(aiCorrect)}</div>
-            </div>
-          </Card>
-        </div>
-
-        <Dialog fullScreen open={heatmapDialogOpen} onClose={openHeatmap}>
-          <AppBar position="sticky">
-            <Toolbar variant="dense">
-              <IconButton edge="start" color="inherit" onClick={closeHeatmap} aria-label="close">
-                <Close />
-              </IconButton>
-            </Toolbar>
-          </AppBar>
-        </Dialog>
-      </div>
+      {displayGame()}
     </>
   );
 };
