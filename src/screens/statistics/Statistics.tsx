@@ -252,7 +252,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
 
       <AppBar className={classes.gameTypeAppBar} position="sticky">
         <Tabs
-          value={currentStatsIndex}
+          value={!gameModeSelected ? gameModeSelected : currentStatsIndex}
           onChange={(_, newStatisticsIndex) => onGameTabChange(newStatisticsIndex)}
           aria-label="Gametypes"
           classes={{ indicator: classes.tabIndicator }}
