@@ -260,7 +260,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   const [username, setUsername] = useState("");
 
-  const [gameMode, setGameMode] = useState(0);
+  const [gameMode, setGameMode] = useState<GameMode>("casual");
   const [isGameModeSelected, setGameModeSelected] = useState(false);
 
   const [showHeatmap, setShowHeatmap] = useState(false);
@@ -289,7 +289,8 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Round timer based events
    */
   useEffect(() => {
-    if (!roundRunning || gameMode !== 1) {
+    /* TODO: remove gameMode check from here */
+    if (!roundRunning || gameMode === "casual") {
       return;
     }
 
@@ -367,13 +368,6 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       return;
     }
 
-    // Variable for conditional rendering of AI's prediction and correct answer
-    // If game mode is 0 (Casual), then always check player's click to be not null, before
-    // every timer based render (i.e. wait for player to click,
-    // before displaying the other answers and the AI animation)
-    // If gameMode is 1 (Competitive) then we have no constraint, so make this condition always true
-    const casualModeRenderingCondition = gameMode === 0 ? click : true;
-
     if (endTime === 0) {
       /* 0 seconds passed: draw and upload player click if available, and start the AI search animation */
       setLoading(true);
@@ -390,7 +384,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       enqueueSnackbar("The system is thinking...");
 
       setAnimationRunning(true);
-    } else if (endTime === ANIMATION_TIME + 100 && casualModeRenderingCondition) {
+    } else if (endTime === ANIMATION_TIME + 100) {
       /* 5 seconds passed: stop AI search animation, draw predicted rectangle in default color */
       setAnimationRunning(false);
 
@@ -398,7 +392,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     } else if (endTime === ANIMATION_TIME + 500) {
       /* 5.5 seconds passed: draw truth rectangle */
       drawRectangle(context, truth, TRUE_COLOUR, 3);
-    } else if (endTime === ANIMATION_TIME + 1000 && click && casualModeRenderingCondition) {
+    } else if (endTime === ANIMATION_TIME + 1000 && click) {
       /* 6 seconds passed: evaluate player click if available  */
       const { x, y } = click;
 
@@ -406,15 +400,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
       /* Player was successful if the click coordinates are inside the truth rectangle */
       if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
-        // For Casual Mode: if Hint was shown, receive half a point; otherwise receive full point
-        const casualIncreaseRate = hinted ? 0.5 : 1;
+        /* For Casual Mode: if Hint was shown, receive half a point; otherwise receive full point */
+        const casualRoundScore = hinted ? 0.5 : 1;
 
-        // For Competitive Mode: round time taken doubled if no hint provided
-        const competitiveIncreaseRate = (roundTime / 1000) * (hinted ? 10 : 20);
+        /* For Competitive Mode: round time taken doubled if no hint provided */
+        const competitiveRoundScore = (roundTime / 1000) * (hinted ? 10 : 20);
 
-        // If gameMode === 1, increase score according to Competitive Mode rate,
-        // otherwise with the Casual Mode rate
-        const roundScore = gameMode === 1 ? competitiveIncreaseRate : casualIncreaseRate;
+        const roundScore = gameMode === "casual" ? casualRoundScore : competitiveRoundScore;
 
         setPlayerScore((prevState) => prevState + roundScore);
         setPlayerCorrectAnswers((prevState) => prevState + 1);
@@ -424,7 +416,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       } else {
         drawCross(context, x, y, 5, INVALID_COLOUR);
       }
-    } else if (endTime === ANIMATION_TIME + 1500 && casualModeRenderingCondition) {
+    } else if (endTime === ANIMATION_TIME + 1500) {
       /* 6.5 seconds passed: evaluate AI prediction */
       const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
 
@@ -613,7 +605,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     };
 
     const leaderboard =
-      gameMode === 0 ? DbUtils.LEADERBOARD_CASUAL : DbUtils.LEADERBOARD_COMPETITIVE;
+      gameMode === "casual" ? DbUtils.LEADERBOARD_CASUAL : DbUtils.LEADERBOARD_COMPETITIVE;
 
     const entryName = `${entry.year}.${entry.month}.${entry.day}.${entry.user}`;
 
@@ -779,11 +771,12 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
                 size="large"
                 onClick={() => {
                   setGameModeSelected(true);
-                  setGameMode(0);
+                  setGameMode("casual");
                 }}
               >
                 Casual
               </Button>
+
               <Button
                 className={classes.gameModeButton}
                 variant="contained"
@@ -791,7 +784,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
                 size="large"
                 onClick={() => {
                   setGameModeSelected(true);
-                  setGameMode(1);
+                  setGameMode("competitive");
                 }}
               >
                 Competitive
@@ -807,8 +800,11 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       <>
         <div className={classes.container}>
           <div className={classes.emptyDiv} />
+
           {displayGameContent()}
+
           {displayScoreCard()}
+
           {displayHeatmapDialog()}
         </div>
       </>
@@ -821,7 +817,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * Display Timer Bar for Competitive Mode (gameMode === 1)
    */
   const displayGameContent = () => {
-    return gameMode === 0 ? (
+    return gameMode === "casual" ? (
       <div className={classes.upperBarCanvasContainer}>
         <Card className={classes.hintButtonContainer}>
           <Button
@@ -832,6 +828,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
             Show hint
           </Button>
         </Card>
+
         {displayGameCanvas()}
       </div>
     ) : (
@@ -847,6 +844,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
             value={roundTime / 100}
           />
         </Card>
+
         {displayGameCanvas()}
       </div>
     );
@@ -869,7 +867,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
           <div className={classes.flexButton}>
             <Typography className={classes.result} variant="h4">
-              {playerScore} vs {gameMode === 0 ? aiCorrectAnswers : aiScore}
+              {playerScore} vs {gameMode === "casual" ? aiCorrectAnswers : aiScore}
             </Typography>
           </div>
 
@@ -881,6 +879,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
             <div className={classes.result}>{showCorrect(aiCorrect)}</div>
           </div>
           <div className={classes.result}>{sideAction()}</div>
+
           {displaySubmitButton()}
         </Card>
       </div>
@@ -943,7 +942,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
    * For Competitive Mode, display nothing
    */
   const displaySubmitButton = () => {
-    return gameMode === 0 ? (
+    return gameMode === "casual" ? (
       <>
         <TwitterShareButton
           url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
@@ -951,13 +950,16 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         >
           <TwitterIcon size="50px" round />
         </TwitterShareButton>
+
         <TextField
           label="Username"
           variant="outlined"
           value={username}
           onChange={onChangeUsername}
         />
+
         <div />
+
         <Button
           variant="contained"
           color="primary"
@@ -1013,6 +1015,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
           {showHeatmapButton()}
         </Toolbar>
       </AppBar>
+
       {displayGame()}
     </>
   );
