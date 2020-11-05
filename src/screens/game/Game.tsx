@@ -272,12 +272,19 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   /**
    * Round timer
+   *
+   * Decrement roundTime by 100, every 100ms
+   *
+   * Running only in competitive mode, while roundRunning is true
    */
   useInterval(
     () => setRoundTime((prevState) => prevState - 100),
     roundRunning && gameMode === "competitive" ? 100 : null
   );
 
+  /**
+   * Draw the hint circle
+   */
   const showHint = useCallback(() => {
     setHinted(true);
 
@@ -312,6 +319,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   /**
    * End timer
+   *
+   * Increment roundTime by 100, every 100ms
+   *
+   * Running only while endRunning is true
    */
   useInterval(() => setEndTime((prevState) => prevState + 100), endRunning ? 100 : null);
 
@@ -456,6 +467,10 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
   /**
    * Animation timer
+   *
+   * Increment animationPosition by 1 (tempo based on set animation time and number of search cubes)
+   *
+   * Running only while animationRunning is true
    */
   useInterval(
     () => setAnimationPosition((prevState) => prevState + 1),
