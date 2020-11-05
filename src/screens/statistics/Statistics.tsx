@@ -41,7 +41,10 @@ const useStyles = makeStyles(() =>
     gameModeSelectionText: {
       fontSize: "150%",
       fontWeight: "bold",
-      fontFamily: "segoe UI",
+    },
+    statTitle: {
+      fontWeight: "bold",
+      margin: "inherit",
     },
   })
 );
@@ -118,6 +121,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     return (
       <div className={classes.container}>
         <Card className={classes.card}>
+          <Typography className={classes.statTitle}>Human vs AI</Typography>
           <ResponsivePie
             data={[
               {
