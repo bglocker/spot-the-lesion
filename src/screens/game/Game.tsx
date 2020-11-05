@@ -173,7 +173,7 @@ const DEFAULT_COLOUR = "yellow";
 const TRUE_COLOUR = "blue";
 const INITIAL_TIMER_COLOR = "#373737";
 
-const NUM_ROUNDS = 1;
+const NUM_ROUNDS = 10;
 
 const ROUND_START_TIME = 10000;
 
