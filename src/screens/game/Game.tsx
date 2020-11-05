@@ -612,9 +612,14 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   };
 
   /**
-   * Uploads the score to the database
+   * Function for triggering the effects associated with submitting the score
+   * Submit button becomes disabled
+   * Snackbar triggered
+   * Scores uploaded into Firebase
    */
-  const uploadScore = async (username: string) => {
+  const onSubmitScore = async (username: string) => {
+    setLoading(true);
+
     const date = new Date();
     const entry = {
       user: username,
@@ -658,18 +663,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
         await db.collection(leaderboard).doc(entryName).set(entry);
       }
     }
-  };
-
-  /**
-   * Function for triggering the effects associated with submitting the score
-   * Submit button becomes disabled
-   * Snackbar triggered
-   * Scores uploaded into Firebase
-   */
-  const onSubmitScore = async (username: string) => {
-    setLoading(true);
-
-    await uploadScore(username);
 
     setRoute("home");
     enqueueSnackbar("Score successfully submitted!");
