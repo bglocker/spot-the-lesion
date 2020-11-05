@@ -63,19 +63,22 @@ const useStyles = makeStyles((theme: Theme) =>
       justifyContent: "center",
       [theme.breakpoints.down("sm")]: {
         width: "80vw",
-        maxWidth: "65vh",
+        maxWidth: "60vh",
       },
       [theme.breakpoints.up("md")]: {
         width: "70vh",
         maxWidth: "70vw",
       },
     },
+    showHintButton: {
+      backgroundColor: "#63a2ab",
+    },
     timerContainer: {
       margin: 8,
       padding: 8,
       [theme.breakpoints.down("sm")]: {
         width: "80vw",
-        maxWidth: "65vh",
+        maxWidth: "60vh",
       },
       [theme.breakpoints.up("md")]: {
         width: "70vh",
@@ -94,8 +97,8 @@ const useStyles = makeStyles((theme: Theme) =>
       [theme.breakpoints.down("sm")]: {
         height: "80vw",
         width: "80vw",
-        maxWidth: "65vh",
-        maxHeight: "65vh",
+        maxWidth: "60vh",
+        maxHeight: "60vh",
       },
       [theme.breakpoints.up("md")]: {
         height: "70vh",
@@ -128,18 +131,10 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: 8,
       [theme.breakpoints.down("sm")]: {
         width: "80vw",
-        maxWidth: "65vh",
+        maxWidth: "60vh",
       },
       [theme.breakpoints.up("md")]: {
         minWidth: "20vw",
-      },
-    },
-    sideCardText: {
-      [theme.breakpoints.down("sm")]: {
-        fontSize: "1.5rem",
-      },
-      [theme.breakpoints.up("md")]: {
-        fontSize: "2rem",
       },
     },
     scoresContainer: {
@@ -154,8 +149,20 @@ const useStyles = makeStyles((theme: Theme) =>
         alignItems: "center",
       },
     },
-    showHintButton: {
-      backgroundColor: "#63a2ab",
+    sideCardText: {
+      [theme.breakpoints.down("sm")]: {
+        fontSize: "1.5rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        fontSize: "2rem",
+      },
+    },
+    submitShareContainer: {
+      width: "100%",
+      display: "flex",
+      flexDirection: "row",
+      justifyContent: "space-evenly",
+      alignItems: "center",
     },
   })
 );
@@ -734,7 +741,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
     );
   };
 
-  const displayOutOfRoundActions = () => {
+  const displaySubmitShare = () => {
     if (
       (gameMode === "casual" && round === 0) ||
       (gameMode === "competitive" && round < NUM_ROUNDS) ||
@@ -745,14 +752,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
     }
 
     return (
-      <>
-        <TwitterShareButton
-          url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
-          title={`I got ${playerScore} points in Spot-the-Lesion! Can you beat my score?`}
-        >
-          <TwitterIcon size="50px" round />
-        </TwitterShareButton>
-
+      <div className={classes.submitShareContainer}>
         <Button
           variant="contained"
           color="primary"
@@ -762,7 +762,14 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
         >
           Submit Score
         </Button>
-      </>
+
+        <TwitterShareButton
+          url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
+          title={`I got ${playerScore} points in Spot-the-Lesion! Can you beat my score?`}
+        >
+          <TwitterIcon size="50px" round />
+        </TwitterShareButton>
+      </div>
     );
   };
 
@@ -867,7 +874,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
           {displayStartRoundButton()}
 
-          {displayOutOfRoundActions()}
+          {displaySubmitShare()}
         </Card>
       </div>
     );
