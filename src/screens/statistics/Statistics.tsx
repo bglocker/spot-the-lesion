@@ -1,7 +1,20 @@
-import React, { useState } from "react";
-import { AppBar, Card, Grid, IconButton, Tab, Tabs, Toolbar, Typography } from "@material-ui/core";
+import React, { useEffect, useState } from "react";
+import {
+  AppBar,
+  Button,
+  ButtonGroup,
+  Card,
+  Grid,
+  IconButton,
+  Slide,
+  SlideProps,
+  Tab,
+  Tabs,
+  Toolbar,
+  Typography,
+} from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { KeyboardBackspace } from "@material-ui/icons";
+import { ArrowBack, ArrowForward, KeyboardBackspace } from "@material-ui/icons";
 import { ResponsivePie } from "@nivo/pie";
 import { db } from "../../firebase/firebaseApp";
 import DbUtils from "../../utils/DbUtils";
@@ -19,6 +32,7 @@ const useStyles = makeStyles(() =>
       justifyContent: "center",
       alignItems: "center",
       marginTop: 24,
+      padding: 8,
     },
     container: {
       width: "100%",
@@ -46,6 +60,11 @@ const useStyles = makeStyles(() =>
       fontWeight: "bold",
       margin: "inherit",
     },
+    buttonGroup: {
+      marginTop: 16,
+      alignSelf: "center",
+      padding: 8,
+    },
   })
 );
 
@@ -69,6 +88,12 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
    * Hook used for prompting the user to select the game mode
    */
   const [gameModeSelected, setGameModeSelected] = useState(false);
+
+  const [slideIn, setSlideIn] = useState(true);
+  const [slideDirection, setSlideDirection] = useState<SlideProps["direction"]>("down");
+  const [slideIndex, setSlideIndex] = useState(0);
+
+  const numSlides = 3;
 
   /**
    * Function used for retrieving the statistics for the current game mode
@@ -229,6 +254,54 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     );
   };
 
+  const onArrowClick = (direction: SlideProps["direction"]) => {
+    const increment = direction === "left" ? -1 : 1;
+    const newIndex = (slideIndex + increment + numSlides) % numSlides;
+    const oppDirection = direction === "left" ? "right" : "left";
+
+    setSlideDirection(direction);
+    setSlideIn(false);
+
+    window.setTimeout(() => {
+      setSlideIndex(newIndex);
+      setSlideDirection(oppDirection);
+      setSlideIn(true);
+    }, 500);
+  };
+
+  useEffect(() => {
+    const onKeyDown = (e: { keyCode: number }) => {
+      if (e.keyCode === 37) {
+        onArrowClick("left");
+      }
+
+      if (e.keyCode === 39) {
+        onArrowClick("right");
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
+
+  const displaySlideShowButtons = () => {
+    if (!gameModeSelected) {
+      return null;
+    }
+    return (
+      <ButtonGroup size="large" className={classes.buttonGroup}>
+        <Button color="primary" variant="contained" onClick={() => onArrowClick("left")}>
+          <ArrowBack>Prev</ArrowBack>
+        </Button>
+
+        <Button color="primary" variant="contained" onClick={() => onArrowClick("right")}>
+          <ArrowForward>Next</ArrowForward>
+        </Button>
+      </ButtonGroup>
+    );
+  };
+
   /**
    * Main return from the Statistics Functional Component
    */
@@ -272,7 +345,10 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
           />
         </Tabs>
       </AppBar>
-      {displayStats()}
+      <Slide in={slideIn} direction={slideDirection}>
+        {displayStats()}
+      </Slide>
+      {displaySlideShowButtons()}
     </>
   );
 };
