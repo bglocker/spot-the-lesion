@@ -32,8 +32,15 @@ const SubmitScoreDialog: React.FC<SubmitScoreDialogProps> = ({
     }
   };
 
+  const onCloseDialog = () => {
+    setUsername("");
+    setError(false);
+
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={onCloseDialog}>
       <DialogTitle>Submit scores</DialogTitle>
 
       <DialogContent>
