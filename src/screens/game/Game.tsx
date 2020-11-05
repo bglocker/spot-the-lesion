@@ -451,6 +451,13 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
 
         const roundScore = gameMode === "casual" ? casualRoundScore : competitiveRoundScore;
 
+        if (!localStorage.getItem("firstCorrect")) {
+          localStorage.setItem("firstCorrect", "true");
+        }
+
+        if (!localStorage.getItem("[firstCorrectWithoutHint") && !hinted) {
+          localStorage.setItem("firstCorrectWithoutHint", "true");
+        }
         setPlayerScore((prevState) => prevState + roundScore);
         setPlayerCorrectAnswers((prevState) => prevState + 1);
         setPlayerCorrect(true);
@@ -724,6 +731,9 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     let color: string;
 
     if (playerScore > aiScore) {
+      if (!localStorage.getItem("firstWin")) {
+        localStorage.setItem("firstWin", "true");
+      }
       text = "You won!";
       color = VALID_COLOUR;
     } else if (playerScore < aiScore) {
