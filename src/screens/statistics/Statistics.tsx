@@ -332,7 +332,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
       setSlideIndex(newIndex);
       setSlideDirection(oppDirection);
       setSlideIn(true);
-      await retrieveStatistics(currentGameModeIndex, slideIndex);
+      await retrieveStatistics(currentGameModeIndex, newIndex);
     }, 500);
   };
 
