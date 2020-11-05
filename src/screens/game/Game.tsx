@@ -1,14 +1,5 @@
-import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
-import {
-  AppBar,
-  Button,
-  Card,
-  Dialog,
-  IconButton,
-  TextField,
-  Toolbar,
-  Typography,
-} from "@material-ui/core";
+import React, { useCallback, useEffect, useState } from "react";
+import { AppBar, Button, Card, Dialog, IconButton, Toolbar, Typography } from "@material-ui/core";
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import { KeyboardBackspace, Close } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
@@ -28,6 +19,7 @@ import {
 import { getImagePath, getIntersectionOverUnion, getJsonPath } from "./GameUitls";
 import DbUtils from "../../utils/DbUtils";
 import { db } from "../../firebase/firebaseApp";
+import SubmitScoreDialog from "./SubmitScoreDialog";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -225,9 +217,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   const [playerCorrectAnswers, setPlayerCorrectAnswers] = useState(0);
   const [aiCorrectAnswers, setAiCorrectAnswers] = useState(0);
 
-  const [username, setUsername] = useState("");
-
   const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showSubmit, setShowSubmit] = useState(false);
 
   const classes = useStyles({ timerColor });
 
@@ -620,7 +611,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   /**
    * Uploads the score to the database
    */
-  const uploadScore = async () => {
+  const uploadScore = async (username: string) => {
     const date = new Date();
     const entry = {
       user: username,
@@ -666,27 +657,33 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   };
 
   /**
-   * Display the round score in green if positive, or red if 0
-   *
-   * @param roundScore Score for the current round
+   * Function for triggering the effects associated with submitting the score
+   * Submit button becomes disabled
+   * Snackbar triggered
+   * Scores uploaded into Firebase
    */
-  const showRoundScore = (roundScore: number) => {
-    if (round === 0 || roundRunning || loading) {
-      return null;
-    }
+  const onSubmitScore = async (username: string) => {
+    setLoading(true);
 
-    const color = roundScore > 0 ? VALID_COLOUR : INVALID_COLOUR;
+    await uploadScore(username);
 
-    return <span style={{ color }}>+{roundScore}</span>;
+    setRoute("home");
+    enqueueSnackbar("Score successfully submitted!");
   };
 
   /**
-   * Function for filling up the username field before submitting score
-   * @param event - username writing event listener
+   * Called when the Show Heatmap button is clicked
    */
-  const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
-    setUsername(event.target.value);
-  };
+  const onShowHeatmap = () => setShowHeatmap(true);
+
+  /**
+   * Called when the Show Heatmap Dialog is closed
+   */
+  const onCloseHeatmap = () => setShowHeatmap(false);
+
+  const onShowSubmit = () => setShowSubmit(true);
+
+  const onCloseSubmit = () => setShowSubmit(false);
 
   /**
    * Display the winner (only on competitive mode, after last round)
@@ -725,19 +722,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
     );
   };
 
-  /**
-   * Function for triggering the effects associated with submitting the score
-   * Submit button becomes disabled
-   * Snackbar triggered
-   * Scores uploaded into Firebase
-   */
-  const onSubmitScore = async () => {
-    setLoading(true);
-    await uploadScore();
-    setRoute("home");
-    enqueueSnackbar("Score successfully submitted!");
-  };
-
   const displayStartRoundButton = () => {
     if (gameMode === "competitive" && round === NUM_ROUNDS) {
       return null;
@@ -772,35 +756,18 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
           <TwitterIcon size="50px" round />
         </TwitterShareButton>
 
-        <TextField
-          label="Username"
-          variant="outlined"
-          value={username}
-          onChange={onChangeUsername}
-        />
-
         <Button
           variant="contained"
           color="primary"
           size="large"
-          disabled={roundRunning || loading || username === ""}
-          onClick={onSubmitScore}
+          disabled={roundRunning || loading}
+          onClick={onShowSubmit}
         >
           Submit Score
         </Button>
       </>
     );
   };
-
-  /**
-   * Called when the Show Heatmap button is clicked
-   */
-  const onShowHeatmap = () => setShowHeatmap(true);
-
-  /**
-   * Called when the Show Heatmap Dialog is closed
-   */
-  const onCloseHeatmap = () => setShowHeatmap(false);
 
   /**
    * Display game Top Bar
@@ -864,6 +831,21 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   };
 
   /**
+   * Display the round score in green if positive, or red if 0
+   *
+   * @param roundScore Score for the current round
+   */
+  const showRoundScore = (roundScore: number) => {
+    if (round === 0 || roundRunning || loading) {
+      return null;
+    }
+
+    const color = roundScore > 0 ? VALID_COLOUR : INVALID_COLOUR;
+
+    return <span style={{ color }}>+{roundScore}</span>;
+  };
+
+  /**
    * Function for displaying the side Score Card
    */
   const displaySideCard = () => {
@@ -899,7 +881,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
    */
   const displayHeatmapDialog = () => {
     return (
-      <Dialog fullScreen open={showHeatmap} onClose={onShowHeatmap}>
+      <Dialog fullScreen open={showHeatmap}>
         <AppBar position="sticky">
           <Toolbar variant="dense">
             <IconButton
@@ -956,9 +938,11 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
         {displayGameContent()}
 
         {displaySideCard()}
-
-        {displayHeatmapDialog()}
       </div>
+
+      {displayHeatmapDialog()}
+
+      <SubmitScoreDialog open={showSubmit} onClose={onCloseSubmit} onSubmit={onSubmitScore} />
     </>
   );
 };
