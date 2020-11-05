@@ -89,10 +89,14 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
    */
   const [gameModeSelected, setGameModeSelected] = useState(false);
 
+  /**
+   * Hooks used for slide show transitions between game stats
+   */
   const [slideIn, setSlideIn] = useState(true);
   const [slideDirection, setSlideDirection] = useState<SlideProps["direction"]>("down");
   const [slideIndex, setSlideIndex] = useState(0);
 
+  // Total number of Slides with User Statistics
   const numSlides = 3;
 
   /**
@@ -254,6 +258,9 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     );
   };
 
+  /**
+   * Function for rendering the next slide with statistics
+   */
   const onArrowClick = (direction: SlideProps["direction"]) => {
     const increment = direction === "left" ? -1 : 1;
     const newIndex = (slideIndex + increment + numSlides) % numSlides;
@@ -269,6 +276,9 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     }, 500);
   };
 
+  /**
+   * useEffect hook for changing stats tabs with the arrow keys
+   */
   useEffect(() => {
     const onKeyDown = (e: { keyCode: number }) => {
       if (e.keyCode === 37) {
@@ -285,6 +295,9 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     return () => window.removeEventListener("keydown", onKeyDown);
   });
 
+  /**
+   * Function for displaying the slideshow buttons after the game mode was selected
+   */
   const displaySlideShowButtons = () => {
     if (!gameModeSelected) {
       return null;
