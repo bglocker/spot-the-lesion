@@ -47,14 +47,36 @@ const HeatmapDisplay: React.FC<HeatmapProps> = ({ imageId }: HeatmapProps) => {
     return clicks;
   }, [imageId]);
 
+  const [heatmapInstance, setHeatmapInstance] = useState<h337>(null!);
+  const [resize, setResize] = useState(false);
+
+  const resizeHandler = () => {
+    window.removeEventListener("resize", resizeHandler);
+    setResize(true);
+  };
+
   useEffect(() => {
     if (heatmapContainer === null) {
       return;
     }
 
-    const heatmapInstance = h337.create({
-      container: heatmapContainer,
-    });
+    if (resize) {
+      // eslint-disable-next-line no-underscore-dangle
+      const { canvas } = heatmapInstance._renderer;
+      canvas.remove();
+      setHeatmapInstance(null);
+
+      setResize(false);
+    }
+
+    if (heatmapInstance === null) {
+      setHeatmapInstance(
+        h337.create({
+          container: heatmapContainer,
+        })
+      );
+      return;
+    }
 
     getClickedPoints().then((clicks) => {
       const heatmapData = {
@@ -69,8 +91,9 @@ const HeatmapDisplay: React.FC<HeatmapProps> = ({ imageId }: HeatmapProps) => {
       };
 
       heatmapInstance.setData(heatmapData);
+      window.addEventListener("resize", resizeHandler);
     });
-  }, [getClickedPoints, heatmapContainer]);
+  }, [getClickedPoints, heatmapContainer, heatmapInstance, resize]);
 
   return (
     <div className={classes.container} ref={heatmapContainerRef}>
