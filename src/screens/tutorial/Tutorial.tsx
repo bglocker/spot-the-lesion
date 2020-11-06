@@ -15,36 +15,54 @@ import { makeStyles, createStyles } from "@material-ui/core/styles";
 import TutorialCard from "./card/TutorialCard";
 import doctor from "../../res/images/tutorial/doctor.png";
 import start_screen from "../../res/images/tutorial/start screen.png";
+import strategy_game from "../../res/images/tutorial/strategy_game.png";
 import help from "../../res/images/tutorial/help.png";
 import right_click from "../../res/images/tutorial/right click.png";
 import wrong_click from "../../res/images/tutorial/wrong click.png";
 import wrong_ai from "../../res/images/tutorial/wrong ai.png";
 import right_ai from "../../res/images/tutorial/right ai.png";
+import giftbox from "../../res/images/tutorial/giftbox.png";
+import hourglass from "../../res/images/tutorial/hourglass.png";
+import calm from "../../res/images/tutorial/calm.png";
+import application from "../../res/images/tutorial/application.png";
+import hint from "../../res/images/tutorial/mystery.png";
 import actual_lesion from "../../res/images/tutorial/actual lesion.png";
 
 const slideImages = [
   doctor,
   start_screen,
+  strategy_game,
   start_screen,
   help,
   right_click,
   wrong_click,
+  hourglass,
+  giftbox,
   wrong_ai,
   right_ai,
   actual_lesion,
+  calm,
+  hint,
+  application,
   "",
 ];
 
 const slideTexts = [
   "Welcome to Spot-the-Lesion!",
   "You’ll receive a sample of a CT scan like this one below, and you’’ll have to find the lesion present in it.",
-  " You have 10 seconds to click on the region of the scan where you think the lesion is located.",
+  "There are 2 game modes: competitive and casual",
+  "In the competitive mode you have 10 seconds to click on the region of the scan where you think the lesion is located.",
   "After 5 seconds, a hint will appear - the red circle indicates the part of the image which you should look at.",
   "If your click was correct, then you’ll see a green cross (x) on the spot you selected...",
   "...otherwise a red cross (x) will appear.",
+  "The faster you answer, the more points you score (10 * time remaining)...",
+  "...and if you answer without a hint, you get double the points",
   "You’ll also see the AI’s prediction on the lesion, marked in red if the AI was wrong...",
   "...or in green if the AI was correct.",
   "Finally, you will see the correct answer marked in yellow.",
+  "In the casual game mode, you can take your time when answering, as there is no time limit per picture",
+  "If you want some help, you can use the hint button located on top of the CT scan image",
+  "You can play as much as you want and when you are done you can just submit your score",
   "That's it! Now, can you spot more lesions than the AI?",
 ];
 
@@ -71,11 +89,11 @@ const useStyles = makeStyles(() =>
       marginTop: 24,
     },
     playButton: {
-      display: (props: Record<string, unknown>) => (props.index === 9 ? "inline-flex" : "none"),
+      display: (props: Record<string, unknown>) => (props.index === 15 ? "inline-flex" : "none"),
       borderRadius: 20,
       paddingLeft: 24,
       paddingRight: 24,
-      fontSize: "2rem",
+      fontSize: "3rem",
     },
     buttonGroup: {
       marginTop: 16,

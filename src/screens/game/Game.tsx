@@ -1,14 +1,5 @@
-import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
-import {
-  AppBar,
-  Button,
-  Card,
-  Dialog,
-  IconButton,
-  TextField,
-  Toolbar,
-  Typography,
-} from "@material-ui/core";
+import React, { useCallback, useEffect, useState } from "react";
+import { AppBar, Button, Card, Dialog, IconButton, Toolbar, Typography } from "@material-ui/core";
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import { KeyboardBackspace, Close } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
@@ -28,6 +19,7 @@ import {
 import { getImagePath, getIntersectionOverUnion, getJsonPath } from "./GameUitls";
 import DbUtils from "../../utils/DbUtils";
 import { db } from "../../firebase/firebaseApp";
+import SubmitScoreDialog from "./SubmitScoreDialog";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -71,19 +63,22 @@ const useStyles = makeStyles((theme: Theme) =>
       justifyContent: "center",
       [theme.breakpoints.down("sm")]: {
         width: "80vw",
-        maxWidth: "65vh",
+        maxWidth: "60vh",
       },
       [theme.breakpoints.up("md")]: {
         width: "70vh",
         maxWidth: "70vw",
       },
     },
+    showHintButton: {
+      backgroundColor: "#63a2ab",
+    },
     timerContainer: {
       margin: 8,
       padding: 8,
       [theme.breakpoints.down("sm")]: {
         width: "80vw",
-        maxWidth: "65vh",
+        maxWidth: "60vh",
       },
       [theme.breakpoints.up("md")]: {
         width: "70vh",
@@ -102,8 +97,8 @@ const useStyles = makeStyles((theme: Theme) =>
       [theme.breakpoints.down("sm")]: {
         height: "80vw",
         width: "80vw",
-        maxWidth: "65vh",
-        maxHeight: "65vh",
+        maxWidth: "60vh",
+        maxHeight: "60vh",
       },
       [theme.breakpoints.up("md")]: {
         height: "70vh",
@@ -136,18 +131,10 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: 8,
       [theme.breakpoints.down("sm")]: {
         width: "80vw",
-        maxWidth: "65vh",
+        maxWidth: "60vh",
       },
       [theme.breakpoints.up("md")]: {
         minWidth: "20vw",
-      },
-    },
-    sideCardText: {
-      [theme.breakpoints.down("sm")]: {
-        fontSize: "1.5rem",
-      },
-      [theme.breakpoints.up("md")]: {
-        fontSize: "2rem",
       },
     },
     scoresContainer: {
@@ -162,8 +149,20 @@ const useStyles = makeStyles((theme: Theme) =>
         alignItems: "center",
       },
     },
-    showHintButton: {
-      backgroundColor: "#63a2ab",
+    sideCardText: {
+      [theme.breakpoints.down("sm")]: {
+        fontSize: "1.5rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        fontSize: "2rem",
+      },
+    },
+    submitShareContainer: {
+      width: "100%",
+      display: "flex",
+      flexDirection: "row",
+      justifyContent: "space-evenly",
+      alignItems: "center",
     },
   })
 );
@@ -174,7 +173,7 @@ const DEFAULT_COLOUR = "yellow";
 const TRUE_COLOUR = "blue";
 const INITIAL_TIMER_COLOR = "#373737";
 
-const NUM_ROUNDS = 1;
+const NUM_ROUNDS = 10;
 
 const ROUND_START_TIME = 10000;
 
@@ -207,6 +206,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   const [animationPosition, setAnimationPosition] = useState(0);
 
   const [hinted, setHinted] = useState(false);
+  const [hintedAtLeastOnce, setHintedAtLeastOnce] = useState(false);
+
   const [timerColor, setTimerColor] = useState(INITIAL_TIMER_COLOR);
 
   const [imageId, setImageId] = useState(0);
@@ -225,9 +226,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   const [playerCorrectAnswers, setPlayerCorrectAnswers] = useState(0);
   const [aiCorrectAnswers, setAiCorrectAnswers] = useState(0);
 
-  const [username, setUsername] = useState("");
-
   const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showSubmit, setShowSubmit] = useState(false);
 
   const classes = useStyles({ timerColor });
 
@@ -251,6 +251,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
    */
   const showHint = useCallback(() => {
     setHinted(true);
+    setHintedAtLeastOnce(true);
 
     const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
     const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
@@ -618,15 +619,21 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   };
 
   /**
-   * Uploads the score to the database
+   * Function for triggering the effects associated with submitting the score
+   * Submit button becomes disabled
+   * Snackbar triggered
+   * Scores uploaded into Firebase
    */
-  const uploadScore = async () => {
+  const onSubmitScore = async (username: string) => {
+    setLoading(true);
+
     const date = new Date();
     const entry = {
       user: username,
-      score: playerScore,
-      ai_score: aiScore,
+      score: playerScore + playerRoundScore,
+      ai_score: aiScore + aiRoundScore,
       correct_player_answers: playerCorrectAnswers,
+      usedHints: hintedAtLeastOnce,
       correct_ai_answers: aiCorrectAnswers,
       day: date.getDate(),
       month: DbUtils.monthNames[date.getMonth()],
@@ -663,30 +670,24 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
         await db.collection(leaderboard).doc(entryName).set(entry);
       }
     }
+
+    setRoute("home");
+    enqueueSnackbar("Score successfully submitted!");
   };
 
   /**
-   * Display the round score in green if positive, or red if 0
-   *
-   * @param roundScore Score for the current round
+   * Called when the Show Heatmap button is clicked
    */
-  const showRoundScore = (roundScore: number) => {
-    if (round === 0 || roundRunning || loading) {
-      return null;
-    }
-
-    const color = roundScore > 0 ? VALID_COLOUR : INVALID_COLOUR;
-
-    return <span style={{ color }}>+{roundScore}</span>;
-  };
+  const onShowHeatmap = () => setShowHeatmap(true);
 
   /**
-   * Function for filling up the username field before submitting score
-   * @param event - username writing event listener
+   * Called when the Show Heatmap Dialog is closed
    */
-  const onChangeUsername = (event: ChangeEvent<HTMLInputElement>) => {
-    setUsername(event.target.value);
-  };
+  const onCloseHeatmap = () => setShowHeatmap(false);
+
+  const onShowSubmit = () => setShowSubmit(true);
+
+  const onCloseSubmit = () => setShowSubmit(false);
 
   /**
    * Display the winner (only on competitive mode, after last round)
@@ -725,19 +726,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
     );
   };
 
-  /**
-   * Function for triggering the effects associated with submitting the score
-   * Submit button becomes disabled
-   * Snackbar triggered
-   * Scores uploaded into Firebase
-   */
-  const onSubmitScore = async () => {
-    setLoading(true);
-    await uploadScore();
-    setRoute("home");
-    enqueueSnackbar("Score successfully submitted!");
-  };
-
   const displayStartRoundButton = () => {
     if (gameMode === "competitive" && round === NUM_ROUNDS) {
       return null;
@@ -753,7 +741,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
     );
   };
 
-  const displayOutOfRoundActions = () => {
+  const displaySubmitShare = () => {
     if (
       (gameMode === "casual" && round === 0) ||
       (gameMode === "competitive" && round < NUM_ROUNDS) ||
@@ -764,43 +752,26 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
     }
 
     return (
-      <>
+      <div className={classes.submitShareContainer}>
+        <Button
+          variant="contained"
+          color="primary"
+          size="large"
+          disabled={roundRunning || loading}
+          onClick={onShowSubmit}
+        >
+          Submit Score
+        </Button>
+
         <TwitterShareButton
           url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
           title={`I got ${playerScore} points in Spot-the-Lesion! Can you beat my score?`}
         >
           <TwitterIcon size="50px" round />
         </TwitterShareButton>
-
-        <TextField
-          label="Username"
-          variant="outlined"
-          value={username}
-          onChange={onChangeUsername}
-        />
-
-        <Button
-          variant="contained"
-          color="primary"
-          size="large"
-          disabled={roundRunning || loading || username === ""}
-          onClick={onSubmitScore}
-        >
-          Submit Score
-        </Button>
-      </>
+      </div>
     );
   };
-
-  /**
-   * Called when the Show Heatmap button is clicked
-   */
-  const onShowHeatmap = () => setShowHeatmap(true);
-
-  /**
-   * Called when the Show Heatmap Dialog is closed
-   */
-  const onCloseHeatmap = () => setShowHeatmap(false);
 
   /**
    * Display game Top Bar
@@ -864,6 +835,21 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   };
 
   /**
+   * Display the round score in green if positive, or red if 0
+   *
+   * @param roundScore Score for the current round
+   */
+  const showRoundScore = (roundScore: number) => {
+    if (round === 0 || roundRunning || loading) {
+      return null;
+    }
+
+    const color = roundScore > 0 ? VALID_COLOUR : INVALID_COLOUR;
+
+    return <span style={{ color }}>+{roundScore}</span>;
+  };
+
+  /**
    * Function for displaying the side Score Card
    */
   const displaySideCard = () => {
@@ -888,7 +874,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
           {displayStartRoundButton()}
 
-          {displayOutOfRoundActions()}
+          {displaySubmitShare()}
         </Card>
       </div>
     );
@@ -899,7 +885,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
    */
   const displayHeatmapDialog = () => {
     return (
-      <Dialog fullScreen open={showHeatmap} onClose={onShowHeatmap}>
+      <Dialog fullScreen open={showHeatmap}>
         <AppBar position="sticky">
           <Toolbar variant="dense">
             <IconButton
@@ -956,9 +942,11 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
         {displayGameContent()}
 
         {displaySideCard()}
-
-        {displayHeatmapDialog()}
       </div>
+
+      {displayHeatmapDialog()}
+
+      <SubmitScoreDialog open={showSubmit} onClose={onCloseSubmit} onSubmit={onSubmitScore} />
     </>
   );
 };
