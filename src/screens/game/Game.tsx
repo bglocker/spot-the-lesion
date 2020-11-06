@@ -16,7 +16,13 @@ import {
   mapClickToCanvas,
   mapToCanvasScale,
 } from "../../components/CanvasUtils";
-import { getImagePath, getIntersectionOverUnion, getJsonPath } from "./GameUitls";
+import {
+  getImagePath,
+  getIntersectionOverUnion,
+  getJsonPath,
+  getNewFileId,
+  range,
+} from "./GameUitls";
 import DbUtils from "../../utils/DbUtils";
 import { db } from "../../firebase/firebaseApp";
 import SubmitScoreDialog from "./SubmitScoreDialog";
@@ -185,13 +191,11 @@ const NUM_SEARCH_CUBES = 10;
 
 const MAX_CANVAS_SIZE = 750;
 
-const MAX_FILE_NUMBER = 100;
+const MAX_FILE_ID = 100;
 
 type JsonData = { truth: number[]; predicted: number[] };
 
 const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
-  const seenFiles = new Set<number>();
-
   const [context, canvasRef] = useCanvasContext();
   const [animationContext, animationCanvasRef] = useCanvasContext();
 
@@ -210,7 +214,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
   const [timerColor, setTimerColor] = useState(INITIAL_TIMER_COLOR);
 
-  const [imageId, setImageId] = useState(0);
+  const [fileId, setFileId] = useState(0);
+  const [fileIds, setFileIds] = useState<number[]>(() => range(0, MAX_FILE_ID));
+
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
   const [click, setClick] = useState<{ x: number; y: number } | null>(null);
@@ -312,7 +318,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
    */
   const uploadPlayerClick = useCallback(
     async (x: number, y: number) => {
-      const docNameForImage = `image_${imageId}`;
+      const docNameForImage = `image_${fileId}`;
       let entry;
       let pointWasClickedBefore = false;
 
@@ -348,7 +354,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
       await db.collection(DbUtils.IMAGES).doc(docNameForImage).set(entry);
     },
-    [context, imageId]
+    [context, fileId]
   );
 
   /**
@@ -521,24 +527,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   };
 
   /**
-   * Returns a random, previously unseen, file number
-   *
-   * @return number of a new file
-   */
-  const getNewFileNumber = (): number => {
-    const newFileNumber = Math.round(Math.random() * MAX_FILE_NUMBER);
-
-    /* TODO: handle case where all files have been used */
-    if (seenFiles.has(newFileNumber)) {
-      return getNewFileNumber();
-    }
-
-    seenFiles.add(newFileNumber);
-
-    return newFileNumber;
-  };
-
-  /**
    * Maps the coordinates of a given rectangle to the current canvas scale
    *
    * @param rect Coordinates for the corners of the rectangle to map
@@ -593,11 +581,12 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
     setLoading(true);
 
     /* Get a new file number and load the corresponding json and image */
-    const fileNumber = getNewFileNumber();
-    setImageId(fileNumber);
+    const [newFileId, remainingFileIds] = getNewFileId(fileIds);
+    setFileId(newFileId);
+    setFileIds(remainingFileIds);
 
-    await loadJson(fileNumber);
-    await loadImage(fileNumber);
+    await loadJson(newFileId);
+    await loadImage(newFileId);
 
     /* Reset game state */
     setRoundTime(ROUND_START_TIME);
@@ -902,7 +891,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
           </Toolbar>
         </AppBar>
 
-        <HeatmapDisplay imageId={imageId} />
+        <HeatmapDisplay imageId={fileId} />
       </Dialog>
     );
   };
