@@ -50,10 +50,10 @@ const HeatmapDisplay: React.FC<HeatmapProps> = ({ imageId }: HeatmapProps) => {
   const [heatmapInstance, setHeatmapInstance] = useState<h337>(null!);
   const [resize, setResize] = useState(false);
 
-  const resizeHandler = () => {
+  const resizeHandler = useCallback(() => {
     window.removeEventListener("resize", resizeHandler);
     setResize(true);
-  };
+  }, []);
 
   useEffect(() => {
     if (heatmapContainer === null) {
@@ -93,7 +93,7 @@ const HeatmapDisplay: React.FC<HeatmapProps> = ({ imageId }: HeatmapProps) => {
       heatmapInstance.setData(heatmapData);
       window.addEventListener("resize", resizeHandler);
     });
-  }, [getClickedPoints, heatmapContainer, heatmapInstance, resize]);
+  }, [getClickedPoints, heatmapContainer, heatmapInstance, resize, resizeHandler]);
 
   return (
     <div className={classes.container} ref={heatmapContainerRef}>
