@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { AppBar, Button, Card, Dialog, IconButton, Toolbar, Typography } from "@material-ui/core";
-import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
-import { KeyboardBackspace, Close } from "@material-ui/icons";
+import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import { Close, KeyboardBackspace } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
@@ -11,8 +11,8 @@ import useInterval from "../../components/useInterval";
 import useCanvasContext from "../../components/useCanvasContext";
 import useUniqueRandomGenerator from "../../components/useUniqueRandomGenerator";
 import {
-  drawCross,
   drawCircle,
+  drawCross,
   drawRectangle,
   mapClickToCanvas,
   mapToCanvasScale,
@@ -224,8 +224,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   const [playerRoundScore, setPlayerRoundScore] = useState(0);
   const [aiRoundScore, setAiRoundScore] = useState(0);
 
-  const [playerCorrectAnswers, setPlayerCorrectAnswers] = useState(0);
-  const [aiCorrectAnswers, setAiCorrectAnswers] = useState(0);
+  const [playerCorrect, setPlayerCorrect] = useState(0);
+  const [aiCorrect, setAiCorrect] = useState(0);
 
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showSubmit, setShowSubmit] = useState(false);
@@ -392,7 +392,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
       drawRectangle(context, predicted, DEFAULT_COLOUR, 3);
     } else if (endTime === 500) {
       /*
-       * 1 second passed
+       * 0.5 seconds passed
        *
        * draw truth rectangle
        */
@@ -410,15 +410,13 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
       /* Player was successful if the click coordinates are inside the truth rectangle */
       if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
         /* Casual Mode: half a point, doubled if no hint received */
-        const casualRoundScore = hinted ? 0.5 : 1;
+        const casualScore = hinted ? 0.5 : 1;
 
         /* Competitive Mode: function of round time left, doubled if no hint received */
-        const competitiveRoundScore = (roundTime / 1000) * (hinted ? 10 : 20);
+        const competitiveScore = (roundTime / 1000) * (hinted ? 10 : 20);
 
-        const roundScore = gameMode === "casual" ? casualRoundScore : competitiveRoundScore;
-
-        setPlayerRoundScore(roundScore);
-        setPlayerCorrectAnswers((prevState) => prevState + 1);
+        setPlayerRoundScore(gameMode === "casual" ? casualScore : competitiveScore);
+        setPlayerCorrect((prevState) => prevState + 1);
 
         drawCross(context, x, y, 5, VALID_COLOUR);
       } else {
@@ -436,15 +434,13 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
       /* AI was successful if the ratio of the intersection over the union is greater than 0.5 */
       if (intersectionOverUnion > 0.5) {
         /* Casual mode: one point */
-        const casualRoundScore = 1;
+        const casualScore = 1;
 
         /* Competitive mode: function of prediction accuracy and constant increase rate */
         const competitiveRoundScore = Math.round(intersectionOverUnion * AI_SCORE_INCREASE_RATE);
 
-        const roundScore = gameMode === "casual" ? casualRoundScore : competitiveRoundScore;
-
-        setAiRoundScore(roundScore);
-        setAiCorrectAnswers((prevState) => prevState + 1);
+        setAiRoundScore(gameMode === "casual" ? casualScore : competitiveRoundScore);
+        setAiCorrect((prevState) => prevState + 1);
 
         drawRectangle(context, predicted, VALID_COLOUR, 3);
       } else {
@@ -615,9 +611,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
       user: username,
       score: playerScore + playerRoundScore,
       ai_score: aiScore + aiRoundScore,
-      correct_player_answers: playerCorrectAnswers,
+      correct_player_answers: playerCorrect,
       usedHints: hintedAtLeastOnce,
-      correct_ai_answers: aiCorrectAnswers,
+      correct_ai_answers: aiCorrect,
       day: date.getDate(),
       month: DbUtils.monthNames[date.getMonth()],
       year: date.getFullYear(),
@@ -658,14 +654,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
     enqueueSnackbar("Score successfully submitted!");
   };
 
-  /**
-   * Called when the Show Heatmap button is clicked
-   */
   const onShowHeatmap = () => setShowHeatmap(true);
 
-  /**
-   * Called when the Show Heatmap Dialog is closed
-   */
   const onCloseHeatmap = () => setShowHeatmap(false);
 
   const onShowSubmit = () => setShowSubmit(true);
@@ -676,12 +666,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
    * Display the winner (only on competitive mode, after last round)
    */
   const showWinner = () => {
-    if (
-      gameMode === "casual" ||
-      (gameMode === "competitive" && round < NUM_ROUNDS) ||
-      roundRunning ||
-      loading
-    ) {
+    if (gameMode === "casual" || round < NUM_ROUNDS || roundRunning || loading) {
       return null;
     }
 
