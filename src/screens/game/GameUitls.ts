@@ -47,31 +47,42 @@ const getIntersectionOverUnion = (rectA: number[], rectB: number[]): number => {
  * @param start First value of range (inclusive)
  * @param stop  Last value of range (exclusive)
  * @param step  Step between consecutive range values
+ *
+ * @return Array range
  */
-const range = (start = 1, stop: number, step = 1): number[] =>
-  Array.from({ length: (stop - start) / step }, (_, i) => i * step);
+const range = (start = 1, stop: number, step = 1): number[] => {
+  const nums: number[] = [];
 
-/**
- * Generate a new, previously unseen file Id
- * Does not mutate the input array, instead returning a copy
- *
- * @param fileIds Current (unseen) file ids to choose from
- *
- * @return Tuple of the chosen Id, and a copy of the fileIds without the chosen Id
- */
-const getNewFileId = (fileIds: number[]): [number, number[]] => {
-  if (fileIds.length === 0) {
-    /* TODO: handle case where all files have been used */
-    return [-1, []];
+  for (let i = start; i < stop; i += step) {
+    nums.push(i);
   }
 
-  const remainingFileIds = [...fileIds];
-
-  const index = Math.floor(Math.random() * remainingFileIds.length);
-
-  const [newFileId] = remainingFileIds.splice(index, 1);
-
-  return [newFileId, remainingFileIds];
+  return nums;
 };
 
-export { getJsonPath, getIntersectionOverUnion, getImagePath, getNewFileId, range };
+/**
+ * Create a (randomly) shuffled array from a given range
+ *
+ * @param start First value of range (inclusive)
+ * @param stop  Last value of range (exclusive)
+ * @param step  Step between consecutive range values
+ *
+ * @return Shuffled array range
+ */
+const shuffledRange = (start = 1, stop: number, step = 1): number[] => {
+  const nums: number[] = [];
+
+  for (let i = 0; i < (stop - start) / step; i++) {
+    const j = Math.floor(Math.random() * (i + 1));
+
+    if (j !== i) {
+      nums.push(nums[j]);
+    }
+
+    nums[j] = start + i * step;
+  }
+
+  return nums;
+};
+
+export { getJsonPath, getIntersectionOverUnion, getImagePath, range, shuffledRange };

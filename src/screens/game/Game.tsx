@@ -9,6 +9,7 @@ import LoadingButton from "../../components/LoadingButton";
 import HeatmapDisplay from "../../components/HeatmapDisplay";
 import useInterval from "../../components/useInterval";
 import useCanvasContext from "../../components/useCanvasContext";
+import useUniqueRandomGenerator from "../../components/useUniqueRandomGenerator";
 import {
   drawCross,
   drawCircle,
@@ -16,13 +17,7 @@ import {
   mapClickToCanvas,
   mapToCanvasScale,
 } from "../../components/CanvasUtils";
-import {
-  getImagePath,
-  getIntersectionOverUnion,
-  getJsonPath,
-  getNewFileId,
-  range,
-} from "./GameUitls";
+import { getImagePath, getIntersectionOverUnion, getJsonPath } from "./GameUitls";
 import DbUtils from "../../utils/DbUtils";
 import { db } from "../../firebase/firebaseApp";
 import SubmitScoreDialog from "./SubmitScoreDialog";
@@ -214,8 +209,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
   const [timerColor, setTimerColor] = useState(INITIAL_TIMER_COLOR);
 
+  const getNewFileId = useUniqueRandomGenerator(MAX_FILE_ID);
   const [fileId, setFileId] = useState(0);
-  const [fileIds, setFileIds] = useState<number[]>(() => range(0, MAX_FILE_ID));
 
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
@@ -581,9 +576,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
     setLoading(true);
 
     /* Get a new file number and load the corresponding json and image */
-    const [newFileId, remainingFileIds] = getNewFileId(fileIds);
+    const newFileId = getNewFileId();
     setFileId(newFileId);
-    setFileIds(remainingFileIds);
 
     await loadJson(newFileId);
     await loadImage(newFileId);
