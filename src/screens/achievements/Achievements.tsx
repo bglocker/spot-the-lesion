@@ -4,16 +4,17 @@ import { makeStyles, createStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import question from "../../res/images/achievements/block.png";
 import firstCorrect from "../../res/images/achievements/check.png";
-import firstCorrectWithoutHint from "../../res/images/achievements/noHint.png";
-import firstWin from "../../res/images/achievements/trophy.png";
+import firstCorrectWithoutHint from "../../res/images/achievements/investigation.png";
+import firstCompetitiveWin from "../../res/images/achievements/trophy.png";
+import firstCasualWin from "../../res/images/achievements/medal.png";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     backButton: {
       marginRight: 8,
     },
-    container: {
-      height: "100%",
+    root: {
+      flexGrow: 1,
     },
     grid: {
       marginTop: 32,
@@ -21,10 +22,10 @@ const useStyles = makeStyles((theme) =>
     },
     image: {
       [theme.breakpoints.down("xs")]: {
-        height: 200,
+        height: 150,
       },
       [theme.breakpoints.up("sm")]: {
-        height: 300,
+        height: 250,
       },
     },
   })
@@ -51,7 +52,7 @@ const FirstFormRow = () => {
       <Grid item xs={4}>
         <img
           className={classes.image}
-          src={localStorage.getItem("firstWin") ? firstWin : question}
+          src={localStorage.getItem("firstCasualWin") ? firstCasualWin : question}
           alt="Not found yet"
         />
       </Grid>
@@ -60,32 +61,38 @@ const FirstFormRow = () => {
 };
 
 const SecondFormRow = () => {
+  const classes = useStyles();
   return (
     <>
       <Grid item xs={4}>
-        asd
+        <img
+          className={classes.image}
+          src={localStorage.getItem("firstCompetitiveWin") ? firstCompetitiveWin : question}
+          alt="Not found yet"
+        />
       </Grid>
       <Grid item xs={4}>
-        asd
+        <img className={classes.image} src={question} alt="Not found yet" />
       </Grid>
       <Grid item xs={4}>
-        ads
+        <img className={classes.image} src={question} alt="Not found yet" />
       </Grid>
     </>
   );
 };
 
 const ThirdFormRow = () => {
+  const classes = useStyles();
   return (
     <>
       <Grid item xs={4}>
-        asd
+        <img className={classes.image} src={question} alt="Not found yet" />
       </Grid>
       <Grid item xs={4}>
-        asd
+        <img className={classes.image} src={question} alt="Not found yet" />
       </Grid>
       <Grid item xs={4}>
-        ads
+        <img className={classes.image} src={question} alt="Not found yet" />
       </Grid>
     </>
   );
@@ -95,7 +102,7 @@ const Achievements: React.FC<AchievementsProps> = ({ setRoute }: AchievementsPro
   const classes = useStyles();
 
   return (
-    <>
+    <div className={classes.root}>
       <AppBar position="sticky">
         <Toolbar variant="dense">
           <IconButton
@@ -112,7 +119,7 @@ const Achievements: React.FC<AchievementsProps> = ({ setRoute }: AchievementsPro
         </Toolbar>
       </AppBar>
 
-      <div className={classes.container}>
+      <>
         <Grid container spacing={6} className={classes.grid}>
           <Grid container item xs={12} spacing={3}>
             <FirstFormRow />
@@ -124,8 +131,8 @@ const Achievements: React.FC<AchievementsProps> = ({ setRoute }: AchievementsPro
             <ThirdFormRow />
           </Grid>
         </Grid>
-      </div>
-    </>
+      </>
+    </div>
   );
 };
 
