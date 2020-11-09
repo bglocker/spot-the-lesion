@@ -442,27 +442,45 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
       enqueueSnackbar("Checking results...");
 
       /* Player was successful if the click coordinates are inside the truth rectangle */
-      if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
-        /* For Casual Mode: if Hint was shown, receive half a point; otherwise receive full point */
-        const casualRoundScore = hinted ? 0.5 : 1;
+      if (truth[0] <= x && x <= truth[2] && truth[1] <= y) {
+        if (y <= truth[3]) {
+          /* For Casual Mode: if Hint was shown, receive half a point; otherwise receive full point */
+          const casualRoundScore = hinted ? 0.5 : 1;
 
-        /* For Competitive Mode: round time taken doubled if no hint provided */
-        const competitiveRoundScore = (roundTime / 1000) * (hinted ? 10 : 20);
+          /* For Competitive Mode: round time taken doubled if no hint provided */
+          const competitiveRoundScore = (roundTime / 1000) * (hinted ? 10 : 20);
 
-        const roundScore = gameMode === "casual" ? casualRoundScore : competitiveRoundScore;
+          const roundScore = gameMode === "casual" ? casualRoundScore : competitiveRoundScore;
 
-        if (!localStorage.getItem("firstCorrect")) {
-          localStorage.setItem("firstCorrect", "true");
+          if (!localStorage.getItem("firstCorrect")) {
+            enqueueSnackbar("Achievement! First correct answer!", {
+              anchorOrigin: {
+                vertical: "top",
+                horizontal: "right",
+              },
+              variant: "success",
+            });
+            localStorage.setItem("firstCorrect", "true");
+          }
+
+          if (!localStorage.getItem("firstCorrectWithoutHint") && !hinted) {
+            enqueueSnackbar("Achievement! No hint needed!", {
+              anchorOrigin: {
+                vertical: "top",
+                horizontal: "right",
+              },
+              variant: "success",
+            });
+            localStorage.setItem("firstCorrectWithoutHint", "true");
+          }
+          setPlayerScore((prevState) => prevState + roundScore);
+          setPlayerCorrectAnswers((prevState) => prevState + 1);
+          setPlayerCorrect(true);
+
+          drawCross(context, x, y, 5, VALID_COLOUR);
+        } else {
+          drawCross(context, x, y, 5, INVALID_COLOUR);
         }
-
-        if (!localStorage.getItem("[firstCorrectWithoutHint") && !hinted) {
-          localStorage.setItem("firstCorrectWithoutHint", "true");
-        }
-        setPlayerScore((prevState) => prevState + roundScore);
-        setPlayerCorrectAnswers((prevState) => prevState + 1);
-        setPlayerCorrect(true);
-
-        drawCross(context, x, y, 5, VALID_COLOUR);
       } else {
         drawCross(context, x, y, 5, INVALID_COLOUR);
       }
@@ -731,8 +749,15 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     let color: string;
 
     if (playerScore > aiScore) {
-      if (!localStorage.getItem("firstWin")) {
-        localStorage.setItem("firstWin", "true");
+      if (!localStorage.getItem("firstCompetitiveWin")) {
+        enqueueSnackbar("Achievement! First competitive win!", {
+          anchorOrigin: {
+            vertical: "top",
+            horizontal: "right",
+          },
+          variant: "success",
+        });
+        localStorage.setItem("firstCompetitiveWin", "true");
       }
       text = "You won!";
       color = VALID_COLOUR;
@@ -761,6 +786,18 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
     setLoading(true);
     await uploadScore();
     setRoute("home");
+    if (gameMode === "casual" && playerScore > aiCorrectAnswers) {
+      if (!localStorage.getItem("firstCasualWin")) {
+        enqueueSnackbar("Achievement! First casual win!", {
+          anchorOrigin: {
+            vertical: "top",
+            horizontal: "right",
+          },
+          variant: "success",
+        });
+        localStorage.setItem("firstCasualWin", "true");
+      }
+    }
     enqueueSnackbar("Score successfully submitted!");
   };
 
