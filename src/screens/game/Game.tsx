@@ -423,7 +423,7 @@ const Game: React.FC<GameProps> = ({ setRoute }: GameProps) => {
         variant: "success",
         autoHideDuration: 3000,
       });
-      localStorage.setItem("firstCorrectWithoutHint", "true");
+      localStorage.setItem("fiveCorrectSameRunCasual", "true");
     }
     if (
       !localStorage.getItem("fiveCorrectSameRunCompetitive") &&
