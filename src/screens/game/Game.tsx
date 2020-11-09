@@ -6,6 +6,7 @@ import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import LoadingButton from "../../components/LoadingButton";
+import ScoreWithIncrement from "../../components/ScoreWithIncrement";
 import HeatmapDisplay from "../../components/HeatmapDisplay";
 import useInterval from "../../components/useInterval";
 import useCanvasContext from "../../components/useCanvasContext";
@@ -803,21 +804,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   };
 
   /**
-   * Display the round score in green if positive, or red if 0
-   *
-   * @param roundScore Score for the current round
-   */
-  const showRoundScore = (roundScore: number) => {
-    if (round === 0 || roundRunning || loading) {
-      return null;
-    }
-
-    const color = roundScore > 0 ? VALID_COLOUR : INVALID_COLOUR;
-
-    return <span style={{ color }}>+{roundScore}</span>;
-  };
-
-  /**
    * Function for displaying the side Score Card
    */
   const displaySideCard = () => {
@@ -825,17 +811,21 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
       <div className={classes.sideContainer}>
         <Card className={classes.sideCard}>
           <div className={classes.scoresContainer}>
-            <Typography className={classes.sideCardText} variant="h4">
-              You: {playerScore} {showRoundScore(playerRoundScore)}
-            </Typography>
+            <ScoreWithIncrement
+              player="You"
+              score={playerScore}
+              increment={playerRoundScore}
+              showIncrement={round > 0 && !roundRunning && !loading}
+            />
 
-            <Typography className={classes.sideCardText} variant="h4">
-              vs
-            </Typography>
+            <Typography className={classes.sideCardText}>vs</Typography>
 
-            <Typography className={classes.sideCardText} variant="h4">
-              AI: {aiScore} {showRoundScore(aiRoundScore)}
-            </Typography>
+            <ScoreWithIncrement
+              player="AI"
+              score={aiScore}
+              increment={aiRoundScore}
+              showIncrement={round > 0 && !roundRunning && !loading}
+            />
           </div>
 
           {showWinner()}
