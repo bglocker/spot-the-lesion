@@ -778,22 +778,25 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
           autoHideDuration: 3000,
         });
         localStorage.setItem("firstCompetitiveWin", "true");
-      text = "You won!";
-      color = VALID_COLOUR;
-    } else if (endPlayerScore < endAiScore) {
-      text = "AI won!";
-      color = INVALID_COLOUR;
-    } else {
-      text = "It was a draw!";
-      color = DEFAULT_COLOUR;
+        text = "You won!";
+        color = VALID_COLOUR;
+      } else if (endPlayerScore < endAiScore) {
+        text = "AI won!";
+        color = INVALID_COLOUR;
+      } else {
+        text = "It was a draw!";
+        color = DEFAULT_COLOUR;
+      }
+
+      return (
+        <Typography className={classes.sideCardText} variant="h6" style={{ color }}>
+          {text}
+        </Typography>
+      );
     }
 
-    return (
-      <Typography className={classes.sideCardText} variant="h6" style={{ color }}>
-        {text}
-      </Typography>
-    );
-  }
+    return null;
+  };
 
   const displayStartRoundButton = () => {
     if (gameMode === "competitive" && round === NUM_ROUNDS) {
