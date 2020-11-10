@@ -176,6 +176,7 @@ const NUM_SEARCH_CUBES = 10;
 
 const MAX_CANVAS_SIZE = 750;
 
+const MIN_FILE_ID = 0;
 const MAX_FILE_ID = 100;
 
 type JsonData = { truth: number[]; predicted: number[] };
@@ -199,7 +200,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
   const [timerColor, setTimerColor] = useState(INITIAL_TIMER_COLOR);
 
-  const getNewFileId = useUniqueRandomGenerator(MAX_FILE_ID);
+  const getNewFileId = useUniqueRandomGenerator(MIN_FILE_ID, MAX_FILE_ID);
   const [fileId, setFileId] = useState(0);
 
   const [truth, setTruth] = useState<number[]>([]);
