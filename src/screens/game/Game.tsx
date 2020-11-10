@@ -625,30 +625,14 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
     const entryName = `${entry.year}.${entry.month}.${entry.day}.${entry.user}`;
 
-    const snapshot = await db
-      .collection(leaderboard)
-      .where("year", "==", entry.year)
-      .where("month", "==", entry.month)
-      .where("day", "==", entry.day)
-      .where("user", "==", username)
-      .get();
+    const playerDoc = await db.collection(leaderboard).doc(entryName).get();
 
-    if (snapshot.empty) {
+    if (!playerDoc.exists) {
       // First time played today - add this score to DB
       await db.collection(leaderboard).doc(entryName).set(entry);
-    } else {
-      // Check if this score is better than what this player registered before
-      let newScoreRecord = true;
-      snapshot.forEach((doc) => {
-        if (doc.data().score > entry.score) {
-          newScoreRecord = false;
-        }
-      });
-
-      // Add current score in DB only if it is a new Score Record
-      if (newScoreRecord) {
-        await db.collection(leaderboard).doc(entryName).set(entry);
-      }
+    } else if (playerDoc.data()!.score < entry.score) {
+      // Current score is greater than what this player registered before => update it in the DB
+      await db.collection(leaderboard).doc(entryName).set(entry);
     }
 
     setRoute("home");
