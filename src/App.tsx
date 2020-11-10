@@ -15,6 +15,9 @@ const theme = createMuiTheme({
     primary: {
       main: colors.primary,
     },
+    secondary: {
+      main: colors.secondary /* TODO: secondary should contrast primary */,
+    },
   },
 });
 
@@ -24,7 +27,7 @@ const useStyles = makeStyles(() =>
       height: "100vh",
       display: "flex",
       flexDirection: "column",
-      backgroundColor: "#63A2AB",
+      backgroundColor: colors.secondary,
     },
   })
 );

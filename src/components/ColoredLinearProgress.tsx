@@ -10,6 +10,7 @@ interface ColoredLinearProgressProps extends LinearProgressProps {
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
+      width: "100%",
       backgroundColor: ({ barBackgroundColor }: ColoredLinearProgressProps) =>
         barBackgroundColor !== "" ? barBackgroundColor : "gray",
     },

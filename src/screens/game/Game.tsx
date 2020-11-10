@@ -23,6 +23,10 @@ import DbUtils from "../../utils/DbUtils";
 import { db } from "../../firebase/firebaseApp";
 import SubmitScoreDialog from "./SubmitScoreDialog";
 
+interface StylesProps {
+  timerColor: string;
+}
+
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     backButton: {
@@ -57,10 +61,11 @@ const useStyles = makeStyles((theme: Theme) =>
       justifyContent: "space-evenly",
       alignItems: "center",
     },
-    hintButtonContainer: {
+    topBar: {
       margin: 8,
       padding: 8,
       display: "flex",
+      flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
       [theme.breakpoints.down("sm")]: {
@@ -72,26 +77,10 @@ const useStyles = makeStyles((theme: Theme) =>
         maxWidth: "70vw",
       },
     },
-    showHintButton: {
-      backgroundColor: "#63a2ab",
-    },
-    timerContainer: {
-      margin: 8,
-      padding: 8,
-      [theme.breakpoints.down("sm")]: {
-        width: "80vw",
-        maxWidth: "60vh",
-      },
-      [theme.breakpoints.up("md")]: {
-        width: "70vh",
-        maxWidth: "70vw",
-      },
-    },
     timer: {
       marginBottom: 8,
-      textAlign: "center",
       fontSize: "1.5rem",
-      color: (props: Record<string, string>) => props.timerColor,
+      color: (props: StylesProps) => props.timerColor,
     },
     canvasContainer: {
       display: "grid",
@@ -748,40 +737,42 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
    * Casual Mode: Hint Button
    * Competitive Mode: Timer
    */
-  const displayTopBar = () => {
+  const gameTopBar = () => {
+    let topBarContent;
     if (gameMode === "casual") {
-      return (
-        <Card className={classes.hintButtonContainer}>
-          <Button
-            className={classes.showHintButton}
-            onClick={showHint}
-            disabled={round === 0 || loading || hinted || !roundRunning}
-          >
-            Show hint
-          </Button>
-        </Card>
+      topBarContent = (
+        <Button
+          variant="contained"
+          color="secondary"
+          disabled={hinted || !roundRunning}
+          onClick={showHint}
+        >
+          Show hint
+        </Button>
+      );
+    } else {
+      topBarContent = (
+        <>
+          <Typography className={classes.timer}>
+            Time remaining: {(roundTime / 1000).toFixed(1)}s
+          </Typography>
+
+          <ColoredLinearProgress
+            barColor={timerColor}
+            variant="determinate"
+            value={roundTime / 100}
+          />
+        </>
       );
     }
 
-    return (
-      <Card className={classes.timerContainer}>
-        <Typography className={classes.timer} variant="h4">
-          Time remaining: {(roundTime / 1000).toFixed(1)}s
-        </Typography>
-
-        <ColoredLinearProgress
-          barColor={timerColor}
-          variant="determinate"
-          value={roundTime / 100}
-        />
-      </Card>
-    );
+    return <Card className={classes.topBar}>{topBarContent}</Card>;
   };
 
-  const displayGameContent = () => {
+  const gameContent = () => {
     return (
       <div className={classes.topBarCanvasContainer}>
-        {displayTopBar()}
+        {gameTopBar()}
 
         <Card className={classes.canvasContainer}>
           <canvas
@@ -806,7 +797,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   /**
    * Function for displaying the side Score Card
    */
-  const displaySideCard = () => {
+  const gameSideCard = () => {
     return (
       <div className={classes.sideContainer}>
         <Card className={classes.sideCard}>
@@ -897,9 +888,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
       <div className={classes.container}>
         <div className={classes.emptyDiv} />
 
-        {displayGameContent()}
+        {gameContent()}
 
-        {displaySideCard()}
+        {gameSideCard()}
       </div>
 
       {displayHeatmapDialog()}
