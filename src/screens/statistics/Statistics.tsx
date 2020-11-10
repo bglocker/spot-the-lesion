@@ -93,8 +93,9 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
   /**
    * Index for the current Statistics page
    * Casual Mode - index 0; Competitive Mode - index 1
+   * Per-Image Stats - index 2
    */
-  const [currentGameModeIndex, setCurrentGameModeIndex] = useState(0);
+  const [currentTabIndex, setCurrentTabIndex] = useState(0);
 
   /**
    * Hook used for prompting the user to select the game mode
@@ -122,6 +123,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
   const retrieveStatistics = async (gameModeIndex: number, statsIndex: number) => {
     const leaderboard =
       gameModeIndex === 0 ? DbUtils.LEADERBOARD_CASUAL : DbUtils.LEADERBOARD_COMPETITIVE;
+
     const snapshot = await db.collection(leaderboard).get();
 
     if (statsIndex === 0) {
@@ -158,14 +160,14 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
 
   /**
    * Function for triggering the re-render of the statistics according to the new stats index
-   * @param gameModeIndex - index of the Game mode for which to retrieve stats
+   * @param newTabIndex - index of the Game mode for which to retrieve stats
    *                      - 0 for Casual, 1 for Competitive
    * @param statsIndex - index of the next Stats page to display
    */
-  const onGameTabChange = async (gameModeIndex: number, statsIndex: number) => {
-    setCurrentGameModeIndex(gameModeIndex);
+  const onGameTabChange = async (newTabIndex: number, statsIndex: number) => {
+    setCurrentTabIndex(newTabIndex);
     setGameModeSelected(true);
-    await retrieveStatistics(gameModeIndex, statsIndex);
+    await retrieveStatistics(newTabIndex, statsIndex);
   };
 
   /**
@@ -173,7 +175,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
    * If game mode not selected yet, prompt the user to do so
    * Otherwise, show corresponding stats
    */
-  const displayStats = (statsIndex: number) => {
+  const displayStats = (tabIndex: number, statsIndex: number) => {
     if (!gameModeSelected) {
       return (
         <Grid container justify="center">
@@ -181,14 +183,14 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
         </Grid>
       );
     }
-    return displayStatsPage(statsIndex);
+    return tabIndex !== 2 ? displayUserStats(statsIndex) : <div className={classes.emptyDiv} />;
   };
 
   /**
-   * Function for displaying a single Stats page (slide)
+   * Function for displaying a single User Stats page (slide)
    * @param statsIndex - index of the stats page (slide) to display
    */
-  const displayStatsPage = (statsIndex: number) => {
+  const displayUserStats = (statsIndex: number) => {
     if (statsIndex === 0) {
       const data = [
         {
@@ -345,7 +347,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
       setSlideIndex(newIndex);
       setSlideDirection(oppDirection);
       setSlideIn(true);
-      await retrieveStatistics(currentGameModeIndex, newIndex);
+      await retrieveStatistics(currentTabIndex, newIndex);
     }, 500);
   };
 
@@ -392,7 +394,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
 
       <AppBar className={classes.gameTypeAppBar} position="sticky">
         <Tabs
-          value={!gameModeSelected ? gameModeSelected : currentGameModeIndex}
+          value={!gameModeSelected ? gameModeSelected : currentTabIndex}
           onChange={(_, newGameModeIndex) => onGameTabChange(newGameModeIndex, slideIndex)}
           aria-label="Gametypes"
           classes={{ indicator: classes.tabIndicator }}
@@ -410,10 +412,17 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
             id="gametype-1"
             aria-controls="gametype-view-1"
           />
+
+          <Tab
+            className={classes.tab}
+            label="Per Image Stats"
+            id="gametype-1"
+            aria-controls="gametype-view-1"
+          />
         </Tabs>
       </AppBar>
       <Slide in={slideIn} direction={slideDirection}>
-        {displayStats(slideIndex)}
+        {displayStats(currentTabIndex, slideIndex)}
       </Slide>
       {displaySlideShowButtons()}
     </>
