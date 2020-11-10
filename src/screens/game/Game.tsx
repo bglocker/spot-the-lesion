@@ -307,6 +307,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
       const docNameForImage = `image_${fileId}`;
       let entry;
       let pointWasClickedBefore = false;
+      let isClickCorrect = false;
 
       const newClickPoint = {
         x: Math.round((x * 10000) / context.canvas.width) / 100,
@@ -314,14 +315,23 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
         clickCount: 1,
       };
 
+      // Check whether click was correct
+      if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
+        isClickCorrect = true;
+      }
+
       const imageDoc = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
 
       if (!imageDoc.exists) {
         // First time this image showed up in the game - entry will be singleton array
-        entry = { clicks: [newClickPoint] };
+        entry = {
+          clicks: [newClickPoint],
+          correctClicks: isClickCorrect ? 1 : 0,
+          wrongClicks: isClickCorrect ? 0 : 1,
+          hintCount: hinted ? 1 : 0,
+        };
       } else {
-        const { clicks } = imageDoc.data()!;
-
+        const { clicks, correctClicks, wrongClicks, hintCount } = imageDoc.data()!;
         clicks.forEach((clk: { x: number; y: number; count: number }) => {
           if (clk.x === x && clk.y === y) {
             clk.count += 1;
@@ -334,13 +344,18 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
           clicks.push(newClickPoint);
         }
 
-        // Entry in DB will be the updated clicks array
-        entry = { clicks };
+        // Construct the updated DB entry for this image
+        entry = {
+          clicks,
+          correctClicks: isClickCorrect ? correctClicks + 1 : correctClicks,
+          wrongClicks: isClickCorrect ? wrongClicks : wrongClicks + 1,
+          hintCount: hinted ? hintCount + 1 : hintCount,
+        };
       }
 
       await db.collection(DbUtils.IMAGES).doc(docNameForImage).set(entry);
     },
-    [context, fileId]
+    [context, fileId, hinted, truth]
   );
 
   /**
@@ -615,30 +630,14 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
     const entryName = `${entry.year}.${entry.month}.${entry.day}.${entry.user}`;
 
-    const snapshot = await db
-      .collection(leaderboard)
-      .where("year", "==", entry.year)
-      .where("month", "==", entry.month)
-      .where("day", "==", entry.day)
-      .where("user", "==", username)
-      .get();
+    const playerDoc = await db.collection(leaderboard).doc(entryName).get();
 
-    if (snapshot.empty) {
+    if (!playerDoc.exists) {
       // First time played today - add this score to DB
       await db.collection(leaderboard).doc(entryName).set(entry);
-    } else {
-      // Check if this score is better than what this player registered before
-      let newScoreRecord = true;
-      snapshot.forEach((doc) => {
-        if (doc.data().score > entry.score) {
-          newScoreRecord = false;
-        }
-      });
-
-      // Add current score in DB only if it is a new Score Record
-      if (newScoreRecord) {
-        await db.collection(leaderboard).doc(entryName).set(entry);
-      }
+    } else if (playerDoc.data()!.score < entry.score) {
+      // Current score is greater than what this player registered before => update it in the DB
+      await db.collection(leaderboard).doc(entryName).set(entry);
     }
 
     setRoute("home");
