@@ -3,7 +3,7 @@ import { createMuiTheme, createStyles, makeStyles, ThemeProvider } from "@materi
 import { SnackbarProvider } from "notistack";
 import colors from "./res/colors";
 import Home from "./screens/home/Home";
-import Game from "./screens/game/Game";
+import GameModeSelect from "./screens/game/GameModeSelect";
 import Tutorial from "./screens/tutorial/Tutorial";
 import About from "./screens/about/About";
 import Credits from "./screens/credits/Credits";
@@ -16,6 +16,9 @@ const theme = createMuiTheme({
     primary: {
       main: colors.primary,
     },
+    secondary: {
+      main: colors.secondary /* TODO: secondary should contrast primary */,
+    },
   },
 });
 
@@ -25,7 +28,7 @@ const useStyles = makeStyles(() =>
       height: "100vh",
       display: "flex",
       flexDirection: "column",
-      backgroundColor: "#63A2AB",
+      backgroundColor: colors.secondary,
     },
   })
 );
@@ -42,7 +45,7 @@ const App: React.FC = () => {
       currentScreen = <Home setRoute={setRoute} />;
       break;
     case "game":
-      currentScreen = <Game setRoute={setRoute} />;
+      currentScreen = <GameModeSelect setRoute={setRoute} />;
       break;
     case "leaderboard":
       currentScreen = <Leaderboard setRoute={setRoute} />;
