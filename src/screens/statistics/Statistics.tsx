@@ -166,6 +166,10 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     }
   };
 
+  /**
+   * Function for retrieving image statistics from Firebase
+   * @param imageIndex - index of the image for which we retrieve stats
+   */
   const retrieveImageStats = async (imageIndex: number) => {
     const table = DbUtils.IMAGES;
     const docName = `image_${imageIndex}`;
@@ -193,9 +197,14 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
   };
 
   /**
-   * Function for displaying the Statistics for Casual or Competitive Game Mode
+   * Function for displaying the Player Statistics or Image Statistics
    * If game mode not selected yet, prompt the user to do so
    * Otherwise, show corresponding stats
+   * @param tabIndex - index of the User/Image stats tab to display
+   *                 - 0 for Casual Mode User Stats
+   *                 - 1 for Competitive Mode User Stats
+   *                 - 2 for Image Stats
+   * @param statIndex - index of the specific stats page to display
    */
   const displayStats = (tabIndex: number, statIndex: number) => {
     if (!tabSelected) {
@@ -208,8 +217,12 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     return tabIndex !== 2 ? displayUserStats(statIndex) : displayPerImageStats(statIndex);
   };
 
+  /**
+   * Function for displaying Per-Image Stats
+   * @param imageIndex - index of the image for which we display the stats
+   */
   const displayPerImageStats = (imageIndex: number) => {
-    numSlides = 100;
+    numSlides = 100; // Total number of images in the DB
     const data = [
       {
         id: "Players that got this image right",
@@ -242,7 +255,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
    * @param statsIndex - index of the stats page (slide) to display
    */
   const displayUserStats = (statsIndex: number) => {
-    numSlides = 2;
+    numSlides = 2; // Total number of user statistics
     if (statsIndex === 0) {
       const data = [
         {
@@ -386,6 +399,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
 
   /**
    * Function for rendering the next slide with statistics
+   * @param direction - "left" for prev slide, "right" for next
    */
   const onArrowClick = (direction: SlideProps["direction"]) => {
     const increment = direction === "left" ? -1 : 1;
