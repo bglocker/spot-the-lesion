@@ -176,12 +176,9 @@ const NUM_SEARCH_CUBES = 10;
 
 const MAX_CANVAS_SIZE = 750;
 
-const MIN_FILE_ID = 0;
-const MAX_FILE_ID = 100;
-
 type JsonData = { truth: number[]; predicted: number[] };
 
-const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
+const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_ID }: GameProps) => {
   const [context, canvasRef] = useCanvasContext();
   const [animationContext, animationCanvasRef] = useCanvasContext();
 
