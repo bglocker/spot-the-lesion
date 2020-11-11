@@ -20,7 +20,7 @@ import {
 } from "../../components/CanvasUtils";
 import { getImagePath, getIntersectionOverUnion, getJsonPath } from "./GameUitls";
 import DbUtils from "../../utils/DbUtils";
-import { db } from "../../firebase/firebaseApp";
+import { db, firebaseStorage } from "../../firebase/firebaseApp";
 import SubmitScoreDialog from "./SubmitScoreDialog";
 
 interface StylesProps {
@@ -558,10 +558,25 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         resolve();
       };
 
+      // Create a reference from a Google Cloud Storage URI
+      const gsStorageReference = firebaseStorage.refFromURL(
+        "gs://spot-the-lesion.appspot.com/images"
+      );
+
       image.onerror = reject;
 
       /* Set source after onLoad to ensure onLoad gets called (in case the image is cached) */
-      image.src = getImagePath(fileNumber);
+      gsStorageReference
+        .child(getImagePath(fileNumber))
+        .getDownloadURL()
+        .then((url) => {
+          // Or inserted into an <img> element:
+          image.src = url;
+        })
+        .catch((error) => {
+          // eslint-disable-next-line no-console
+          console.log(`Ran into firebase storage error: ${error}`);
+        });
     });
 
   /**

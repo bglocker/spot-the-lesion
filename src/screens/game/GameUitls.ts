@@ -3,16 +3,14 @@
  *
  * @param fileNumber Number of the file to retrieve
  */
-const getJsonPath = (fileNumber: number): string =>
-  `${process.env.PUBLIC_URL}/content/annotation/${fileNumber}.json`;
+const getJsonPath = (fileNumber: number): string => `${fileNumber}.json`;
 
 /**
  * Returns the path to the image file corresponding to the given fileNumber
  *
  * @param fileNumber Number of the file to retrieve
  */
-const getImagePath = (fileNumber: number): string =>
-  `${process.env.PUBLIC_URL}/content/images/${fileNumber}.png`;
+const getImagePath = (fileNumber: number): string => `${fileNumber}.png`;
 
 /**
  * Given the coordinates of two rectangles, returns the ratio of their intersection

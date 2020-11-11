@@ -1,7 +1,7 @@
 import React from "react";
 import OptionsSelectInterface from "./OptionsSelectInterface";
 
-const DIFFICULTY_SPLITTERS = [0, 30, 60, 100];
+const DIFFICULTY_SPLITTERS = [0, 30, 60, 4723];
 
 const DifficultySelect: React.FC<DifficultySelectProps> = ({
   setRoute,
