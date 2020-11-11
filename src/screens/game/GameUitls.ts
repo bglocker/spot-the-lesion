@@ -3,7 +3,8 @@
  *
  * @param fileNumber Number of the file to retrieve
  */
-const getJsonPath = (fileNumber: number): string => `${fileNumber}.json`;
+const getJsonPath = (fileNumber: number): string =>
+  `${process.env.PUBLIC_URL}/content/annotation/${fileNumber}.json`;
 
 /**
  * Returns the path to the image file corresponding to the given fileNumber
