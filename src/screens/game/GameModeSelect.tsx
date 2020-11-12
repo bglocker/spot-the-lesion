@@ -1,24 +1,21 @@
 import React from "react";
 import OptionsSelectInterface from "./OptionsSelectInterface";
 
-const GameModeSelect: React.FC<GameModeSelectProps> = ({
-  setRoute,
-  setSelected,
-  setGameMode,
-}: GameModeSelectProps) => {
+const GameModeSelect: React.FC<GameModeSelectProps> = ({ setGameMode }: GameModeSelectProps) => {
   const onCasualClick = () => {
-    setSelected(true);
+    document.getElementById("Casual")!.style.backgroundColor = "gray";
+    document.getElementById("Competitive")!.style.backgroundColor = "green";
     setGameMode("casual");
   };
 
   const onCompetitiveClick = () => {
-    setSelected(true);
+    document.getElementById("Casual")!.style.backgroundColor = "green";
+    document.getElementById("Competitive")!.style.backgroundColor = "gray";
     setGameMode("competitive");
   };
 
   return (
     <OptionsSelectInterface
-      setRoute={setRoute}
       optionName="mode"
       options={[
         ["Casual", onCasualClick],
