@@ -236,9 +236,16 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
   const onTabChange = async (newTabIndex: number, newStatsIndex: number) => {
     setCurrentTabIndex(newTabIndex);
     setTabSelected(true);
-    newTabIndex === 2
-      ? await retrieveImageStats(newStatsIndex)
-      : await retrieveUserStats(newTabIndex, newStatsIndex);
+    if (newTabIndex === 2) {
+      await retrieveImageStats(newStatsIndex);
+      numSlides = 100;
+    } else {
+      await retrieveUserStats(newTabIndex, newStatsIndex);
+      if (currentSlideIndex > 1) {
+        numSlides = 2;
+        setCurrentSlideIndex(currentSlideIndex % numSlides);
+      }
+    }
   };
 
   /**
@@ -255,7 +262,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     if (!tabSelected) {
       return (
         <Grid container justify="center">
-          <Typography className={classes.gameModeSelectionText}>SELECT A GAME MODE</Typography>
+          <Typography className={classes.gameModeSelectionText}>SELECT A STATISTICS TAB</Typography>
         </Grid>
       );
     }
