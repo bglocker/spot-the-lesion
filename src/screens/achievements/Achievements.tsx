@@ -39,16 +39,20 @@ const useStyles = makeStyles((theme) =>
       flexGrow: 1,
     },
     grid: {
+      marginLeft: "auto",
+      marginRight: "auto",
+      width: "100%",
       marginTop: 32,
-      paddingLeft: 12,
       textAlign: "center",
+      display: "flex",
+      justifyContent: "center",
     },
     image: {
       [theme.breakpoints.down("xs")]: {
-        height: 100,
+        width: "100%",
       },
       [theme.breakpoints.up("sm")]: {
-        height: 225,
+        width: 190,
       },
     },
   })
@@ -57,7 +61,7 @@ const useStyles = makeStyles((theme) =>
 const FirstFormRow = () => {
   const classes = useStyles();
   return (
-    <>
+    <Grid container spacing={2}>
       <Grid item xs={4}>
         <LightTooltip
           title={localStorage.getItem("firstCorrect") ? "First correct answer" : "Not yet found"}
@@ -74,7 +78,7 @@ const FirstFormRow = () => {
           title={
             localStorage.getItem("firstCorrectWithoutHint")
               ? "First correct answer without hint"
-              : "Not yet found"
+              : "Not found yet"
           }
         >
           <img
@@ -97,14 +101,14 @@ const FirstFormRow = () => {
           />
         </LightTooltip>
       </Grid>
-    </>
+    </Grid>
   );
 };
 
 const SecondFormRow = () => {
   const classes = useStyles();
   return (
-    <>
+    <Grid container spacing={2}>
       <Grid item xs={4}>
         <LightTooltip
           title={
@@ -123,7 +127,7 @@ const SecondFormRow = () => {
           title={
             localStorage.getItem("fiveCorrectSameRunCasual")
               ? "Five correct answers in one casual game"
-              : "Not yet found"
+              : "Not found yet"
           }
         >
           <img
@@ -138,7 +142,7 @@ const SecondFormRow = () => {
           title={
             localStorage.getItem("fiveCorrectSameRunCompetitive")
               ? "Five correct answers in one competitive game"
-              : "Not yet found"
+              : "Not found yet"
           }
         >
           <img
@@ -150,20 +154,20 @@ const SecondFormRow = () => {
           />
         </LightTooltip>
       </Grid>
-    </>
+    </Grid>
   );
 };
 
 const ThirdFormRow = () => {
   const classes = useStyles();
   return (
-    <>
+    <Grid container spacing={2}>
       <Grid item xs={4}>
         <LightTooltip
           title={
             localStorage.getItem("competitivePointsRun")
               ? "1000 points in a competitive run"
-              : "Not yet found"
+              : "Not found yet"
           }
         >
           <img
@@ -178,7 +182,7 @@ const ThirdFormRow = () => {
           title={
             localStorage.getItem("allCorrectCompetitive")
               ? "Ten correct answers in one competitive run"
-              : "Not yet found"
+              : "Not found yet"
           }
         >
           <img
@@ -193,7 +197,7 @@ const ThirdFormRow = () => {
           title={
             localStorage.getItem("fastAnswer")
               ? "You answered correctly in less than 2 seconds...lightning fast!"
-              : "Not yet found"
+              : "Not found yet"
           }
         >
           <img
@@ -203,7 +207,7 @@ const ThirdFormRow = () => {
           />
         </LightTooltip>
       </Grid>
-    </>
+    </Grid>
   );
 };
 
