@@ -19,6 +19,8 @@ import { ArrowBack, ArrowForward, KeyboardBackspace } from "@material-ui/icons";
 import { ResponsivePie } from "@nivo/pie";
 import { db } from "../../firebase/firebaseApp";
 import DbUtils from "../../utils/DbUtils";
+import useCanvasContext from "../../components/useCanvasContext";
+import { getImagePath } from "../game/GameUitls";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -36,12 +38,13 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: 8,
     },
     container: {
-      width: "100%",
+      width: "75%",
       display: "flex",
-      flexDirection: "column",
+      flexDirection: "row",
       justifyContent: "center",
       alignItems: "center",
       overflow: "hidden",
+      alignSelf: "center",
     },
     gameTypeAppBar: {
       alignItems: "center",
@@ -73,6 +76,10 @@ const useStyles = makeStyles((theme: Theme) =>
       [theme.breakpoints.up("md")]: {
         flex: 1,
       },
+    },
+    imageStatsCanvas: {
+      gridColumnStart: 1,
+      gridRowStart: 1,
     },
   })
 );
@@ -117,9 +124,12 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
    */
   const [slideIn, setSlideIn] = useState(true);
   const [slideDirection, setSlideDirection] = useState<SlideProps["direction"]>("down");
-  const [slideIndex, setSlideIndex] = useState(0);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+  const [imageStatsContext, imageStatsCanvasRef] = useCanvasContext();
 
   let numSlides = 2;
+  const MAX_IMAGE_CANVAS_SIZE = 500;
   /**
    * Function used for retrieving the statistics for the current game mode
    * @param gameModeIndex - the index of the game mode for which the stats are retrieved
@@ -180,6 +190,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
       setWrongAnswers(imageDoc.data()!.wrongClicks);
       setTotalHints(imageDoc.data()!.hintCount);
     }
+    loadImage(imageIndex).then(null);
   };
 
   /**
@@ -223,6 +234,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
    */
   const displayPerImageStats = (imageIndex: number) => {
     numSlides = 100; // Total number of images in the DB
+    loadImage(imageIndex).then(null);
     const data = [
       {
         id: "Players that got this image right",
@@ -245,8 +257,37 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     ];
     return (
       <div className={classes.container}>
+        {displayImage()}
         {displayPieChart(`Stats for Image: ${imageIndex}`, data)}
       </div>
+    );
+  };
+
+  const loadImage = (imageIndex: number): Promise<void> =>
+    new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => {
+        imageStatsContext.drawImage(
+          image,
+          0,
+          0,
+          imageStatsContext.canvas.width,
+          imageStatsContext.canvas.height
+        );
+        resolve();
+      };
+      image.onerror = reject;
+      image.src = getImagePath(imageIndex);
+    });
+
+  const displayImage = () => {
+    return (
+      <canvas
+        className={classes.imageStatsCanvas}
+        ref={imageStatsCanvasRef}
+        width={MAX_IMAGE_CANVAS_SIZE}
+        height={MAX_IMAGE_CANVAS_SIZE}
+      />
     );
   };
 
@@ -403,14 +444,14 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
    */
   const onArrowClick = (direction: SlideProps["direction"]) => {
     const increment = direction === "left" ? -1 : 1;
-    const newIndex = (slideIndex + increment + numSlides) % numSlides;
+    const newIndex = (currentSlideIndex + increment + numSlides) % numSlides;
     const oppDirection = direction === "left" ? "right" : "left";
 
     setSlideDirection(direction);
     setSlideIn(false);
 
     window.setTimeout(async () => {
-      setSlideIndex(newIndex);
+      setCurrentSlideIndex(newIndex);
       setSlideDirection(oppDirection);
       setSlideIn(true);
       currentTabIndex === 2
@@ -463,7 +504,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
       <AppBar className={classes.gameTypeAppBar} position="sticky">
         <Tabs
           value={!tabSelected ? tabSelected : currentTabIndex}
-          onChange={(_, newTabIndex) => onTabChange(newTabIndex, slideIndex)}
+          onChange={(_, newTabIndex) => onTabChange(newTabIndex, currentSlideIndex)}
           aria-label="Gametypes"
           classes={{ indicator: classes.tabIndicator }}
         >
@@ -490,7 +531,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
         </Tabs>
       </AppBar>
       <Slide in={slideIn} direction={slideDirection}>
-        {displayStats(currentTabIndex, slideIndex)}
+        {displayStats(currentTabIndex, currentSlideIndex)}
       </Slide>
       {displaySlideShowButtons()}
     </>
