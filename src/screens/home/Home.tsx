@@ -135,6 +135,16 @@ const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
               variant="contained"
               color="primary"
               size="large"
+              onClick={() => setRoute("achievements")}
+            >
+              Achievements
+            </Button>
+
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              size="large"
               onClick={() => setRoute("statistics")}
             >
               Statistics
