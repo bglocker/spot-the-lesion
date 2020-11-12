@@ -1,25 +1,31 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { AppBar, Button, Card, Dialog, IconButton, Toolbar, Typography } from "@material-ui/core";
-import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
-import { KeyboardBackspace, Close } from "@material-ui/icons";
+import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import { Close, KeyboardBackspace } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import LoadingButton from "../../components/LoadingButton";
+import ScoreWithIncrement from "../../components/ScoreWithIncrement";
 import HeatmapDisplay from "../../components/HeatmapDisplay";
 import useInterval from "../../components/useInterval";
 import useCanvasContext from "../../components/useCanvasContext";
+import useUniqueRandomGenerator from "../../components/useUniqueRandomGenerator";
 import {
-  drawCross,
   drawCircle,
+  drawCross,
   drawRectangle,
   mapClickToCanvas,
   mapToCanvasScale,
 } from "../../components/CanvasUtils";
 import { getImagePath, getIntersectionOverUnion, getJsonPath } from "./GameUitls";
 import DbUtils from "../../utils/DbUtils";
-import { db } from "../../firebase/firebaseApp";
+import { db, firebaseStorage } from "../../firebase/firebaseApp";
 import SubmitScoreDialog from "./SubmitScoreDialog";
+
+interface StylesProps {
+  timerColor: string;
+}
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -55,10 +61,11 @@ const useStyles = makeStyles((theme: Theme) =>
       justifyContent: "space-evenly",
       alignItems: "center",
     },
-    hintButtonContainer: {
+    topBar: {
       margin: 8,
       padding: 8,
       display: "flex",
+      flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
       [theme.breakpoints.down("sm")]: {
@@ -70,26 +77,10 @@ const useStyles = makeStyles((theme: Theme) =>
         maxWidth: "70vw",
       },
     },
-    showHintButton: {
-      backgroundColor: "#63a2ab",
-    },
-    timerContainer: {
-      margin: 8,
-      padding: 8,
-      [theme.breakpoints.down("sm")]: {
-        width: "80vw",
-        maxWidth: "60vh",
-      },
-      [theme.breakpoints.up("md")]: {
-        width: "70vh",
-        maxWidth: "70vw",
-      },
-    },
     timer: {
       marginBottom: 8,
-      textAlign: "center",
       fontSize: "1.5rem",
-      color: (props: Record<string, string>) => props.timerColor,
+      color: (props: StylesProps) => props.timerColor,
     },
     canvasContainer: {
       display: "grid",
@@ -185,13 +176,9 @@ const NUM_SEARCH_CUBES = 10;
 
 const MAX_CANVAS_SIZE = 750;
 
-const MAX_FILE_NUMBER = 100;
-
 type JsonData = { truth: number[]; predicted: number[] };
 
-const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
-  const seenFiles = new Set<number>();
-
+const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_ID }: GameProps) => {
   const [context, canvasRef] = useCanvasContext();
   const [animationContext, animationCanvasRef] = useCanvasContext();
 
@@ -210,7 +197,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
   const [timerColor, setTimerColor] = useState(INITIAL_TIMER_COLOR);
 
-  const [imageId, setImageId] = useState(0);
+  const getNewFileId = useUniqueRandomGenerator(MIN_FILE_ID, MAX_FILE_ID);
+  const [fileId, setFileId] = useState(0);
+
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
   const [click, setClick] = useState<{ x: number; y: number } | null>(null);
@@ -223,8 +212,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   const [playerRoundScore, setPlayerRoundScore] = useState(0);
   const [aiRoundScore, setAiRoundScore] = useState(0);
 
-  const [playerCorrectAnswers, setPlayerCorrectAnswers] = useState(0);
-  const [aiCorrectAnswers, setAiCorrectAnswers] = useState(0);
+  const [playerCorrect, setPlayerCorrect] = useState(0);
+  const [aiCorrect, setAiCorrect] = useState(0);
 
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showSubmit, setShowSubmit] = useState(false);
@@ -312,9 +301,10 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
    */
   const uploadPlayerClick = useCallback(
     async (x: number, y: number) => {
-      const docNameForImage = `image_${imageId}`;
+      const docNameForImage = `image_${fileId}`;
       let entry;
       let pointWasClickedBefore = false;
+      let isClickCorrect = false;
 
       const newClickPoint = {
         x: Math.round((x * 10000) / context.canvas.width) / 100,
@@ -322,14 +312,23 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
         clickCount: 1,
       };
 
+      // Check whether click was correct
+      if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
+        isClickCorrect = true;
+      }
+
       const imageDoc = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
 
       if (!imageDoc.exists) {
         // First time this image showed up in the game - entry will be singleton array
-        entry = { clicks: [newClickPoint] };
+        entry = {
+          clicks: [newClickPoint],
+          correctClicks: isClickCorrect ? 1 : 0,
+          wrongClicks: isClickCorrect ? 0 : 1,
+          hintCount: hinted ? 1 : 0,
+        };
       } else {
-        const { clicks } = imageDoc.data()!;
-
+        const { clicks, correctClicks, wrongClicks, hintCount } = imageDoc.data()!;
         clicks.forEach((clk: { x: number; y: number; count: number }) => {
           if (clk.x === x && clk.y === y) {
             clk.count += 1;
@@ -342,13 +341,18 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
           clicks.push(newClickPoint);
         }
 
-        // Entry in DB will be the updated clicks array
-        entry = { clicks };
+        // Construct the updated DB entry for this image
+        entry = {
+          clicks,
+          correctClicks: isClickCorrect ? correctClicks + 1 : correctClicks,
+          wrongClicks: isClickCorrect ? wrongClicks : wrongClicks + 1,
+          hintCount: hinted ? hintCount + 1 : hintCount,
+        };
       }
 
       await db.collection(DbUtils.IMAGES).doc(docNameForImage).set(entry);
     },
-    [context, imageId]
+    [context, fileId, hinted, truth]
   );
 
   /**
@@ -391,7 +395,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
       drawRectangle(context, predicted, DEFAULT_COLOUR, 3);
     } else if (endTime === 500) {
       /*
-       * 1 second passed
+       * 0.5 seconds passed
        *
        * draw truth rectangle
        */
@@ -409,15 +413,13 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
       /* Player was successful if the click coordinates are inside the truth rectangle */
       if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
         /* Casual Mode: half a point, doubled if no hint received */
-        const casualRoundScore = hinted ? 0.5 : 1;
+        const casualScore = hinted ? 0.5 : 1;
 
         /* Competitive Mode: function of round time left, doubled if no hint received */
-        const competitiveRoundScore = (roundTime / 1000) * (hinted ? 10 : 20);
+        const competitiveScore = (roundTime / 1000) * (hinted ? 10 : 20);
 
-        const roundScore = gameMode === "casual" ? casualRoundScore : competitiveRoundScore;
-
-        setPlayerRoundScore(roundScore);
-        setPlayerCorrectAnswers((prevState) => prevState + 1);
+        setPlayerRoundScore(gameMode === "casual" ? casualScore : competitiveScore);
+        setPlayerCorrect((prevState) => prevState + 1);
 
         drawCross(context, x, y, 5, VALID_COLOUR);
       } else {
@@ -435,15 +437,13 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
       /* AI was successful if the ratio of the intersection over the union is greater than 0.5 */
       if (intersectionOverUnion > 0.5) {
         /* Casual mode: one point */
-        const casualRoundScore = 1;
+        const casualScore = 1;
 
         /* Competitive mode: function of prediction accuracy and constant increase rate */
         const competitiveRoundScore = Math.round(intersectionOverUnion * AI_SCORE_INCREASE_RATE);
 
-        const roundScore = gameMode === "casual" ? casualRoundScore : competitiveRoundScore;
-
-        setAiRoundScore(roundScore);
-        setAiCorrectAnswers((prevState) => prevState + 1);
+        setAiRoundScore(gameMode === "casual" ? casualScore : competitiveRoundScore);
+        setAiCorrect((prevState) => prevState + 1);
 
         drawRectangle(context, predicted, VALID_COLOUR, 3);
       } else {
@@ -521,24 +521,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   };
 
   /**
-   * Returns a random, previously unseen, file number
-   *
-   * @return number of a new file
-   */
-  const getNewFileNumber = (): number => {
-    const newFileNumber = Math.round(Math.random() * MAX_FILE_NUMBER);
-
-    /* TODO: handle case where all files have been used */
-    if (seenFiles.has(newFileNumber)) {
-      return getNewFileNumber();
-    }
-
-    seenFiles.add(newFileNumber);
-
-    return newFileNumber;
-  };
-
-  /**
    * Maps the coordinates of a given rectangle to the current canvas scale
    *
    * @param rect Coordinates for the corners of the rectangle to map
@@ -576,10 +558,25 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
         resolve();
       };
 
+      // Create a reference from a Google Cloud Storage URI
+      const gsStorageReference = firebaseStorage.refFromURL(
+        "gs://spot-the-lesion.appspot.com/images"
+      );
+
       image.onerror = reject;
 
       /* Set source after onLoad to ensure onLoad gets called (in case the image is cached) */
-      image.src = getImagePath(fileNumber);
+      gsStorageReference
+        .child(getImagePath(fileNumber))
+        .getDownloadURL()
+        .then((url) => {
+          // Or inserted into an <img> element:
+          image.src = url;
+        })
+        .catch((error) => {
+          // eslint-disable-next-line no-console
+          console.log(`Ran into firebase storage error: ${error}`);
+        });
     });
 
   /**
@@ -593,11 +590,11 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
     setLoading(true);
 
     /* Get a new file number and load the corresponding json and image */
-    const fileNumber = getNewFileNumber();
-    setImageId(fileNumber);
+    const newFileId = getNewFileId();
+    setFileId(newFileId);
 
-    await loadJson(fileNumber);
-    await loadImage(fileNumber);
+    await loadJson(newFileId);
+    await loadImage(newFileId);
 
     /* Reset game state */
     setRoundTime(ROUND_START_TIME);
@@ -632,9 +629,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
       user: username,
       score: playerScore + playerRoundScore,
       ai_score: aiScore + aiRoundScore,
-      correct_player_answers: playerCorrectAnswers,
+      correct_player_answers: playerCorrect,
       usedHints: hintedAtLeastOnce,
-      correct_ai_answers: aiCorrectAnswers,
+      correct_ai_answers: aiCorrect,
       day: date.getDate(),
       month: DbUtils.monthNames[date.getMonth()],
       year: date.getFullYear(),
@@ -645,44 +642,22 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
     const entryName = `${entry.year}.${entry.month}.${entry.day}.${entry.user}`;
 
-    const snapshot = await db
-      .collection(leaderboard)
-      .where("year", "==", entry.year)
-      .where("month", "==", entry.month)
-      .where("day", "==", entry.day)
-      .where("user", "==", username)
-      .get();
+    const playerDoc = await db.collection(leaderboard).doc(entryName).get();
 
-    if (snapshot.empty) {
+    if (!playerDoc.exists) {
       // First time played today - add this score to DB
       await db.collection(leaderboard).doc(entryName).set(entry);
-    } else {
-      // Check if this score is better than what this player registered before
-      let newScoreRecord = true;
-      snapshot.forEach((doc) => {
-        if (doc.data().score > entry.score) {
-          newScoreRecord = false;
-        }
-      });
-
-      // Add current score in DB only if it is a new Score Record
-      if (newScoreRecord) {
-        await db.collection(leaderboard).doc(entryName).set(entry);
-      }
+    } else if (playerDoc.data()!.score < entry.score) {
+      // Current score is greater than what this player registered before => update it in the DB
+      await db.collection(leaderboard).doc(entryName).set(entry);
     }
 
     setRoute("home");
     enqueueSnackbar("Score successfully submitted!");
   };
 
-  /**
-   * Called when the Show Heatmap button is clicked
-   */
   const onShowHeatmap = () => setShowHeatmap(true);
 
-  /**
-   * Called when the Show Heatmap Dialog is closed
-   */
   const onCloseHeatmap = () => setShowHeatmap(false);
 
   const onShowSubmit = () => setShowSubmit(true);
@@ -693,12 +668,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
    * Display the winner (only on competitive mode, after last round)
    */
   const showWinner = () => {
-    if (
-      gameMode === "casual" ||
-      (gameMode === "competitive" && round < NUM_ROUNDS) ||
-      roundRunning ||
-      loading
-    ) {
+    if (gameMode === "casual" || round < NUM_ROUNDS || roundRunning || loading) {
       return null;
     }
 
@@ -779,40 +749,42 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
    * Casual Mode: Hint Button
    * Competitive Mode: Timer
    */
-  const displayTopBar = () => {
+  const gameTopBar = () => {
+    let topBarContent;
     if (gameMode === "casual") {
-      return (
-        <Card className={classes.hintButtonContainer}>
-          <Button
-            className={classes.showHintButton}
-            onClick={showHint}
-            disabled={round === 0 || loading || hinted || !roundRunning}
-          >
-            Show hint
-          </Button>
-        </Card>
+      topBarContent = (
+        <Button
+          variant="contained"
+          color="secondary"
+          disabled={hinted || !roundRunning}
+          onClick={showHint}
+        >
+          Show hint
+        </Button>
+      );
+    } else {
+      topBarContent = (
+        <>
+          <Typography className={classes.timer}>
+            Time remaining: {(roundTime / 1000).toFixed(1)}s
+          </Typography>
+
+          <ColoredLinearProgress
+            barColor={timerColor}
+            variant="determinate"
+            value={roundTime / 100}
+          />
+        </>
       );
     }
 
-    return (
-      <Card className={classes.timerContainer}>
-        <Typography className={classes.timer} variant="h4">
-          Time remaining: {(roundTime / 1000).toFixed(1)}s
-        </Typography>
-
-        <ColoredLinearProgress
-          barColor={timerColor}
-          variant="determinate"
-          value={roundTime / 100}
-        />
-      </Card>
-    );
+    return <Card className={classes.topBar}>{topBarContent}</Card>;
   };
 
-  const displayGameContent = () => {
+  const gameContent = () => {
     return (
       <div className={classes.topBarCanvasContainer}>
-        {displayTopBar()}
+        {gameTopBar()}
 
         <Card className={classes.canvasContainer}>
           <canvas
@@ -835,39 +807,28 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   };
 
   /**
-   * Display the round score in green if positive, or red if 0
-   *
-   * @param roundScore Score for the current round
-   */
-  const showRoundScore = (roundScore: number) => {
-    if (round === 0 || roundRunning || loading) {
-      return null;
-    }
-
-    const color = roundScore > 0 ? VALID_COLOUR : INVALID_COLOUR;
-
-    return <span style={{ color }}>+{roundScore}</span>;
-  };
-
-  /**
    * Function for displaying the side Score Card
    */
-  const displaySideCard = () => {
+  const gameSideCard = () => {
     return (
       <div className={classes.sideContainer}>
         <Card className={classes.sideCard}>
           <div className={classes.scoresContainer}>
-            <Typography className={classes.sideCardText} variant="h4">
-              You: {playerScore} {showRoundScore(playerRoundScore)}
-            </Typography>
+            <ScoreWithIncrement
+              player="You"
+              score={playerScore}
+              increment={playerRoundScore}
+              showIncrement={round > 0 && !roundRunning && !loading}
+            />
 
-            <Typography className={classes.sideCardText} variant="h4">
-              vs
-            </Typography>
+            <Typography className={classes.sideCardText}>vs</Typography>
 
-            <Typography className={classes.sideCardText} variant="h4">
-              AI: {aiScore} {showRoundScore(aiRoundScore)}
-            </Typography>
+            <ScoreWithIncrement
+              player="AI"
+              score={aiScore}
+              increment={aiRoundScore}
+              showIncrement={round > 0 && !roundRunning && !loading}
+            />
           </div>
 
           {showWinner()}
@@ -902,7 +863,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
           </Toolbar>
         </AppBar>
 
-        <HeatmapDisplay imageId={imageId} />
+        <HeatmapDisplay imageId={fileId} />
       </Dialog>
     );
   };
@@ -939,9 +900,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
       <div className={classes.container}>
         <div className={classes.emptyDiv} />
 
-        {displayGameContent()}
+        {gameContent()}
 
-        {displaySideCard()}
+        {gameSideCard()}
       </div>
 
       {displayHeatmapDialog()}

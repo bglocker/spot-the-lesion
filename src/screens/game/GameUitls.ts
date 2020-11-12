@@ -11,8 +11,7 @@ const getJsonPath = (fileNumber: number): string =>
  *
  * @param fileNumber Number of the file to retrieve
  */
-const getImagePath = (fileNumber: number): string =>
-  `${process.env.PUBLIC_URL}/content/images/${fileNumber}.png`;
+const getImagePath = (fileNumber: number): string => `${fileNumber}.png`;
 
 /**
  * Given the coordinates of two rectangles, returns the ratio of their intersection
@@ -41,4 +40,48 @@ const getIntersectionOverUnion = (rectA: number[], rectB: number[]): number => {
   return inter / union;
 };
 
-export { getJsonPath, getIntersectionOverUnion, getImagePath };
+/**
+ * Create an array from a given range
+ *
+ * @param start First value of range (inclusive)
+ * @param stop  Last value of range (exclusive)
+ * @param step  Step between consecutive range values
+ *
+ * @return Array range
+ */
+const range = (start = 1, stop: number, step = 1): number[] => {
+  const nums: number[] = [];
+
+  for (let i = start; i < stop; i += step) {
+    nums.push(i);
+  }
+
+  return nums;
+};
+
+/**
+ * Create a (randomly) shuffled array from a given range
+ *
+ * @param start First value of range (inclusive)
+ * @param stop  Last value of range (exclusive)
+ * @param step  Step between consecutive range values
+ *
+ * @return Shuffled array range
+ */
+const shuffledRange = (start = 1, stop: number, step = 1): number[] => {
+  const nums: number[] = [];
+
+  for (let i = 0; i < (stop - start) / step; i++) {
+    const j = Math.floor(Math.random() * (i + 1));
+
+    if (j !== i) {
+      nums.push(nums[j]);
+    }
+
+    nums[j] = start + i * step;
+  }
+
+  return nums;
+};
+
+export { getJsonPath, getIntersectionOverUnion, getImagePath, range, shuffledRange };
