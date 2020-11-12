@@ -19,7 +19,7 @@ import { ArrowBack, ArrowForward, KeyboardBackspace } from "@material-ui/icons";
 import { ResponsivePie } from "@nivo/pie";
 import { db, firebaseStorage } from "../../firebase/firebaseApp";
 import DbUtils from "../../utils/DbUtils";
-import { getImagePath } from "../game/GameUtils";
+import { getImagePath } from "../../utils/GameUtils";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

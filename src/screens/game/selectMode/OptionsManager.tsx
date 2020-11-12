@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { AppBar, Button, IconButton, Theme, Toolbar, Typography } from "@material-ui/core";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import Game from "./Game";
+import Game from "../Game";
 import GameModeSelect from "./GameModeSelect";
 import DifficultySelect from "./DifficultySelect";
 
@@ -65,6 +65,9 @@ const OptionsManager: React.FC<OptionsProps> = ({ setRoute }: OptionsProps) => {
   const [minId, setMinId] = useState(0);
   const [maxId, setMaxId] = useState(0);
 
+  const [gameModeSelected, setGameModeSelected] = useState(false);
+  const [difficultySelected, setDifficultySelected] = useState(false);
+
   if (start) {
     return <Game setRoute={setRoute} gameMode={gameMode} MIN_FILE_ID={minId} MAX_FILE_ID={maxId} />;
   }
@@ -88,14 +91,19 @@ const OptionsManager: React.FC<OptionsProps> = ({ setRoute }: OptionsProps) => {
       </AppBar>
       <div className={classes.rows}>
         <div className={classes.columns}>
-          <GameModeSelect setGameMode={setGameMode} />
-          <DifficultySelect setMin={setMinId} setMax={setMaxId} />
+          <GameModeSelect setGameMode={setGameMode} setGameModeSelected={setGameModeSelected} />
+          <DifficultySelect
+            setMin={setMinId}
+            setMax={setMaxId}
+            setDifficultySelected={setDifficultySelected}
+          />
         </div>
         <Button
           className={classes.buttonDesign}
           variant="contained"
           color="primary"
           size="large"
+          disabled={!(gameModeSelected && difficultySelected)}
           onClick={() => {
             setStart(true);
           }}

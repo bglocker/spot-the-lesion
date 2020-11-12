@@ -6,10 +6,12 @@ interface GameProps {
 }
 
 interface GameModeSelectProps {
+  setGameModeSelected: (boolean) => void;
   setGameMode: (string) => void;
 }
 
 interface DifficultySelectProps {
+  setDifficultySelected: (boolean) => void;
   setMin: (int) => void;
   setMax: (int) => void;
 }

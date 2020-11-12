@@ -19,7 +19,7 @@ import {
   mapClickToCanvas,
   mapToCanvasScale,
 } from "../../components/CanvasUtils";
-import { getImagePath, getIntersectionOverUnion, getJsonPath } from "./GameUtils";
+import { getImagePath, getIntersectionOverUnion, getJsonPath } from "../../utils/GameUtils";
 import DbUtils from "../../utils/DbUtils";
 import { db, firebaseStorage } from "../../firebase/firebaseApp";
 import SubmitScoreDialog from "./SubmitScoreDialog";

@@ -15,6 +15,15 @@ const useStyles = makeStyles((theme: Theme) =>
       fontSize: "3rem",
       fontWeight: "bold",
       textAlign: "center",
+      [theme.breakpoints.only("xs")]: {
+        fontSize: "150%",
+      },
+      [theme.breakpoints.only("sm")]: {
+        fontSize: "1.5rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        fontSize: "3rem",
+      },
     },
     buttonDesign: {
       margin: 8,
