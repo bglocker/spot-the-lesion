@@ -17,10 +17,9 @@ import {
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { ArrowBack, ArrowForward, KeyboardBackspace } from "@material-ui/icons";
 import { ResponsivePie } from "@nivo/pie";
-import { db } from "../../firebase/firebaseApp";
+import { db, firebaseStorage } from "../../firebase/firebaseApp";
 import DbUtils from "../../utils/DbUtils";
-import useCanvasContext from "../../components/useCanvasContext";
-import { getImagePath } from "../game/GameUitls";
+import { getImagePath } from "../game/GameUtils";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -77,7 +76,7 @@ const useStyles = makeStyles((theme: Theme) =>
         flex: 1,
       },
     },
-    imageStatsCanvas: {
+    image: {
       gridColumnStart: 1,
       gridRowStart: 1,
     },
@@ -126,10 +125,10 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
   const [slideDirection, setSlideDirection] = useState<SlideProps["direction"]>("down");
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
-  const [imageStatsContext, imageStatsCanvasRef] = useCanvasContext();
+  const [imageUrl, setImageUrl] = useState("");
 
   let numSlides = 2;
-  const MAX_IMAGE_CANVAS_SIZE = 500;
+  const MAX_IMAGE_SIZE = 500;
   /**
    * Function used for retrieving the statistics for the current game mode
    * @param gameModeIndex - the index of the game mode for which the stats are retrieved
@@ -178,11 +177,11 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
 
   /**
    * Function for retrieving image statistics from Firebase
-   * @param imageIndex - index of the image for which we retrieve stats
+   * @param fileNumber - index of the image for which we retrieve stats
    */
-  const retrieveImageStats = async (imageIndex: number) => {
+  const retrieveImageStats = async (fileNumber: number) => {
     const table = DbUtils.IMAGES;
-    const docName = `image_${imageIndex}`;
+    const docName = `image_${fileNumber}`;
 
     const imageDoc = await db.collection(table).doc(docName).get();
     if (imageDoc.exists) {
@@ -190,7 +189,6 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
       setWrongAnswers(imageDoc.data()!.wrongClicks);
       setTotalHints(imageDoc.data()!.hintCount);
     }
-    loadImage(imageIndex).then(null);
   };
 
   /**
@@ -230,11 +228,11 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
 
   /**
    * Function for displaying Per-Image Stats
-   * @param imageIndex - index of the image for which we display the stats
+   * @param fileNumber - index of the image for which we display the stats
    */
-  const displayPerImageStats = (imageIndex: number) => {
+  const displayPerImageStats = (fileNumber: number) => {
     numSlides = 100; // Total number of images in the DB
-    loadImage(imageIndex).then(null);
+    loadImage(fileNumber).then(null);
     const data = [
       {
         id: "Players that got this image right",
@@ -257,36 +255,35 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     ];
     return (
       <div className={classes.container}>
-        {displayImage()}
-        {displayPieChart(`Stats for Image: ${imageIndex}`, data)}
+        {displayImage(fileNumber)}
+        {displayPieChart(`Stats for Image: ${fileNumber}`, data)}
       </div>
     );
   };
 
-  const loadImage = (imageIndex: number): Promise<void> =>
-    new Promise((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => {
-        imageStatsContext.drawImage(
-          image,
-          0,
-          0,
-          imageStatsContext.canvas.width,
-          imageStatsContext.canvas.height
-        );
-        resolve();
-      };
-      image.onerror = reject;
-      image.src = getImagePath(imageIndex);
-    });
+  const loadImage = async (fileNumber: number) => {
+    // Create a reference from a Google Cloud Storage URI
+    const imageStorageReference = firebaseStorage.refFromURL(
+      "gs://spot-the-lesion.appspot.com/images"
+    );
 
-  const displayImage = () => {
+    /* Set source after onLoad to ensure onLoad gets called (in case the image is cached) */
+    const imageLink: string = await imageStorageReference
+      .child(getImagePath(fileNumber))
+      .getDownloadURL();
+
+    setImageUrl(imageLink);
+  };
+
+  const displayImage = (fileNumber: number) => {
+    loadImage(fileNumber);
     return (
-      <canvas
-        className={classes.imageStatsCanvas}
-        ref={imageStatsCanvasRef}
-        width={MAX_IMAGE_CANVAS_SIZE}
-        height={MAX_IMAGE_CANVAS_SIZE}
+      <img
+        src={imageUrl}
+        className={classes.image}
+        width={MAX_IMAGE_SIZE}
+        height={MAX_IMAGE_SIZE}
+        alt={`Lesion Number ${fileNumber}`}
       />
     );
   };
