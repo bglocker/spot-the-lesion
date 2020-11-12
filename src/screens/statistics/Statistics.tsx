@@ -26,9 +26,7 @@ const useStyles = makeStyles((theme: Theme) =>
     backButton: {
       marginRight: 8,
     },
-    userStatsCard: {
-      width: "90%",
-      height: "80vh",
+    basicCard: {
       display: "flex",
       flexDirection: "column",
       justifyContent: "center",
@@ -36,15 +34,13 @@ const useStyles = makeStyles((theme: Theme) =>
       marginTop: 24,
       padding: 8,
     },
+    userStatsCard: {
+      width: "90%",
+      height: "80vh",
+    },
     imageStatsCard: {
       width: "50%",
       height: "60vh",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "center",
-      marginTop: 24,
-      padding: 8,
     },
     imageStatsContainer: {
       marginTop: "5%",
@@ -162,6 +158,9 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
   const [slideDirection, setSlideDirection] = useState<SlideProps["direction"]>("down");
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
+  /**
+   * Hook for updating the URL of the image displayed as we go through the slideshow
+   */
   const [imageUrl, setImageUrl] = useState("");
 
   let numSlides = 2;
@@ -298,7 +297,11 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     );
   };
 
-  const loadImage = async (fileNumber: number) => {
+  /**
+   * Function for loading an image from the Firebase Storage
+   * @param imageIndex - index of the image to be retrieved
+   */
+  const loadImage = async (imageIndex: number) => {
     // Create a reference from a Google Cloud Storage URI
     const imageStorageReference = firebaseStorage.refFromURL(
       "gs://spot-the-lesion.appspot.com/images"
@@ -306,13 +309,17 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
 
     /* Set source after onLoad to ensure onLoad gets called (in case the image is cached) */
     const imageLink: string = await imageStorageReference
-      .child(getImagePath(fileNumber))
+      .child(getImagePath(imageIndex))
       .getDownloadURL();
 
     setImageUrl(imageLink);
   };
 
-  const displayImage = (fileNumber: number) => {
+  /**
+   * Function for displaying an image on an image container
+   * @param imageIndex - index of the Image to be displayed
+   */
+  const displayImage = (imageIndex: number) => {
     return (
       <div className={classes.imageContainer}>
         <Card className={classes.imageCard}>
@@ -321,7 +328,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
             className={classes.image}
             width={MAX_IMAGE_SIZE}
             height={MAX_IMAGE_SIZE}
-            alt={`Lesion Number ${fileNumber}`}
+            alt={`Lesion Number ${imageIndex}`}
           />
         </Card>
       </div>
@@ -391,7 +398,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     data: { id: string; label: string; value: number; color: string }[]
   ) => {
     return (
-      <Card className={classes.userStatsCard}>
+      <Card className={[classes.basicCard, classes.userStatsCard].join(" ")}>
         <Typography className={classes.statTitle}>{title}</Typography>
         <ResponsivePie
           data={data}
@@ -459,6 +466,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
               itemHeight: 18,
               itemTextColor: "#999",
               symbolSize: 18,
+              itemsSpacing: 100,
               symbolShape: "circle",
               effects: [
                 {
@@ -475,12 +483,17 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     );
   };
 
+  /**
+   * Function for displaying a pie chart designed for Image Stats
+   * @param title - Pie Chart title for the image displayed
+   * @param data - data parsed in to the pie chart
+   */
   const displayImagePieChart = (
     title: string,
     data: { id: string; label: string; value: number; color: string }[]
   ) => {
     return (
-      <Card className={classes.imageStatsCard}>
+      <Card className={[classes.basicCard, classes.imageStatsCard].join(" ")}>
         <Typography className={classes.statTitle}>{title}</Typography>
         <ResponsivePie
           data={data}
@@ -572,7 +585,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
               justify: false,
               translateX: 0,
               translateY: 56,
-              itemsSpacing: 0,
+              itemsSpacing: 100,
               itemWidth: 100,
               itemHeight: 18,
               itemTextColor: "#999",
