@@ -7,7 +7,8 @@ import DbUtils from "../utils/DbUtils";
 const useStyles = makeStyles(() =>
   createStyles({
     container: {
-      margin: "auto",
+      display: "flex",
+      justifyContent: "center",
     },
     image: {
       height: "80vw",
