@@ -200,6 +200,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   const getNewFileId = useUniqueRandomGenerator(MIN_FILE_ID, MAX_FILE_ID);
   const [fileId, setFileId] = useState(0);
 
+  const [imageUrl, setImageUrl] = useState("");
+
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
   const [click, setClick] = useState<{ x: number; y: number } | null>(null);
@@ -570,7 +572,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         .child(getImagePath(fileNumber))
         .getDownloadURL()
         .then((url) => {
-          // Or inserted into an <img> element:
+          setImageUrl(url);
           image.src = url;
         })
         .catch((error) => {
@@ -863,7 +865,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
           </Toolbar>
         </AppBar>
 
-        <HeatmapDisplay imageId={fileId} />
+        <HeatmapDisplay imageUrl={imageUrl} imageId={fileId} />
       </Dialog>
     );
   };

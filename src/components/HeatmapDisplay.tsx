@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import h337 from "heatmap.js";
-import { getImagePath } from "../screens/game/GameUitls";
 import { db } from "../firebase/firebaseApp";
 import DbUtils from "../utils/DbUtils";
 
@@ -19,7 +18,7 @@ const useStyles = makeStyles(() =>
   })
 );
 
-const HeatmapDisplay: React.FC<HeatmapProps> = ({ imageId }: HeatmapProps) => {
+const HeatmapDisplay: React.FC<HeatmapProps> = ({ imageId, imageUrl }: HeatmapProps) => {
   const classes = useStyles();
 
   const [heatmapContainer, setHeatmapContainer] = useState<HTMLDivElement | null>(null);
@@ -97,7 +96,7 @@ const HeatmapDisplay: React.FC<HeatmapProps> = ({ imageId }: HeatmapProps) => {
 
   return (
     <div className={classes.container} ref={heatmapContainerRef}>
-      <img className={classes.image} src={getImagePath(imageId)} alt="Heatmap" />
+      <img className={classes.image} src={imageUrl} alt="Heatmap" />
     </div>
   );
 };
