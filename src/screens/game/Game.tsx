@@ -877,7 +877,16 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
    */
   const displayHeatmapDialog = () => {
     return (
-      <Dialog fullScreen open={showHeatmap}>
+      <Dialog
+        fullScreen
+        open={showHeatmap}
+        PaperProps={{
+          style: {
+            backgroundColor: "transparent",
+            boxShadow: "none",
+          },
+        }}
+      >
         <AppBar position="sticky">
           <Toolbar variant="dense">
             <IconButton
