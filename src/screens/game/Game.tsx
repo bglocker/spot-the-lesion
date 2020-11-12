@@ -20,8 +20,12 @@ import {
 } from "../../components/CanvasUtils";
 import { getImagePath, getIntersectionOverUnion, getJsonPath } from "./GameUitls";
 import DbUtils from "../../utils/DbUtils";
-import { db } from "../../firebase/firebaseApp";
+import { db, firebaseStorage } from "../../firebase/firebaseApp";
 import SubmitScoreDialog from "./SubmitScoreDialog";
+
+interface StylesProps {
+  timerColor: string;
+}
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -57,10 +61,11 @@ const useStyles = makeStyles((theme: Theme) =>
       justifyContent: "space-evenly",
       alignItems: "center",
     },
-    hintButtonContainer: {
+    topBar: {
       margin: 8,
       padding: 8,
       display: "flex",
+      flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
       [theme.breakpoints.down("sm")]: {
@@ -72,26 +77,10 @@ const useStyles = makeStyles((theme: Theme) =>
         maxWidth: "70vw",
       },
     },
-    showHintButton: {
-      backgroundColor: "#63a2ab",
-    },
-    timerContainer: {
-      margin: 8,
-      padding: 8,
-      [theme.breakpoints.down("sm")]: {
-        width: "80vw",
-        maxWidth: "60vh",
-      },
-      [theme.breakpoints.up("md")]: {
-        width: "70vh",
-        maxWidth: "70vw",
-      },
-    },
     timer: {
       marginBottom: 8,
-      textAlign: "center",
       fontSize: "1.5rem",
-      color: (props: Record<string, string>) => props.timerColor,
+      color: (props: StylesProps) => props.timerColor,
     },
     canvasContainer: {
       display: "grid",
@@ -187,11 +176,9 @@ const NUM_SEARCH_CUBES = 10;
 
 const MAX_CANVAS_SIZE = 750;
 
-const MAX_FILE_ID = 100;
-
 type JsonData = { truth: number[]; predicted: number[] };
 
-const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
+const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_ID }: GameProps) => {
   const [context, canvasRef] = useCanvasContext();
   const [animationContext, animationCanvasRef] = useCanvasContext();
 
@@ -210,7 +197,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
 
   const [timerColor, setTimerColor] = useState(INITIAL_TIMER_COLOR);
 
-  const getNewFileId = useUniqueRandomGenerator(MAX_FILE_ID);
+  const getNewFileId = useUniqueRandomGenerator(MIN_FILE_ID, MAX_FILE_ID);
   const [fileId, setFileId] = useState(0);
 
   const [truth, setTruth] = useState<number[]>([]);
@@ -571,10 +558,25 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
         resolve();
       };
 
+      // Create a reference from a Google Cloud Storage URI
+      const gsStorageReference = firebaseStorage.refFromURL(
+        "gs://spot-the-lesion.appspot.com/images"
+      );
+
       image.onerror = reject;
 
       /* Set source after onLoad to ensure onLoad gets called (in case the image is cached) */
-      image.src = getImagePath(fileNumber);
+      gsStorageReference
+        .child(getImagePath(fileNumber))
+        .getDownloadURL()
+        .then((url) => {
+          // Or inserted into an <img> element:
+          image.src = url;
+        })
+        .catch((error) => {
+          // eslint-disable-next-line no-console
+          console.log(`Ran into firebase storage error: ${error}`);
+        });
     });
 
   /**
@@ -747,40 +749,42 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
    * Casual Mode: Hint Button
    * Competitive Mode: Timer
    */
-  const displayTopBar = () => {
+  const gameTopBar = () => {
+    let topBarContent;
     if (gameMode === "casual") {
-      return (
-        <Card className={classes.hintButtonContainer}>
-          <Button
-            className={classes.showHintButton}
-            onClick={showHint}
-            disabled={round === 0 || loading || hinted || !roundRunning}
-          >
-            Show hint
-          </Button>
-        </Card>
+      topBarContent = (
+        <Button
+          variant="contained"
+          color="secondary"
+          disabled={hinted || !roundRunning}
+          onClick={showHint}
+        >
+          Show hint
+        </Button>
+      );
+    } else {
+      topBarContent = (
+        <>
+          <Typography className={classes.timer}>
+            Time remaining: {(roundTime / 1000).toFixed(1)}s
+          </Typography>
+
+          <ColoredLinearProgress
+            barColor={timerColor}
+            variant="determinate"
+            value={roundTime / 100}
+          />
+        </>
       );
     }
 
-    return (
-      <Card className={classes.timerContainer}>
-        <Typography className={classes.timer} variant="h4">
-          Time remaining: {(roundTime / 1000).toFixed(1)}s
-        </Typography>
-
-        <ColoredLinearProgress
-          barColor={timerColor}
-          variant="determinate"
-          value={roundTime / 100}
-        />
-      </Card>
-    );
+    return <Card className={classes.topBar}>{topBarContent}</Card>;
   };
 
-  const displayGameContent = () => {
+  const gameContent = () => {
     return (
       <div className={classes.topBarCanvasContainer}>
-        {displayTopBar()}
+        {gameTopBar()}
 
         <Card className={classes.canvasContainer}>
           <canvas
@@ -805,7 +809,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
   /**
    * Function for displaying the side Score Card
    */
-  const displaySideCard = () => {
+  const gameSideCard = () => {
     return (
       <div className={classes.sideContainer}>
         <Card className={classes.sideCard}>
@@ -896,9 +900,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode }: GameProps) => {
       <div className={classes.container}>
         <div className={classes.emptyDiv} />
 
-        {displayGameContent()}
+        {gameContent()}
 
-        {displaySideCard()}
+        {gameSideCard()}
       </div>
 
       {displayHeatmapDialog()}

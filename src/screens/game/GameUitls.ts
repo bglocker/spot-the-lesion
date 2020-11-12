@@ -11,8 +11,7 @@ const getJsonPath = (fileNumber: number): string =>
  *
  * @param fileNumber Number of the file to retrieve
  */
-const getImagePath = (fileNumber: number): string =>
-  `${process.env.PUBLIC_URL}/content/images/${fileNumber}.png`;
+const getImagePath = (fileNumber: number): string => `${fileNumber}.png`;
 
 /**
  * Given the coordinates of two rectangles, returns the ratio of their intersection
