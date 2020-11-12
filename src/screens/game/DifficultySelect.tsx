@@ -30,7 +30,7 @@ const DifficultySelect: React.FC<DifficultySelectProps> = ({
   return (
     <OptionsSelectInterface
       setRoute={setRoute}
-      optionName="mode"
+      optionName="difficulty"
       options={[
         ["Easy", onEasyClick],
         ["Medium", onMediumClick],

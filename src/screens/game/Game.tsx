@@ -4,6 +4,7 @@ import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import { Close, KeyboardBackspace } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
+import axios from "axios";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import LoadingButton from "../../components/LoadingButton";
 import ScoreWithIncrement from "../../components/ScoreWithIncrement";
@@ -18,7 +19,7 @@ import {
   mapClickToCanvas,
   mapToCanvasScale,
 } from "../../components/CanvasUtils";
-import { getImagePath, getIntersectionOverUnion, getJsonPath } from "./GameUitls";
+import { getImagePath, getIntersectionOverUnion, getJsonPath } from "./GameUtils";
 import DbUtils from "../../utils/DbUtils";
 import { db, firebaseStorage } from "../../firebase/firebaseApp";
 import SubmitScoreDialog from "./SubmitScoreDialog";
@@ -199,6 +200,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
   const getNewFileId = useUniqueRandomGenerator(MIN_FILE_ID, MAX_FILE_ID);
   const [fileId, setFileId] = useState(0);
+
+  const [imageUrl, setImageUrl] = useState("");
 
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
@@ -535,11 +538,25 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
    * @param fileNumber Number of the json file to load
    */
   const loadJson = async (fileNumber: number) => {
-    const response = await fetch(getJsonPath(fileNumber));
-    const data: JsonData = await response.json();
+    const jsonStorageReference = firebaseStorage.refFromURL(
+      "gs://spot-the-lesion.appspot.com/annotations"
+    );
 
-    setTruth(mapCoordinates(data.truth));
-    setPredicted(mapCoordinates(data.predicted));
+    /* Download the JSON */
+    jsonStorageReference
+      .child(getJsonPath(fileNumber))
+      .getDownloadURL()
+      .then((url) => {
+        axios.get(url).then((response) => {
+          const content: JsonData = response.data;
+          setTruth(mapCoordinates(content.truth));
+          setPredicted(mapCoordinates(content.predicted));
+        });
+      })
+      .catch((error) => {
+        // eslint-disable-next-line no-console
+        console.log(`Ran into firebase storage error: ${error}`);
+      });
   };
 
   /**
@@ -559,18 +576,18 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       };
 
       // Create a reference from a Google Cloud Storage URI
-      const gsStorageReference = firebaseStorage.refFromURL(
+      const imageStorageReference = firebaseStorage.refFromURL(
         "gs://spot-the-lesion.appspot.com/images"
       );
 
       image.onerror = reject;
 
       /* Set source after onLoad to ensure onLoad gets called (in case the image is cached) */
-      gsStorageReference
+      imageStorageReference
         .child(getImagePath(fileNumber))
         .getDownloadURL()
         .then((url) => {
-          // Or inserted into an <img> element:
+          setImageUrl(url);
           image.src = url;
         })
         .catch((error) => {
@@ -863,7 +880,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
           </Toolbar>
         </AppBar>
 
-        <HeatmapDisplay imageId={fileId} />
+        <HeatmapDisplay imageUrl={imageUrl} imageId={fileId} />
       </Dialog>
     );
   };
