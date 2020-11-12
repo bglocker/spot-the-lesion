@@ -26,7 +26,7 @@ const useStyles = makeStyles((theme: Theme) =>
     backButton: {
       marginRight: 8,
     },
-    card: {
+    userStatsCard: {
       width: "90%",
       height: "80vh",
       display: "flex",
@@ -36,8 +36,21 @@ const useStyles = makeStyles((theme: Theme) =>
       marginTop: 24,
       padding: 8,
     },
+    imageStatsCard: {
+      width: "50%",
+      height: "60vh",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: 24,
+      padding: 8,
+    },
+    imageStatsContainer: {
+      marginTop: "5%",
+    },
     container: {
-      width: "75%",
+      width: "65%",
       display: "flex",
       flexDirection: "row",
       justifyContent: "center",
@@ -79,6 +92,30 @@ const useStyles = makeStyles((theme: Theme) =>
     image: {
       gridColumnStart: 1,
       gridRowStart: 1,
+    },
+    imageContainer: {
+      [theme.breakpoints.up("md")]: {
+        height: "100%",
+        flex: 1,
+        display: "flex",
+        justifyContent: "flex-end",
+        alignItems: "center",
+      },
+    },
+    imageCard: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      alignContent: "center",
+      margin: 24,
+      padding: 8,
+      [theme.breakpoints.down("sm")]: {
+        width: "80vw",
+        maxWidth: "60vh",
+      },
+      [theme.breakpoints.up("md")]: {
+        minWidth: "20vw",
+      },
     },
   })
 );
@@ -177,11 +214,11 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
 
   /**
    * Function for retrieving image statistics from Firebase
-   * @param fileNumber - index of the image for which we retrieve stats
+   * @param imageIndex - index of the image for which we retrieve stats
    */
-  const retrieveImageStats = async (fileNumber: number) => {
+  const retrieveImageStats = async (imageIndex: number) => {
     const table = DbUtils.IMAGES;
-    const docName = `image_${fileNumber}`;
+    const docName = `image_${imageIndex}`;
 
     const imageDoc = await db.collection(table).doc(docName).get();
     if (imageDoc.exists) {
@@ -228,35 +265,35 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
 
   /**
    * Function for displaying Per-Image Stats
-   * @param fileNumber - index of the image for which we display the stats
+   * @param imageIndex - index of the image for which we display the stats
    */
-  const displayPerImageStats = (fileNumber: number) => {
+  const displayPerImageStats = (imageIndex: number) => {
     numSlides = 100; // Total number of images in the DB
-    loadImage(fileNumber).then(null);
+    loadImage(imageIndex).then(null);
     const data = [
       {
-        id: "Players that got this image right",
-        label: "Correct answers",
+        id: "Correct Answers",
+        label: "Correct Answers",
         value: correctAnswers,
         color: "hsl(332, 70%, 50%)",
       },
       {
-        id: "Players that got this image wrong",
-        label: "Wrong answers",
+        id: "Wrong Answers",
+        label: "Wrong Answers",
         value: wrongAnswers,
         color: "hsl(194, 70%, 50%)",
       },
       {
-        id: "Total number of hints used for this image",
-        label: "Hints used",
+        id: "Total Hints",
+        label: "Total Hints",
         value: totalHints,
         color: "hsl(124, 43%, 81%)",
       },
     ];
     return (
-      <div className={classes.container}>
-        {displayImage(fileNumber)}
-        {displayPieChart(`Stats for Image: ${fileNumber}`, data)}
+      <div className={[classes.container, classes.imageStatsContainer].join(" ")}>
+        {displayImage(imageIndex)}
+        {displayImagePieChart(`Stats for Image: ${imageIndex}`, data)}
       </div>
     );
   };
@@ -276,15 +313,18 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
   };
 
   const displayImage = (fileNumber: number) => {
-    loadImage(fileNumber);
     return (
-      <img
-        src={imageUrl}
-        className={classes.image}
-        width={MAX_IMAGE_SIZE}
-        height={MAX_IMAGE_SIZE}
-        alt={`Lesion Number ${fileNumber}`}
-      />
+      <div className={classes.imageContainer}>
+        <Card className={classes.imageCard}>
+          <img
+            src={imageUrl}
+            className={classes.image}
+            width={MAX_IMAGE_SIZE}
+            height={MAX_IMAGE_SIZE}
+            alt={`Lesion Number ${fileNumber}`}
+          />
+        </Card>
+      </div>
     );
   };
 
@@ -315,7 +355,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
           color: "hsl(124, 43%, 81%)",
         },
       ];
-      return <div className={classes.container}>{displayPieChart("Human vs AI", data)}</div>;
+      return <div className={classes.container}>{displayUserPieChart("Human vs AI", data)}</div>;
     }
     if (statsIndex === 1) {
       const data = [
@@ -334,7 +374,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
       ];
       return (
         <div className={classes.container}>
-          {displayPieChart("How many players used hints", data)}
+          {displayUserPieChart("How many players used hints", data)}
         </div>
       );
     }
@@ -346,12 +386,12 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
    * @param title - Title of the stats page to be displayed
    * @param data - the user statistics to be displayed
    */
-  const displayPieChart = (
+  const displayUserPieChart = (
     title: string,
     data: { id: string; label: string; value: number; color: string }[]
   ) => {
     return (
-      <Card className={classes.card}>
+      <Card className={classes.userStatsCard}>
         <Typography className={classes.statTitle}>{title}</Typography>
         <ResponsivePie
           data={data}
@@ -418,6 +458,126 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
               itemWidth: 100,
               itemHeight: 18,
               itemTextColor: "#999",
+              symbolSize: 18,
+              symbolShape: "circle",
+              effects: [
+                {
+                  on: "hover",
+                  style: {
+                    itemTextColor: "#000",
+                  },
+                },
+              ],
+            },
+          ]}
+        />
+      </Card>
+    );
+  };
+
+  const displayImagePieChart = (
+    title: string,
+    data: { id: string; label: string; value: number; color: string }[]
+  ) => {
+    return (
+      <Card className={classes.imageStatsCard}>
+        <Typography className={classes.statTitle}>{title}</Typography>
+        <ResponsivePie
+          data={data}
+          margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
+          startAngle={-180}
+          padAngle={0.7}
+          cornerRadius={3}
+          colors={{ scheme: "nivo" }}
+          borderWidth={9}
+          borderColor={{ from: "color", modifiers: [["darker", 0.3]] }}
+          radialLabelsSkipAngle={10}
+          radialLabelsTextColor="#333333"
+          radialLabelsLinkHorizontalLength={36}
+          radialLabelsLinkColor={{ from: "color" }}
+          defs={[
+            {
+              id: "dots",
+              type: "patternDots",
+              background: "inherit",
+              color: "rgba(255, 255, 255, 0.3)",
+              size: 4,
+              padding: 1,
+              stagger: true,
+            },
+            {
+              id: "lines",
+              type: "patternLines",
+              background: "inherit",
+              color: "rgba(255, 255, 255, 0.3)",
+              rotation: -45,
+              lineWidth: 6,
+              spacing: 10,
+            },
+          ]}
+          fill={[
+            {
+              match: {
+                id: "ruby",
+              },
+              id: "dots",
+            },
+            {
+              match: {
+                id: "c",
+              },
+              id: "dots",
+            },
+            {
+              match: {
+                id: "go",
+              },
+              id: "dots",
+            },
+            {
+              match: {
+                id: "python",
+              },
+              id: "dots",
+            },
+            {
+              match: {
+                id: "scala",
+              },
+              id: "lines",
+            },
+            {
+              match: {
+                id: "lisp",
+              },
+              id: "lines",
+            },
+            {
+              match: {
+                id: "elixir",
+              },
+              id: "lines",
+            },
+            {
+              match: {
+                id: "javascript",
+              },
+              id: "lines",
+            },
+          ]}
+          legends={[
+            {
+              anchor: "bottom",
+              direction: "row",
+              justify: false,
+              translateX: 0,
+              translateY: 56,
+              itemsSpacing: 0,
+              itemWidth: 100,
+              itemHeight: 18,
+              itemTextColor: "#999",
+              itemDirection: "left-to-right",
+              itemOpacity: 1,
               symbolSize: 18,
               symbolShape: "circle",
               effects: [
