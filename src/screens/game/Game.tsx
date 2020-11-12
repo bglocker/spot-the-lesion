@@ -876,6 +876,10 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
    * Function for displaying the Heatmap Dialog Window
    */
   const displayHeatmapDialog = () => {
+    if (context == null) {
+      return null;
+    }
+
     return (
       <Dialog
         fullScreen
