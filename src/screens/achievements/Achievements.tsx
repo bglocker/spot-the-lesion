@@ -40,14 +40,15 @@ const useStyles = makeStyles((theme) =>
     },
     grid: {
       marginTop: 32,
+      paddingLeft: 12,
       textAlign: "center",
     },
     image: {
       [theme.breakpoints.down("xs")]: {
-        height: 150,
+        height: 100,
       },
       [theme.breakpoints.up("sm")]: {
-        height: 250,
+        height: 225,
       },
     },
   })
