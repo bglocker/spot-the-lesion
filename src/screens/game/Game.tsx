@@ -371,6 +371,103 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     [context, fileId, hinted, truth]
   );
 
+  const checkAchievements = (roundScore: number) => {
+    if (!localStorage.getItem("firstCorrect")) {
+      enqueueSnackbar("Achievement! First correct answer!", {
+        anchorOrigin: {
+          vertical: "top",
+          horizontal: "right",
+        },
+        variant: "success",
+        autoHideDuration: 3000,
+      });
+      localStorage.setItem("firstCorrect", "true");
+    }
+
+    if (!localStorage.getItem("firstCorrectWithoutHint") && !hinted) {
+      enqueueSnackbar("Achievement! No hint needed!", {
+        anchorOrigin: {
+          vertical: "top",
+          horizontal: "right",
+        },
+        variant: "success",
+        autoHideDuration: 3000,
+      });
+      localStorage.setItem("firstCorrectWithoutHint", "true");
+    }
+    if (
+      !localStorage.getItem("fiveCorrectSameRunCasual") &&
+      gameMode === "casual" &&
+      playerCorrect + 1 > 4
+    ) {
+      enqueueSnackbar("Achievement! Five correct in same casual run!", {
+        anchorOrigin: {
+          vertical: "top",
+          horizontal: "right",
+        },
+        variant: "success",
+        autoHideDuration: 3000,
+      });
+      localStorage.setItem("fiveCorrectSameRunCasual", "true");
+    }
+    if (
+      !localStorage.getItem("fiveCorrectSameRunCompetitive") &&
+      gameMode === "competitive" &&
+      playerCorrect + 1 > 4
+    ) {
+      enqueueSnackbar("Achievement! Five correct in same competitive run!", {
+        anchorOrigin: {
+          vertical: "top",
+          horizontal: "right",
+        },
+        variant: "success",
+        autoHideDuration: 3000,
+      });
+      localStorage.setItem("fiveCorrectSameRunCompetitive", "true");
+    }
+    if (
+      !localStorage.getItem("allCorrectCompetitive") &&
+      gameMode === "competitive" &&
+      playerCorrect + 1 > 9
+    ) {
+      enqueueSnackbar("Achievement! You got them all right!", {
+        anchorOrigin: {
+          vertical: "top",
+          horizontal: "right",
+        },
+        variant: "success",
+        autoHideDuration: 3000,
+      });
+      localStorage.setItem("allCorrectCompetitive", "true");
+    }
+    if (
+      !localStorage.getItem("competitivePoints") &&
+      gameMode === "competitive" &&
+      playerScore + roundScore > 1000
+    ) {
+      enqueueSnackbar("Achievement! 1000 points in a competitive run!", {
+        anchorOrigin: {
+          vertical: "top",
+          horizontal: "right",
+        },
+        variant: "success",
+        autoHideDuration: 3000,
+      });
+      localStorage.setItem("competitivePoints", "true");
+    }
+    if (!localStorage.getItem("fastAnswer") && gameMode === "competitive" && roundTime > 8000) {
+      enqueueSnackbar("Achievement! You answered correctly in less than 2 seconds!", {
+        anchorOrigin: {
+          vertical: "top",
+          horizontal: "right",
+        },
+        variant: "success",
+        autoHideDuration: 3000,
+      });
+      localStorage.setItem("fastAnswer", "true");
+    }
+  };
+
   /**
    * End timer based events
    */
@@ -437,6 +534,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         setPlayerRoundScore(gameMode === "casual" ? casualScore : competitiveScore);
         setPlayerCorrect((prevState) => prevState + 1);
 
+        checkAchievements(playerRoundScore);
+
         drawCross(context, x, y, 5, VALID_COLOUR);
       } else {
         drawCross(context, x, y, 5, INVALID_COLOUR);
@@ -469,6 +568,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       setEndRunning(false);
       setLoading(false);
     }
+    // TODO:figure out how to fix this
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     AI_COLOUR,
     click,
@@ -710,21 +811,34 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     const endAiScore = aiScore + aiRoundScore;
 
     if (endPlayerScore > endAiScore) {
-      text = "You won!";
-      color = VALID_COLOUR;
-    } else if (endPlayerScore < endAiScore) {
-      text = "AI won!";
-      color = INVALID_COLOUR;
-    } else {
-      text = "It was a draw!";
-      color = DEFAULT_COLOUR;
+      if (!localStorage.getItem("firstCompetitiveWin")) {
+        enqueueSnackbar("Achievement! First competitive win!", {
+          anchorOrigin: {
+            vertical: "top",
+            horizontal: "right",
+          },
+          variant: "success",
+          autoHideDuration: 3000,
+        });
+        localStorage.setItem("firstCompetitiveWin", "true");
+        text = "You won!";
+        color = VALID_COLOUR;
+      } else if (endPlayerScore < endAiScore) {
+        text = "AI won!";
+        color = INVALID_COLOUR;
+      } else {
+        text = "It was a draw!";
+        color = DEFAULT_COLOUR;
+      }
+
+      return (
+        <Typography className={classes.sideCardText} variant="h6" style={{ color }}>
+          {text}
+        </Typography>
+      );
     }
 
-    return (
-      <Typography className={classes.sideCardText} variant="h6" style={{ color }}>
-        {text}
-      </Typography>
-    );
+    return null;
   };
 
   const displayStartRoundButton = () => {
