@@ -2,11 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { AppBar, Button, Card, IconButton, Toolbar, Typography, useTheme } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
-import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
 import axios from "axios";
-import LoadingButton from "../../components/LoadingButton";
-import ScoreWithIncrement from "../../components/ScoreWithIncrement";
 import useInterval from "../../components/useInterval";
 import useCanvasContext from "../../components/useCanvasContext";
 import useUniqueRandomGenerator from "../../components/useUniqueRandomGenerator";
@@ -23,6 +20,7 @@ import DbUtils from "../../utils/DbUtils";
 import { db, firebaseStorage } from "../../firebase/firebaseApp";
 import useHeatmap from "../../components/useHeatmap";
 import GameTopBar from "./GameTopBar";
+import GameSideBar from "./GameSideBar";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -56,7 +54,6 @@ const useStyles = makeStyles((theme) =>
     topBarCanvasContainer: {
       display: "flex",
       flexDirection: "column",
-      justifyContent: "space-evenly",
       alignItems: "center",
     },
     canvasContainer: {
@@ -81,61 +78,8 @@ const useStyles = makeStyles((theme) =>
       height: "100%",
       width: "100%",
     },
-    sideContainer: {
-      [theme.breakpoints.up("md")]: {
-        height: "100%",
-        flex: 1,
-        display: "flex",
-        justifyContent: "flex-end",
-        alignItems: "center",
-      },
-    },
-    sideCard: {
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      alignContent: "center",
-      margin: 8,
-      padding: 8,
-      [theme.breakpoints.down("sm")]: {
-        width: "80vw",
-        maxWidth: "60vh",
-      },
-      [theme.breakpoints.up("md")]: {
-        minWidth: "20vw",
-      },
-    },
-    scoresContainer: {
-      display: "flex",
-      [theme.breakpoints.down("sm")]: {
-        width: "100%",
-        flexDirection: "row",
-        justifyContent: "space-evenly",
-      },
-      [theme.breakpoints.up("md")]: {
-        flexDirection: "column",
-        alignItems: "center",
-      },
-    },
-    sideCardText: {
-      [theme.breakpoints.down("sm")]: {
-        fontSize: "1.5rem",
-      },
-      [theme.breakpoints.up("md")]: {
-        fontSize: "2rem",
-      },
-    },
-    submitShareContainer: {
-      width: "100%",
-      display: "flex",
-      flexDirection: "row",
-      justifyContent: "space-evenly",
-      alignItems: "center",
-    },
   })
 );
-
-const NUM_ROUNDS = 10;
 
 const ROUND_START_TIME = 10000;
 
@@ -154,7 +98,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   const classes = useStyles();
 
   const AI_COLOUR = theme.palette.secondary.main;
-  const DEFAULT_COLOUR = "#gray";
   const INVALID_COLOUR = "red";
   const PLAYER_COLOUR = "red";
   const VALID_COLOUR = "green";
@@ -764,136 +707,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
   const onCloseSubmit = () => setShowSubmit(false);
 
-  /**
-   * Display the winner (only on competitive mode, after last round)
-   */
-  const showWinner = () => {
-    if (gameMode === "casual" || round < NUM_ROUNDS || roundRunning || loading) {
-      return null;
-    }
-
-    let text: string;
-    let color: string;
-
-    const endPlayerScore = playerScore + playerRoundScore;
-    const endAiScore = aiScore + aiRoundScore;
-
-    if (endPlayerScore > endAiScore) {
-      if (!localStorage.getItem("firstCompetitiveWin")) {
-        enqueueSnackbar("Achievement! First competitive win!", {
-          anchorOrigin: {
-            vertical: "top",
-            horizontal: "right",
-          },
-          variant: "success",
-          autoHideDuration: 3000,
-        });
-        localStorage.setItem("firstCompetitiveWin", "true");
-        text = "You won!";
-        color = VALID_COLOUR;
-      } else if (endPlayerScore < endAiScore) {
-        text = "AI won!";
-        color = INVALID_COLOUR;
-      } else {
-        text = "It was a draw!";
-        color = DEFAULT_COLOUR;
-      }
-
-      return (
-        <Typography className={classes.sideCardText} variant="h6" style={{ color }}>
-          {text}
-        </Typography>
-      );
-    }
-
-    return null;
-  };
-
-  const displayStartRoundButton = () => {
-    if (gameMode === "competitive" && round === NUM_ROUNDS) {
-      return null;
-    }
-
-    return (
-      <LoadingButton
-        loading={loading}
-        buttonDisabled={roundRunning || loading}
-        onButtonClick={startRound}
-        buttonText={round === 0 ? "Start" : "Next"}
-      />
-    );
-  };
-
-  const displaySubmitShare = () => {
-    if (
-      (gameMode === "casual" && round === 0) ||
-      (gameMode === "competitive" && round < NUM_ROUNDS) ||
-      roundRunning ||
-      loading
-    ) {
-      return null;
-    }
-
-    return (
-      <div className={classes.submitShareContainer}>
-        <Button
-          variant="contained"
-          color="primary"
-          size="large"
-          disabled={roundRunning || loading}
-          onClick={onShowSubmit}
-        >
-          Submit Score
-        </Button>
-
-        <TwitterShareButton
-          url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
-          title={`I got ${playerScore} points in Spot-the-Lesion! Can you beat my score?`}
-        >
-          <TwitterIcon size="50px" round />
-        </TwitterShareButton>
-      </div>
-    );
-  };
-
-  /**
-   * Function for displaying the side Score Card
-   */
-  const gameSideCard = () => {
-    return (
-      <div className={classes.sideContainer}>
-        <Card className={classes.sideCard}>
-          <div className={classes.scoresContainer}>
-            <ScoreWithIncrement
-              player="You"
-              score={playerScore}
-              increment={playerRoundScore}
-              showIncrement={round > 0 && !roundRunning && !loading}
-            />
-
-            <Typography className={classes.sideCardText}>vs</Typography>
-
-            <ScoreWithIncrement
-              player="AI"
-              score={aiScore}
-              increment={aiRoundScore}
-              showIncrement={round > 0 && !roundRunning && !loading}
-            />
-          </div>
-
-          {showWinner()}
-
-          {displayStartRoundButton()}
-
-          {displaySubmitShare()}
-        </Card>
-      </div>
-    );
-  };
-
-  /**
-   * Main return from the React Functional Component
-   */
   return (
     <>
       <AppBar position="sticky">
@@ -950,7 +763,18 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
           </Card>
         </div>
 
-        {gameSideCard()}
+        <GameSideBar
+          gameMode={gameMode}
+          round={round}
+          inRound={roundRunning || loading}
+          loading={loading}
+          playerScore={playerScore}
+          playerRoundScore={playerRoundScore}
+          aiScore={aiScore}
+          aiRoundScore={aiRoundScore}
+          onStartRound={startRound}
+          onShowSubmit={onShowSubmit}
+        />
       </div>
 
       <SubmitScoreDialog open={showSubmit} onClose={onCloseSubmit} onSubmit={onSubmitScore} />
