@@ -30,9 +30,6 @@ interface StylesProps {
 
 const useStyles = makeStyles((theme) =>
   createStyles({
-    appBar: {
-      zIndex: theme.zIndex.modal + 1,
-    },
     backButton: {
       marginRight: 8,
     },
@@ -987,7 +984,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
    */
   return (
     <>
-      <AppBar className={classes.appBar} position="sticky">
+      <AppBar position="sticky">
         <Toolbar variant="dense">
           <IconButton
             className={classes.backButton}
