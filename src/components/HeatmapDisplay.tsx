@@ -6,10 +6,6 @@ import DbUtils from "../utils/DbUtils";
 
 const useStyles = makeStyles(() =>
   createStyles({
-    container: {
-      display: "flex",
-      justifyContent: "center",
-    },
     image: {
       height: "80vw",
       width: "80vw",
@@ -102,7 +98,7 @@ const HeatmapDisplay: React.FC<HeatmapProps> = ({ imageId, imageUrl }: HeatmapPr
   }, [heatmapContainer, heatmapInstance, imageId, resize]);
 
   return (
-    <div className={classes.container} ref={heatmapContainerRef}>
+    <div ref={heatmapContainerRef}>
       <img className={classes.image} src={imageUrl} alt="Heatmap" />
     </div>
   );

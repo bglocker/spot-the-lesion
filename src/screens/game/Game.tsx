@@ -1,26 +1,18 @@
 import React, { useCallback, useEffect, useState } from "react";
-import {
-  AppBar,
-  Button,
-  Card,
-  Dialog,
-  IconButton,
-  Toolbar,
-  Typography,
-  useTheme,
-} from "@material-ui/core";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
-import { Close, KeyboardBackspace } from "@material-ui/icons";
+import { AppBar, Button, Card, IconButton, Toolbar, Typography, useTheme } from "@material-ui/core";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
+import { KeyboardBackspace } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
 import axios from "axios";
 import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import LoadingButton from "../../components/LoadingButton";
 import ScoreWithIncrement from "../../components/ScoreWithIncrement";
-import HeatmapDisplay from "../../components/HeatmapDisplay";
 import useInterval from "../../components/useInterval";
 import useCanvasContext from "../../components/useCanvasContext";
 import useUniqueRandomGenerator from "../../components/useUniqueRandomGenerator";
+import SubmitScoreDialog from "./SubmitScoreDialog";
+import HeatmapModal from "./HeatmapModal";
 import {
   drawCircle,
   drawCross,
@@ -31,14 +23,16 @@ import {
 import { getImagePath, getIntersectionOverUnion, getJsonPath } from "../../utils/GameUtils";
 import DbUtils from "../../utils/DbUtils";
 import { db, firebaseStorage } from "../../firebase/firebaseApp";
-import SubmitScoreDialog from "./SubmitScoreDialog";
 
 interface StylesProps {
   timerColor: string;
 }
 
-const useStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles((theme) =>
   createStyles({
+    appBar: {
+      zIndex: theme.zIndex.modal + 1,
+    },
     backButton: {
       marginRight: 8,
     },
@@ -788,9 +782,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     enqueueSnackbar("Score successfully submitted!");
   };
 
-  const onShowHeatmap = () => setShowHeatmap(true);
-
-  const onCloseHeatmap = () => setShowHeatmap(false);
+  const onToggleHeatmap = () => setShowHeatmap((prevState) => !prevState);
 
   const onShowSubmit = () => setShowSubmit(true);
 
@@ -987,51 +979,11 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   };
 
   /**
-   * Function for displaying the Heatmap Dialog Window
-   */
-  const displayHeatmapDialog = () => {
-    if (context == null) {
-      return null;
-    }
-
-    return (
-      <Dialog
-        fullScreen
-        open={showHeatmap}
-        PaperProps={{
-          style: {
-            backgroundColor: "transparent",
-            boxShadow: "none",
-          },
-        }}
-      >
-        <AppBar position="sticky">
-          <Toolbar variant="dense">
-            <IconButton
-              className={classes.backButton}
-              edge="start"
-              color="inherit"
-              aria-label="close"
-              onClick={onCloseHeatmap}
-            >
-              <Close />
-            </IconButton>
-
-            <Typography>Heatmap</Typography>
-          </Toolbar>
-        </AppBar>
-
-        <HeatmapDisplay imageUrl={imageUrl} imageId={fileId} />
-      </Dialog>
-    );
-  };
-
-  /**
    * Main return from the React Functional Component
    */
   return (
     <>
-      <AppBar position="sticky">
+      <AppBar className={classes.appBar} position="sticky">
         <Toolbar variant="dense">
           <IconButton
             className={classes.backButton}
@@ -1048,9 +1000,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
           <Button
             disabled={round === 0 || roundRunning || loading}
             color="inherit"
-            onClick={onShowHeatmap}
+            onClick={onToggleHeatmap}
           >
-            Show Heatmap
+            {showHeatmap ? "Hide" : "Show"} Heatmap
           </Button>
         </Toolbar>
       </AppBar>
@@ -1063,7 +1015,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         {gameSideCard()}
       </div>
 
-      {displayHeatmapDialog()}
+      <HeatmapModal open={showHeatmap} fileId={fileId} imageUrl={imageUrl} />
 
       <SubmitScoreDialog open={showSubmit} onClose={onCloseSubmit} onSubmit={onSubmitScore} />
     </>
