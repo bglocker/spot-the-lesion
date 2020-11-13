@@ -9,8 +9,6 @@ import {
   TextField,
 } from "@material-ui/core";
 
-const errorText = "Username cannot be empty";
-
 const SubmitScoreDialog: React.FC<SubmitScoreDialogProps> = ({
   open,
   onClose,
@@ -19,19 +17,6 @@ const SubmitScoreDialog: React.FC<SubmitScoreDialogProps> = ({
   const [username, setUsername] = useState("");
   const [error, setError] = useState(false);
 
-  const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setError(false);
-    setUsername(event.target.value);
-  };
-
-  const onClick = () => {
-    if (username === "") {
-      setError(true);
-    } else {
-      onSubmit(username);
-    }
-  };
-
   const onCloseDialog = () => {
     setUsername("");
     setError(false);
@@ -39,12 +24,27 @@ const SubmitScoreDialog: React.FC<SubmitScoreDialogProps> = ({
     onClose();
   };
 
+  const onUsernameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setError(false);
+    setUsername(event.target.value);
+  };
+
+  const onSubmitClick = () => {
+    if (username !== "") {
+      onSubmit(username);
+    } else {
+      setError(true);
+    }
+  };
+
   return (
     <Dialog open={open} onClose={onCloseDialog}>
-      <DialogTitle>Submit scores</DialogTitle>
+      <DialogTitle>Submit</DialogTitle>
 
       <DialogContent>
-        <DialogContentText>To submit your score, please enter an username</DialogContentText>
+        <DialogContentText>
+          To submit your score, please enter your username here.
+        </DialogContentText>
 
         <TextField
           autoFocus
@@ -54,14 +54,20 @@ const SubmitScoreDialog: React.FC<SubmitScoreDialogProps> = ({
           type="text"
           fullWidth
           error={error}
-          helperText={error ? errorText : ""}
+          helperText={error ? "Username cannot be empty" : ""}
           value={username}
-          onChange={onChange}
+          onChange={onUsernameChange}
         />
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClick}>Submit</Button>
+        <Button color="primary" onClick={onCloseDialog}>
+          Cancel
+        </Button>
+
+        <Button color="primary" onClick={onSubmitClick}>
+          Submit
+        </Button>
       </DialogActions>
     </Dialog>
   );
