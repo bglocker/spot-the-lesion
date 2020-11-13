@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { AppBar, Button, Card, IconButton, Toolbar, Typography, useTheme } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
@@ -12,7 +12,6 @@ import useInterval from "../../components/useInterval";
 import useCanvasContext from "../../components/useCanvasContext";
 import useUniqueRandomGenerator from "../../components/useUniqueRandomGenerator";
 import SubmitScoreDialog from "./SubmitScoreDialog";
-import HeatmapModal from "./HeatmapModal";
 import {
   drawCircle,
   drawCross,
@@ -23,6 +22,7 @@ import {
 import { getImagePath, getIntersectionOverUnion, getJsonPath } from "../../utils/GameUtils";
 import DbUtils from "../../utils/DbUtils";
 import { db, firebaseStorage } from "../../firebase/firebaseApp";
+import useHeatmap from "../../components/useHeatmap";
 
 interface StylesProps {
   timerColor: string;
@@ -208,8 +208,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   const getNewFileId = useUniqueRandomGenerator(MIN_FILE_ID, MAX_FILE_ID);
   const [fileId, setFileId] = useState(0);
 
-  const [imageUrl, setImageUrl] = useState("");
-
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
   const [click, setClick] = useState<{ x: number; y: number } | null>(null);
@@ -228,7 +226,11 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showSubmit, setShowSubmit] = useState(false);
 
+  const canvasContainer = useRef<HTMLDivElement>(null);
+
   const classes = useStyles({ timerColor });
+
+  useHeatmap(showHeatmap, canvasContainer, fileId, classes.canvas);
 
   /* TODO: check if upload to database fails to give different message */
   const { enqueueSnackbar } = useSnackbar();
@@ -484,6 +486,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       if (click) {
         const { x, y } = click;
 
+        /* TODO: round x and y here */
         drawCross(context, x, y, 5, PLAYER_COLOUR);
 
         uploadPlayerClick(Math.round(x), Math.round(y)).then(() => null);
@@ -696,7 +699,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         .child(getImagePath(fileNumber))
         .getDownloadURL()
         .then((url) => {
-          setImageUrl(url);
           image.src = url;
         })
         .catch((error) => {
@@ -731,6 +733,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     setTimerColor(INITIAL_TIMER_COLOR);
 
     setClick(null);
+
+    setShowHeatmap(false);
 
     setPlayerRoundScore(0);
     setAiRoundScore(0);
@@ -923,7 +927,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       <div className={classes.topBarCanvasContainer}>
         {gameTopBar()}
 
-        <Card className={classes.canvasContainer}>
+        <Card className={classes.canvasContainer} ref={canvasContainer}>
           <canvas
             className={classes.canvas}
             ref={canvasRef}
@@ -1014,8 +1018,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
         {gameSideCard()}
       </div>
-
-      <HeatmapModal open={showHeatmap} fileId={fileId} imageUrl={imageUrl} />
 
       <SubmitScoreDialog open={showSubmit} onClose={onCloseSubmit} onSubmit={onSubmitScore} />
     </>
