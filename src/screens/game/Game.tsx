@@ -1,5 +1,14 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { AppBar, Button, Card, Dialog, IconButton, Toolbar, Typography } from "@material-ui/core";
+import {
+  AppBar,
+  Button,
+  Card,
+  Dialog,
+  IconButton,
+  Toolbar,
+  Typography,
+  useTheme,
+} from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import { Close, KeyboardBackspace } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
@@ -19,7 +28,7 @@ import {
   mapClickToCanvas,
   mapToCanvasScale,
 } from "../../components/CanvasUtils";
-import { getImagePath, getIntersectionOverUnion, getJsonPath } from "./GameUtils";
+import { getImagePath, getIntersectionOverUnion, getJsonPath } from "../../utils/GameUtils";
 import DbUtils from "../../utils/DbUtils";
 import { db, firebaseStorage } from "../../firebase/firebaseApp";
 import SubmitScoreDialog from "./SubmitScoreDialog";
@@ -159,17 +168,11 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-const VALID_COLOUR = "green";
-const INVALID_COLOUR = "red";
-const DEFAULT_COLOUR = "yellow";
-const TRUE_COLOUR = "blue";
-const INITIAL_TIMER_COLOR = "#373737";
-
 const NUM_ROUNDS = 10;
 
 const ROUND_START_TIME = 10000;
 
-const ANIMATION_TIME = 5000;
+const ANIMATION_TIME = 3000;
 
 const AI_SCORE_INCREASE_RATE = 75;
 
@@ -180,6 +183,16 @@ const MAX_CANVAS_SIZE = 750;
 type JsonData = { truth: number[]; predicted: number[] };
 
 const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_ID }: GameProps) => {
+  const theme = useTheme();
+
+  const AI_COLOUR = theme.palette.secondary.main;
+  const DEFAULT_COLOUR = "#gray";
+  const INVALID_COLOUR = "red";
+  const PLAYER_COLOUR = "red";
+  const VALID_COLOUR = "green";
+  const TRUE_COLOUR = "blue";
+  const INITIAL_TIMER_COLOR = "#373737";
+
   const [context, canvasRef] = useCanvasContext();
   const [animationContext, animationCanvasRef] = useCanvasContext();
 
@@ -477,7 +490,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       if (click) {
         const { x, y } = click;
 
-        drawCross(context, x, y, 5, DEFAULT_COLOUR);
+        drawCross(context, x, y, 5, PLAYER_COLOUR);
 
         uploadPlayerClick(Math.round(x), Math.round(y)).then(() => null);
       }
@@ -492,7 +505,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
        *
        * draw predicted rectangle in default color
        */
-      drawRectangle(context, predicted, DEFAULT_COLOUR, 3);
+      drawRectangle(context, predicted, AI_COLOUR, 3);
     } else if (endTime === 500) {
       /*
        * 0.5 seconds passed
@@ -558,6 +571,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     // TODO:figure out how to fix this
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    AI_COLOUR,
     click,
     context,
     endRunning,
@@ -607,8 +621,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     const baseY = Math.floor(animationPosition / NUM_SEARCH_CUBES) * cubeSide;
     const cube = [baseX, baseY, baseX + cubeSide, baseY + cubeSide];
 
-    drawRectangle(animationContext, cube, VALID_COLOUR, 3);
-  }, [animationContext, animationPosition, animationRunning]);
+    drawRectangle(animationContext, cube, AI_COLOUR, 3);
+  }, [AI_COLOUR, animationContext, animationPosition, animationRunning]);
 
   /**
    * Called when the canvas is clicked
@@ -976,8 +990,21 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
    * Function for displaying the Heatmap Dialog Window
    */
   const displayHeatmapDialog = () => {
+    if (context == null) {
+      return null;
+    }
+
     return (
-      <Dialog fullScreen open={showHeatmap}>
+      <Dialog
+        fullScreen
+        open={showHeatmap}
+        PaperProps={{
+          style: {
+            backgroundColor: "transparent",
+            boxShadow: "none",
+          },
+        }}
+      >
         <AppBar position="sticky">
           <Toolbar variant="dense">
             <IconButton

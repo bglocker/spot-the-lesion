@@ -6,14 +6,12 @@ interface GameProps {
 }
 
 interface GameModeSelectProps {
-  setRoute: (Route) => void;
-  setSelected: (boolean) => void;
+  setGameModeSelected: (boolean) => void;
   setGameMode: (string) => void;
 }
 
 interface DifficultySelectProps {
-  setRoute: (Route) => void;
-  setSelected: (boolean) => void;
+  setDifficultySelected: (boolean) => void;
   setMin: (int) => void;
   setMax: (int) => void;
 }
@@ -23,7 +21,6 @@ interface OptionsProps {
 }
 
 interface OptionsSelectInterface {
-  setRoute: (Route) => void;
   optionName: string;
   options: [string, () => void][];
 }

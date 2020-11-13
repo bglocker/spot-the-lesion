@@ -17,17 +17,16 @@ import {
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { ArrowBack, ArrowForward, KeyboardBackspace } from "@material-ui/icons";
 import { ResponsivePie } from "@nivo/pie";
-import { db } from "../../firebase/firebaseApp";
+import { db, firebaseStorage } from "../../firebase/firebaseApp";
 import DbUtils from "../../utils/DbUtils";
+import { getImagePath } from "../../utils/GameUtils";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     backButton: {
       marginRight: 8,
     },
-    card: {
-      width: "90%",
-      height: "80vh",
+    basicCard: {
       display: "flex",
       flexDirection: "column",
       justifyContent: "center",
@@ -35,13 +34,25 @@ const useStyles = makeStyles((theme: Theme) =>
       marginTop: 24,
       padding: 8,
     },
+    userStatsCard: {
+      width: "90%",
+      height: "80vh",
+    },
+    imageStatsCard: {
+      width: "50%",
+      height: "60vh",
+    },
+    imageStatsContainer: {
+      marginTop: "5%",
+    },
     container: {
-      width: "100%",
+      width: "65%",
       display: "flex",
-      flexDirection: "column",
+      flexDirection: "row",
       justifyContent: "center",
       alignItems: "center",
       overflow: "hidden",
+      alignSelf: "center",
     },
     gameTypeAppBar: {
       alignItems: "center",
@@ -72,6 +83,34 @@ const useStyles = makeStyles((theme: Theme) =>
       },
       [theme.breakpoints.up("md")]: {
         flex: 1,
+      },
+    },
+    image: {
+      gridColumnStart: 1,
+      gridRowStart: 1,
+    },
+    imageContainer: {
+      [theme.breakpoints.up("md")]: {
+        height: "100%",
+        flex: 1,
+        display: "flex",
+        justifyContent: "flex-end",
+        alignItems: "center",
+      },
+    },
+    imageCard: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      alignContent: "center",
+      margin: 24,
+      padding: 8,
+      [theme.breakpoints.down("sm")]: {
+        width: "80vw",
+        maxWidth: "60vh",
+      },
+      [theme.breakpoints.up("md")]: {
+        minWidth: "20vw",
       },
     },
   })
@@ -117,9 +156,15 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
    */
   const [slideIn, setSlideIn] = useState(true);
   const [slideDirection, setSlideDirection] = useState<SlideProps["direction"]>("down");
-  const [slideIndex, setSlideIndex] = useState(0);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+  /**
+   * Hook for updating the URL of the image displayed as we go through the slideshow
+   */
+  const [imageUrl, setImageUrl] = useState("");
 
   let numSlides = 2;
+  const MAX_IMAGE_SIZE = 500;
   /**
    * Function used for retrieving the statistics for the current game mode
    * @param gameModeIndex - the index of the game mode for which the stats are retrieved
@@ -191,9 +236,16 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
   const onTabChange = async (newTabIndex: number, newStatsIndex: number) => {
     setCurrentTabIndex(newTabIndex);
     setTabSelected(true);
-    newTabIndex === 2
-      ? await retrieveImageStats(newStatsIndex)
-      : await retrieveUserStats(newTabIndex, newStatsIndex);
+    if (newTabIndex === 2) {
+      await retrieveImageStats(newStatsIndex);
+      numSlides = 100;
+    } else {
+      await retrieveUserStats(newTabIndex, newStatsIndex);
+      if (currentSlideIndex > 1) {
+        numSlides = 2;
+        setCurrentSlideIndex(currentSlideIndex % numSlides);
+      }
+    }
   };
 
   /**
@@ -210,7 +262,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     if (!tabSelected) {
       return (
         <Grid container justify="center">
-          <Typography className={classes.gameModeSelectionText}>SELECT A GAME MODE</Typography>
+          <Typography className={classes.gameModeSelectionText}>SELECT A STATISTICS TAB</Typography>
         </Grid>
       );
     }
@@ -223,29 +275,69 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
    */
   const displayPerImageStats = (imageIndex: number) => {
     numSlides = 100; // Total number of images in the DB
+    loadImage(imageIndex).then(null);
     const data = [
       {
-        id: "Players that got this image right",
-        label: "Correct answers",
+        id: "Correct Answers",
+        label: "Correct Answers",
         value: correctAnswers,
         color: "hsl(332, 70%, 50%)",
       },
       {
-        id: "Players that got this image wrong",
-        label: "Wrong answers",
+        id: "Wrong Answers",
+        label: "Wrong Answers",
         value: wrongAnswers,
         color: "hsl(194, 70%, 50%)",
       },
       {
-        id: "Total number of hints used for this image",
-        label: "Hints used",
+        id: "Total Hints",
+        label: "Total Hints",
         value: totalHints,
         color: "hsl(124, 43%, 81%)",
       },
     ];
     return (
-      <div className={classes.container}>
-        {displayPieChart(`Stats for Image: ${imageIndex}`, data)}
+      <div className={[classes.container, classes.imageStatsContainer].join(" ")}>
+        {displayImage(imageIndex)}
+        {displayImagePieChart(`Stats for Image: ${imageIndex}`, data)}
+      </div>
+    );
+  };
+
+  /**
+   * Function for loading an image from the Firebase Storage
+   * @param imageIndex - index of the image to be retrieved
+   */
+  const loadImage = async (imageIndex: number) => {
+    // Create a reference from a Google Cloud Storage URI
+    const imageStorageReference = firebaseStorage.refFromURL(
+      "gs://spot-the-lesion.appspot.com/images"
+    );
+
+    /* Set source after onLoad to ensure onLoad gets called (in case the image is cached) */
+    const imageLink: string = await imageStorageReference
+      .child(getImagePath(imageIndex))
+      .getDownloadURL();
+
+    setImageUrl(imageLink);
+  };
+
+  /**
+   * Function for displaying an image on an image container
+   * @param imageIndex - index of the Image to be displayed
+   */
+  const displayImage = (imageIndex: number) => {
+    return (
+      <div className={classes.imageContainer}>
+        <Card className={classes.imageCard}>
+          <img
+            src={imageUrl}
+            className={classes.image}
+            width={MAX_IMAGE_SIZE}
+            height={MAX_IMAGE_SIZE}
+            alt={`Lesion Number ${imageIndex}`}
+          />
+        </Card>
       </div>
     );
   };
@@ -277,7 +369,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
           color: "hsl(124, 43%, 81%)",
         },
       ];
-      return <div className={classes.container}>{displayPieChart("Human vs AI", data)}</div>;
+      return <div className={classes.container}>{displayUserPieChart("Human vs AI", data)}</div>;
     }
     if (statsIndex === 1) {
       const data = [
@@ -296,7 +388,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
       ];
       return (
         <div className={classes.container}>
-          {displayPieChart("How many players used hints", data)}
+          {displayUserPieChart("How many players used hints", data)}
         </div>
       );
     }
@@ -308,12 +400,12 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
    * @param title - Title of the stats page to be displayed
    * @param data - the user statistics to be displayed
    */
-  const displayPieChart = (
+  const displayUserPieChart = (
     title: string,
     data: { id: string; label: string; value: number; color: string }[]
   ) => {
     return (
-      <Card className={classes.card}>
+      <Card className={[classes.basicCard, classes.userStatsCard].join(" ")}>
         <Typography className={classes.statTitle}>{title}</Typography>
         <ResponsivePie
           data={data}
@@ -381,6 +473,132 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
               itemHeight: 18,
               itemTextColor: "#999",
               symbolSize: 18,
+              itemsSpacing: 100,
+              symbolShape: "circle",
+              effects: [
+                {
+                  on: "hover",
+                  style: {
+                    itemTextColor: "#000",
+                  },
+                },
+              ],
+            },
+          ]}
+        />
+      </Card>
+    );
+  };
+
+  /**
+   * Function for displaying a pie chart designed for Image Stats
+   * @param title - Pie Chart title for the image displayed
+   * @param data - data parsed in to the pie chart
+   */
+  const displayImagePieChart = (
+    title: string,
+    data: { id: string; label: string; value: number; color: string }[]
+  ) => {
+    return (
+      <Card className={[classes.basicCard, classes.imageStatsCard].join(" ")}>
+        <Typography className={classes.statTitle}>{title}</Typography>
+        <ResponsivePie
+          data={data}
+          margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
+          startAngle={-180}
+          padAngle={0.7}
+          cornerRadius={3}
+          colors={{ scheme: "nivo" }}
+          borderWidth={9}
+          borderColor={{ from: "color", modifiers: [["darker", 0.3]] }}
+          radialLabelsSkipAngle={10}
+          radialLabelsTextColor="#333333"
+          radialLabelsLinkHorizontalLength={36}
+          radialLabelsLinkColor={{ from: "color" }}
+          defs={[
+            {
+              id: "dots",
+              type: "patternDots",
+              background: "inherit",
+              color: "rgba(255, 255, 255, 0.3)",
+              size: 4,
+              padding: 1,
+              stagger: true,
+            },
+            {
+              id: "lines",
+              type: "patternLines",
+              background: "inherit",
+              color: "rgba(255, 255, 255, 0.3)",
+              rotation: -45,
+              lineWidth: 6,
+              spacing: 10,
+            },
+          ]}
+          fill={[
+            {
+              match: {
+                id: "ruby",
+              },
+              id: "dots",
+            },
+            {
+              match: {
+                id: "c",
+              },
+              id: "dots",
+            },
+            {
+              match: {
+                id: "go",
+              },
+              id: "dots",
+            },
+            {
+              match: {
+                id: "python",
+              },
+              id: "dots",
+            },
+            {
+              match: {
+                id: "scala",
+              },
+              id: "lines",
+            },
+            {
+              match: {
+                id: "lisp",
+              },
+              id: "lines",
+            },
+            {
+              match: {
+                id: "elixir",
+              },
+              id: "lines",
+            },
+            {
+              match: {
+                id: "javascript",
+              },
+              id: "lines",
+            },
+          ]}
+          legends={[
+            {
+              anchor: "bottom",
+              direction: "row",
+              justify: false,
+              translateX: 0,
+              translateY: 56,
+              itemsSpacing: 100,
+              itemWidth: 100,
+              itemHeight: 18,
+              itemTextColor: "#999",
+              itemDirection: "left-to-right",
+              itemOpacity: 1,
+              symbolSize: 18,
               symbolShape: "circle",
               effects: [
                 {
@@ -403,14 +621,14 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
    */
   const onArrowClick = (direction: SlideProps["direction"]) => {
     const increment = direction === "left" ? -1 : 1;
-    const newIndex = (slideIndex + increment + numSlides) % numSlides;
+    const newIndex = (currentSlideIndex + increment + numSlides) % numSlides;
     const oppDirection = direction === "left" ? "right" : "left";
 
     setSlideDirection(direction);
     setSlideIn(false);
 
     window.setTimeout(async () => {
-      setSlideIndex(newIndex);
+      setCurrentSlideIndex(newIndex);
       setSlideDirection(oppDirection);
       setSlideIn(true);
       currentTabIndex === 2
@@ -463,7 +681,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
       <AppBar className={classes.gameTypeAppBar} position="sticky">
         <Tabs
           value={!tabSelected ? tabSelected : currentTabIndex}
-          onChange={(_, newTabIndex) => onTabChange(newTabIndex, slideIndex)}
+          onChange={(_, newTabIndex) => onTabChange(newTabIndex, currentSlideIndex)}
           aria-label="Gametypes"
           classes={{ indicator: classes.tabIndicator }}
         >
@@ -490,7 +708,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
         </Tabs>
       </AppBar>
       <Slide in={slideIn} direction={slideDirection}>
-        {displayStats(currentTabIndex, slideIndex)}
+        {displayStats(currentTabIndex, currentSlideIndex)}
       </Slide>
       {displaySlideShowButtons()}
     </>

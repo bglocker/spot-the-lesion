@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { range } from "../screens/game/GameUtils";
+import { range } from "../utils/GameUtils";
 
 /**
  * Custom hook for creating a unique random generator

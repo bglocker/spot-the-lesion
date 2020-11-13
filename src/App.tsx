@@ -8,7 +8,7 @@ import About from "./screens/about/About";
 import Credits from "./screens/credits/Credits";
 import Leaderboard from "./screens/leaderboard/Leaderboard";
 import Statistics from "./screens/statistics/Statistics";
-import OptionsManager from "./screens/game/OptionsManager";
+import OptionsManager from "./screens/game/selectMode/OptionsManager";
 import Achievements from "./screens/achievements/Achievements";
 
 const theme = createMuiTheme({
