@@ -5,7 +5,6 @@ import { KeyboardBackspace } from "@material-ui/icons";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useSnackbar } from "notistack";
 import axios from "axios";
-import ColoredLinearProgress from "../../components/ColoredLinearProgress";
 import LoadingButton from "../../components/LoadingButton";
 import ScoreWithIncrement from "../../components/ScoreWithIncrement";
 import useInterval from "../../components/useInterval";
@@ -23,10 +22,7 @@ import { getImagePath, getIntersectionOverUnion, getJsonPath } from "../../utils
 import DbUtils from "../../utils/DbUtils";
 import { db, firebaseStorage } from "../../firebase/firebaseApp";
 import useHeatmap from "../../components/useHeatmap";
-
-interface StylesProps {
-  timerColor: string;
-}
+import GameTopBar from "./GameTopBar";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -49,11 +45,12 @@ const useStyles = makeStyles((theme) =>
       },
     },
     emptyDiv: {
+      flex: 1,
       [theme.breakpoints.down("sm")]: {
-        flex: 0,
+        display: "none",
       },
       [theme.breakpoints.up("md")]: {
-        flex: 1,
+        display: "block",
       },
     },
     topBarCanvasContainer: {
@@ -61,27 +58,6 @@ const useStyles = makeStyles((theme) =>
       flexDirection: "column",
       justifyContent: "space-evenly",
       alignItems: "center",
-    },
-    topBar: {
-      margin: 8,
-      padding: 8,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      [theme.breakpoints.down("sm")]: {
-        width: "80vw",
-        maxWidth: "60vh",
-      },
-      [theme.breakpoints.up("md")]: {
-        width: "70vh",
-        maxWidth: "70vw",
-      },
-    },
-    timer: {
-      marginBottom: 8,
-      fontSize: "1.5rem",
-      color: (props: StylesProps) => props.timerColor,
     },
     canvasContainer: {
       display: "grid",
@@ -175,6 +151,7 @@ type JsonData = { truth: number[]; predicted: number[] };
 
 const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_ID }: GameProps) => {
   const theme = useTheme();
+  const classes = useStyles();
 
   const AI_COLOUR = theme.palette.secondary.main;
   const DEFAULT_COLOUR = "#gray";
@@ -224,8 +201,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   const [showSubmit, setShowSubmit] = useState(false);
 
   const canvasContainer = useRef<HTMLDivElement>(null);
-
-  const classes = useStyles({ timerColor });
 
   useHeatmap(showHeatmap, canvasContainer, fileId, classes.canvas);
 
@@ -882,69 +857,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   };
 
   /**
-   * Display game Top Bar
-   *
-   * Casual Mode: Hint Button
-   * Competitive Mode: Timer
-   */
-  const gameTopBar = () => {
-    let topBarContent;
-    if (gameMode === "casual") {
-      topBarContent = (
-        <Button
-          variant="contained"
-          color="secondary"
-          disabled={hinted || !roundRunning}
-          onClick={showHint}
-        >
-          Show hint
-        </Button>
-      );
-    } else {
-      topBarContent = (
-        <>
-          <Typography className={classes.timer}>
-            Time remaining: {(roundTime / 1000).toFixed(1)}s
-          </Typography>
-
-          <ColoredLinearProgress
-            barColor={timerColor}
-            variant="determinate"
-            value={roundTime / 100}
-          />
-        </>
-      );
-    }
-
-    return <Card className={classes.topBar}>{topBarContent}</Card>;
-  };
-
-  const gameContent = () => {
-    return (
-      <div className={classes.topBarCanvasContainer}>
-        {gameTopBar()}
-
-        <Card className={classes.canvasContainer} ref={canvasContainer}>
-          <canvas
-            className={classes.canvas}
-            ref={canvasRef}
-            width={MAX_CANVAS_SIZE}
-            height={MAX_CANVAS_SIZE}
-          />
-
-          <canvas
-            className={classes.canvas}
-            ref={animationCanvasRef}
-            width={MAX_CANVAS_SIZE}
-            height={MAX_CANVAS_SIZE}
-            onClick={onCanvasClick}
-          />
-        </Card>
-      </div>
-    );
-  };
-
-  /**
    * Function for displaying the side Score Card
    */
   const gameSideCard = () => {
@@ -1011,7 +923,32 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       <div className={classes.container}>
         <div className={classes.emptyDiv} />
 
-        {gameContent()}
+        <div className={classes.topBarCanvasContainer}>
+          <GameTopBar
+            gameMode={gameMode}
+            showHintDisabled={hinted || !roundRunning}
+            onShowHint={showHint}
+            roundTime={roundTime}
+            timerColor={timerColor}
+          />
+
+          <Card className={classes.canvasContainer} ref={canvasContainer}>
+            <canvas
+              className={classes.canvas}
+              ref={canvasRef}
+              width={MAX_CANVAS_SIZE}
+              height={MAX_CANVAS_SIZE}
+            />
+
+            <canvas
+              className={classes.canvas}
+              ref={animationCanvasRef}
+              width={MAX_CANVAS_SIZE}
+              height={MAX_CANVAS_SIZE}
+              onClick={onCanvasClick}
+            />
+          </Card>
+        </div>
 
         {gameSideCard()}
       </div>
