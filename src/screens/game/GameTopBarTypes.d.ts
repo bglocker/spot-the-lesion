@@ -1,7 +1,7 @@
 interface GameTopBarProps {
   gameMode: GameMode;
-  showHintDisabled: boolean;
-  onShowHint: () => void;
+  hintDisabled: boolean;
+  onHintClick: () => void;
   roundTime: number;
   timerColor: string;
 }

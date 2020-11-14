@@ -1,54 +1,23 @@
-import React from "react";
-import { Button, CircularProgress } from "@material-ui/core";
-import { makeStyles, createStyles } from "@material-ui/core/styles";
+import React, { ReactNode } from "react";
+import { Button, ButtonProps, CircularProgress } from "@material-ui/core";
 
-interface LoadingButtonProps {
+interface LoadingButtonProps extends ButtonProps {
   loading: boolean;
-  buttonDisabled: boolean;
-  onButtonClick: () => void;
-  buttonText: string;
+  children: ReactNode;
 }
 
-const useStyles = makeStyles(() =>
-  createStyles({
-    container: {
-      position: "relative",
-      marginTop: 16,
-      marginBottom: 16,
-    },
-    circularProgress: {
-      display: ({ loading }: Record<string, boolean>) => (loading ? "block" : "none"),
-      position: "absolute",
-      top: "50%",
-      left: "50%",
-      marginTop: -12,
-      marginLeft: -12,
-    },
-  })
-);
-
 const LoadingButton: React.FC<LoadingButtonProps> = ({
+  children,
   loading,
-  buttonDisabled,
-  onButtonClick,
-  buttonText,
+  disabled,
+  ...other
 }: LoadingButtonProps) => {
-  const classes = useStyles({ loading });
-
   return (
-    <div className={classes.container}>
-      <Button
-        variant="contained"
-        color="primary"
-        size="large"
-        disabled={buttonDisabled}
-        onClick={onButtonClick}
-      >
-        {buttonText}
-      </Button>
-
-      <CircularProgress className={classes.circularProgress} color="primary" size={24} />
-    </div>
+    // Props are properly destructured and passed
+    // eslint-disable-next-line react/jsx-props-no-spreading
+    <Button disabled={disabled || loading} {...other}>
+      {loading ? <CircularProgress color="primary" size={24} /> : children}
+    </Button>
   );
 };
 

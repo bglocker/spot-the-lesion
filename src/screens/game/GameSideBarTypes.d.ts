@@ -8,5 +8,5 @@ interface GameSideBarProps {
   aiScore: number;
   aiRoundScore: number;
   onStartRound: () => void;
-  onShowSubmit: () => void;
+  onSubmitClick: () => void;
 }

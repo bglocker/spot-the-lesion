@@ -107,6 +107,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   const [context, canvasRef] = useCanvasContext();
   const [animationContext, animationCanvasRef] = useCanvasContext();
 
+  const [inRound, setInRound] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [roundRunning, setRoundRunning] = useState(false);
@@ -391,11 +392,10 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       /*
        * 0 seconds passed
        *
-       * set loading true and stop round timer
+       * stop round timer
        * draw and upload player click (if available)
        * start animation timer and pause end timer
        */
-      setLoading(true);
       setRoundRunning(false);
 
       if (click) {
@@ -457,7 +457,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
        * 1.5 seconds passed
        *
        * evaluate AI prediction
-       * stop end timer and set loading false
+       * stop end timer
        */
       const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
 
@@ -477,8 +477,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         drawRectangle(context, predicted, INVALID_COLOUR, 3);
       }
 
+      setInRound(false);
       setEndRunning(false);
-      setLoading(false);
     }
     // TODO:figure out how to fix this
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -626,11 +626,17 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
    * Starts a new round, loading a new image and its corresponding JSON data
    */
   const startRound = async () => {
+    setLoading(true);
+    setInRound(true);
+
     /* Update scores with last round scores */
     setPlayerScore((prevState) => prevState + playerRoundScore);
-    setAiScore((prevState) => prevState + aiRoundScore);
+    setPlayerRoundScore(0);
 
-    setLoading(true);
+    setAiScore((prevState) => prevState + aiRoundScore);
+    setAiRoundScore(0);
+
+    setRound((prevState) => prevState + 1);
 
     /* Get a new file number and load the corresponding json and image */
     const newFileId = getNewFileId();
@@ -651,11 +657,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
     setShowHeatmap(false);
 
-    setPlayerRoundScore(0);
-    setAiRoundScore(0);
-
-    setRound((prevState) => prevState + 1);
-
     setRoundRunning(true);
     setLoading(false);
   };
@@ -667,8 +668,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
    * Scores uploaded into Firebase
    */
   const onSubmitScore = async (username: string) => {
-    setLoading(true);
-
     const date = new Date();
     const entry = {
       user: username,
@@ -723,12 +722,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
           <Typography className={classes.title}>Spot the Lesion</Typography>
 
-          <Button
-            disabled={round === 0 || roundRunning || loading}
-            color="inherit"
-            onClick={onToggleHeatmap}
-          >
-            {showHeatmap ? "Hide" : "Show"} Heatmap
+          <Button disabled={round === 0 || inRound} color="inherit" onClick={onToggleHeatmap}>
+            {showHeatmap ? "Hide Heatmap" : "Show Heatmap"}
           </Button>
         </Toolbar>
       </AppBar>
@@ -739,8 +734,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         <div className={classes.topBarCanvasContainer}>
           <GameTopBar
             gameMode={gameMode}
-            showHintDisabled={hinted || !roundRunning}
-            onShowHint={showHint}
+            hintDisabled={hinted || !roundRunning}
+            onHintClick={showHint}
             roundTime={roundTime}
             timerColor={timerColor}
           />
@@ -766,14 +761,14 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         <GameSideBar
           gameMode={gameMode}
           round={round}
-          inRound={roundRunning || loading}
+          inRound={inRound}
           loading={loading}
           playerScore={playerScore}
           playerRoundScore={playerRoundScore}
           aiScore={aiScore}
           aiRoundScore={aiRoundScore}
           onStartRound={startRound}
-          onShowSubmit={onShowSubmit}
+          onSubmitClick={onShowSubmit}
         />
       </div>
 

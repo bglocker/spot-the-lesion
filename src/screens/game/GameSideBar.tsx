@@ -78,7 +78,7 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
   aiScore,
   aiRoundScore,
   onStartRound,
-  onShowSubmit,
+  onSubmitClick,
 }: GameSideBarProps) => {
   const classes = useStyles();
 
@@ -137,27 +137,30 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
 
     return (
       <LoadingButton
+        variant="contained"
+        color="primary"
+        size="large"
         loading={loading}
-        buttonDisabled={inRound}
-        onButtonClick={onStartRound}
-        buttonText={round === 0 ? "Start" : "Next"}
-      />
+        disabled={inRound}
+        onClick={onStartRound}
+      >
+        {round === 0 ? "Start" : "Next"}
+      </LoadingButton>
     );
   };
 
   const submitShareButtons = () => {
     if (
-      (gameMode === "casual" && round === 0) ||
-      (gameMode === "competitive" && round < NUM_ROUNDS) ||
-      inRound
+      (gameMode === "casual" && (round === 0 || inRound)) ||
+      (gameMode === "competitive" && (round < NUM_ROUNDS || inRound))
     ) {
       return null;
     }
 
     return (
       <div className={classes.submitShareContainer}>
-        <Button variant="contained" color="primary" size="large" onClick={onShowSubmit}>
-          Submit Score
+        <Button variant="contained" color="primary" size="large" onClick={onSubmitClick}>
+          Submit
         </Button>
 
         <TwitterShareButton

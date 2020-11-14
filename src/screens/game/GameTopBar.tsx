@@ -29,8 +29,8 @@ const useStyles = makeStyles((theme) =>
 
 const GameTopBar: React.FC<GameTopBarProps> = ({
   gameMode,
-  showHintDisabled,
-  onShowHint,
+  hintDisabled,
+  onHintClick,
   roundTime,
   timerColor,
 }: GameTopBarProps) => {
@@ -39,12 +39,7 @@ const GameTopBar: React.FC<GameTopBarProps> = ({
   const content = () => {
     if (gameMode === "casual") {
       return (
-        <Button
-          variant="contained"
-          color="secondary"
-          disabled={showHintDisabled}
-          onClick={onShowHint}
-        >
+        <Button variant="contained" color="secondary" disabled={hintDisabled} onClick={onHintClick}>
           Show hint
         </Button>
       );
