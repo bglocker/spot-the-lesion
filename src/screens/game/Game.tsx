@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { AppBar, Button, Card, IconButton, Toolbar, Typography, useTheme } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
-import { useSnackbar } from "notistack";
+import { OptionsObject, useSnackbar } from "notistack";
 import axios from "axios";
 import useInterval from "../../components/useInterval";
 import useCanvasContext from "../../components/useCanvasContext";
@@ -80,6 +80,17 @@ const useStyles = makeStyles((theme) =>
     },
   })
 );
+
+const achievementSnackbarOptions: OptionsObject = {
+  anchorOrigin: {
+    vertical: "top",
+    horizontal: "right",
+  },
+  autoHideDuration: 3000,
+  variant: "success",
+};
+
+const NUM_ROUNDS = 10;
 
 const ROUND_START_TIME = 10000;
 
@@ -283,100 +294,80 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     [context, fileId, hinted, truth]
   );
 
-  const checkAchievements = (roundScore: number) => {
+  const checkAchievements = () => {
     if (!localStorage.getItem("firstCorrect")) {
-      enqueueSnackbar("Achievement! First correct answer!", {
-        anchorOrigin: {
-          vertical: "top",
-          horizontal: "right",
-        },
-        variant: "success",
-        autoHideDuration: 3000,
-      });
+      enqueueSnackbar("Achievement! First correct answer!", achievementSnackbarOptions);
+
       localStorage.setItem("firstCorrect", "true");
     }
 
     if (!localStorage.getItem("firstCorrectWithoutHint") && !hinted) {
-      enqueueSnackbar("Achievement! No hint needed!", {
-        anchorOrigin: {
-          vertical: "top",
-          horizontal: "right",
-        },
-        variant: "success",
-        autoHideDuration: 3000,
-      });
+      enqueueSnackbar("Achievement! No hint needed!", achievementSnackbarOptions);
+
       localStorage.setItem("firstCorrectWithoutHint", "true");
     }
+
     if (
       !localStorage.getItem("fiveCorrectSameRunCasual") &&
       gameMode === "casual" &&
       playerCorrect + 1 > 4
     ) {
-      enqueueSnackbar("Achievement! Five correct in same casual run!", {
-        anchorOrigin: {
-          vertical: "top",
-          horizontal: "right",
-        },
-        variant: "success",
-        autoHideDuration: 3000,
-      });
+      enqueueSnackbar("Achievement! Five correct in same casual run!", achievementSnackbarOptions);
+
       localStorage.setItem("fiveCorrectSameRunCasual", "true");
     }
+
     if (
       !localStorage.getItem("fiveCorrectSameRunCompetitive") &&
       gameMode === "competitive" &&
       playerCorrect + 1 > 4
     ) {
-      enqueueSnackbar("Achievement! Five correct in same competitive run!", {
-        anchorOrigin: {
-          vertical: "top",
-          horizontal: "right",
-        },
-        variant: "success",
-        autoHideDuration: 3000,
-      });
+      enqueueSnackbar(
+        "Achievement! Five correct in same competitive run!",
+        achievementSnackbarOptions
+      );
+
       localStorage.setItem("fiveCorrectSameRunCompetitive", "true");
     }
+
     if (
       !localStorage.getItem("allCorrectCompetitive") &&
       gameMode === "competitive" &&
       playerCorrect + 1 > 9
     ) {
-      enqueueSnackbar("Achievement! You got them all right!", {
-        anchorOrigin: {
-          vertical: "top",
-          horizontal: "right",
-        },
-        variant: "success",
-        autoHideDuration: 3000,
-      });
+      enqueueSnackbar("Achievement! You got them all right!", achievementSnackbarOptions);
+
       localStorage.setItem("allCorrectCompetitive", "true");
     }
+
     if (
       !localStorage.getItem("competitivePoints") &&
       gameMode === "competitive" &&
-      playerScore + roundScore > 1000
+      playerScore + playerRoundScore > 1000
     ) {
-      enqueueSnackbar("Achievement! 1000 points in a competitive run!", {
-        anchorOrigin: {
-          vertical: "top",
-          horizontal: "right",
-        },
-        variant: "success",
-        autoHideDuration: 3000,
-      });
+      enqueueSnackbar("Achievement! 1000 points in a competitive run!", achievementSnackbarOptions);
+
       localStorage.setItem("competitivePoints", "true");
     }
+
     if (!localStorage.getItem("fastAnswer") && gameMode === "competitive" && roundTime > 8000) {
-      enqueueSnackbar("Achievement! You answered correctly in less than 2 seconds!", {
-        anchorOrigin: {
-          vertical: "top",
-          horizontal: "right",
-        },
-        variant: "success",
-        autoHideDuration: 3000,
-      });
+      enqueueSnackbar(
+        "Achievement! You answered correctly in less than 2 seconds!",
+        achievementSnackbarOptions
+      );
+
       localStorage.setItem("fastAnswer", "true");
+    }
+
+    if (
+      !localStorage.getItem("firstCompetitiveWin") &&
+      gameMode === "competitive" &&
+      round === NUM_ROUNDS &&
+      !inRound
+    ) {
+      enqueueSnackbar("Achievement! First competitive win!", achievementSnackbarOptions);
+
+      localStorage.setItem("firstCompetitiveWin", "true");
     }
   };
 
@@ -446,7 +437,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         setPlayerRoundScore(gameMode === "casual" ? casualScore : competitiveScore);
         setPlayerCorrect((prevState) => prevState + 1);
 
-        checkAchievements(playerRoundScore);
+        checkAchievements();
 
         drawCross(context, x, y, 5, VALID_COLOUR);
       } else {

@@ -2,7 +2,6 @@ import React from "react";
 import { Button, Card, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { TwitterIcon, TwitterShareButton } from "react-share";
-import { useSnackbar } from "notistack";
 import ScoreWithIncrement from "../../components/ScoreWithIncrement";
 import LoadingButton from "../../components/LoadingButton";
 
@@ -62,7 +61,7 @@ const useStyles = makeStyles((theme) =>
   })
 );
 
-const NUM_ROUNDS = 2;
+const NUM_ROUNDS = 10;
 
 const DEFAULT_COLOUR = "#gray";
 const INVALID_COLOUR = "red";
@@ -82,23 +81,6 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
 }: GameSideBarProps) => {
   const classes = useStyles();
 
-  const { enqueueSnackbar } = useSnackbar();
-
-  const competitiveWinAchievement = () => {
-    if (!localStorage.getItem("firstCompetitiveWin")) {
-      enqueueSnackbar("Achievement! First competitive win!", {
-        anchorOrigin: {
-          vertical: "top",
-          horizontal: "right",
-        },
-        variant: "success",
-        autoHideDuration: 3000,
-      });
-
-      localStorage.setItem("firstCompetitiveWin", "true");
-    }
-  };
-
   const endingText = () => {
     if (gameMode === "casual" || round < NUM_ROUNDS || inRound) {
       return null;
@@ -111,8 +93,6 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
     let color: string;
 
     if (endPlayerScore > endAiScore) {
-      competitiveWinAchievement();
-
       text = "You won!";
       color = VALID_COLOUR;
     } else if (endPlayerScore < endAiScore) {
