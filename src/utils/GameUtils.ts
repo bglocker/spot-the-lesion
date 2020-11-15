@@ -1,8 +1,11 @@
+import { ReactNode } from "react";
+import { OptionsObject } from "notistack";
 /**
  * Returns the path to the json file corresponding to the given fileNumber
  *
  * @param fileNumber Number of the file to retrieve
  */
+
 const getJsonPath = (fileNumber: number): string => `${fileNumber}.json`;
 
 /**
@@ -83,4 +86,39 @@ const shuffledRange = (start = 1, stop: number, step = 1): number[] => {
   return nums;
 };
 
-export { getJsonPath, getIntersectionOverUnion, getImagePath, range, shuffledRange };
+const achievementSnackbarOptions: OptionsObject = {
+  anchorOrigin: {
+    vertical: "top",
+    horizontal: "right",
+  },
+  autoHideDuration: 3000,
+  variant: "success",
+};
+
+/**
+ * Unlock an achievement and display a snackbar to the user (if not already unlocked)
+ *
+ * @param key             Achievement key
+ * @param message         Snackbar message
+ * @param enqueueSnackbar Function to display a snackbar
+ */
+const unlockAchievement = (
+  key: string,
+  message: ReactNode,
+  enqueueSnackbar: (message: ReactNode, options?: OptionsObject) => void
+): void => {
+  if (localStorage.getItem(key) === null) {
+    enqueueSnackbar(message, achievementSnackbarOptions);
+
+    localStorage.setItem(key, "true");
+  }
+};
+
+export {
+  getJsonPath,
+  getIntersectionOverUnion,
+  getImagePath,
+  range,
+  shuffledRange,
+  unlockAchievement,
+};

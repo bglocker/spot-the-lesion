@@ -15,7 +15,12 @@ import {
   mapClickToCanvas,
   mapToCanvasScale,
 } from "../../components/CanvasUtils";
-import { getImagePath, getIntersectionOverUnion, getJsonPath } from "../../utils/GameUtils";
+import {
+  getImagePath,
+  getIntersectionOverUnion,
+  getJsonPath,
+  unlockAchievement,
+} from "../../utils/GameUtils";
 import DbUtils from "../../utils/DbUtils";
 import { db, firebaseStorage } from "../../firebase/firebaseApp";
 import useHeatmap from "../../components/useHeatmap";
@@ -81,15 +86,6 @@ const useStyles = makeStyles((theme) =>
   })
 );
 
-const achievementSnackbarOptions: OptionsObject = {
-  anchorOrigin: {
-    vertical: "top",
-    horizontal: "right",
-  },
-  autoHideDuration: 3000,
-  variant: "success",
-};
-
 const NUM_ROUNDS = 10;
 
 const ROUND_START_TIME = 10000;
@@ -101,6 +97,15 @@ const AI_SCORE_INCREASE_RATE = 75;
 const NUM_SEARCH_CUBES = 10;
 
 const MAX_CANVAS_SIZE = 750;
+
+const informationSnackbarOptions: OptionsObject = {
+  anchorOrigin: {
+    vertical: "bottom",
+    horizontal: "left",
+  },
+  autoHideDuration: ANIMATION_TIME,
+  variant: "info",
+};
 
 type JsonData = { truth: number[]; predicted: number[] };
 
@@ -151,6 +156,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
   const [playerCorrect, setPlayerCorrect] = useState(0);
   const [aiCorrect, setAiCorrect] = useState(0);
+
+  const [playerCorrectCurrent, setPlayerCorrectCurrent] = useState(false);
 
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showSubmit, setShowSubmit] = useState(false);
@@ -294,83 +301,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     [context, fileId, hinted, truth]
   );
 
-  const checkAchievements = () => {
-    if (!localStorage.getItem("firstCorrect")) {
-      enqueueSnackbar("Achievement! First correct answer!", achievementSnackbarOptions);
-
-      localStorage.setItem("firstCorrect", "true");
-    }
-
-    if (!localStorage.getItem("firstCorrectWithoutHint") && !hinted) {
-      enqueueSnackbar("Achievement! No hint needed!", achievementSnackbarOptions);
-
-      localStorage.setItem("firstCorrectWithoutHint", "true");
-    }
-
-    if (
-      !localStorage.getItem("fiveCorrectSameRunCasual") &&
-      gameMode === "casual" &&
-      playerCorrect + 1 > 4
-    ) {
-      enqueueSnackbar("Achievement! Five correct in same casual run!", achievementSnackbarOptions);
-
-      localStorage.setItem("fiveCorrectSameRunCasual", "true");
-    }
-
-    if (
-      !localStorage.getItem("fiveCorrectSameRunCompetitive") &&
-      gameMode === "competitive" &&
-      playerCorrect + 1 > 4
-    ) {
-      enqueueSnackbar(
-        "Achievement! Five correct in same competitive run!",
-        achievementSnackbarOptions
-      );
-
-      localStorage.setItem("fiveCorrectSameRunCompetitive", "true");
-    }
-
-    if (
-      !localStorage.getItem("allCorrectCompetitive") &&
-      gameMode === "competitive" &&
-      playerCorrect + 1 > 9
-    ) {
-      enqueueSnackbar("Achievement! You got them all right!", achievementSnackbarOptions);
-
-      localStorage.setItem("allCorrectCompetitive", "true");
-    }
-
-    if (
-      !localStorage.getItem("competitivePoints") &&
-      gameMode === "competitive" &&
-      playerScore + playerRoundScore > 1000
-    ) {
-      enqueueSnackbar("Achievement! 1000 points in a competitive run!", achievementSnackbarOptions);
-
-      localStorage.setItem("competitivePoints", "true");
-    }
-
-    if (!localStorage.getItem("fastAnswer") && gameMode === "competitive" && roundTime > 8000) {
-      enqueueSnackbar(
-        "Achievement! You answered correctly in less than 2 seconds!",
-        achievementSnackbarOptions
-      );
-
-      localStorage.setItem("fastAnswer", "true");
-    }
-
-    if (
-      !localStorage.getItem("firstCompetitiveWin") &&
-      gameMode === "competitive" &&
-      round === NUM_ROUNDS &&
-      !inRound
-    ) {
-      enqueueSnackbar("Achievement! First competitive win!", achievementSnackbarOptions);
-
-      localStorage.setItem("firstCompetitiveWin", "true");
-    }
-  };
-
   /**
    * End timer based events
    */
@@ -398,7 +328,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         uploadPlayerClick(Math.round(x), Math.round(y)).then(() => null);
       }
 
-      enqueueSnackbar("The system is thinking...");
+      enqueueSnackbar("The system is thinking...", informationSnackbarOptions);
 
       setAnimationRunning(true);
       setEndRunning(false);
@@ -424,7 +354,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
        */
       const { x, y } = click;
 
-      enqueueSnackbar("Checking results...");
+      /* TODO: maybe remove this snackbar */
+      enqueueSnackbar("Checking results...", informationSnackbarOptions);
 
       /* Player was successful if the click coordinates are inside the truth rectangle */
       if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
@@ -436,8 +367,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
         setPlayerRoundScore(gameMode === "casual" ? casualScore : competitiveScore);
         setPlayerCorrect((prevState) => prevState + 1);
-
-        checkAchievements();
+        setPlayerCorrectCurrent(true);
 
         drawCross(context, x, y, 5, VALID_COLOUR);
       } else {
@@ -471,8 +401,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       setInRound(false);
       setEndRunning(false);
     }
-    // TODO:figure out how to fix this
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     AI_COLOUR,
     click,
@@ -526,6 +454,72 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
     drawRectangle(animationContext, cube, AI_COLOUR, 3);
   }, [AI_COLOUR, animationContext, animationPosition, animationRunning]);
+
+  /**
+   * After round end based events
+   */
+  useEffect(() => {
+    const unlockAchievementHandler = (key, message) =>
+      unlockAchievement(key, message, enqueueSnackbar);
+
+    if (inRound || round === 0) {
+      return;
+    }
+
+    if (playerCorrectCurrent) {
+      unlockAchievementHandler("firstCorrect", "Achievement! First correct answer!");
+
+      if (!hinted) {
+        unlockAchievementHandler("firstCorrectWithoutHint", "Achievement! No hint needed!");
+      }
+    }
+
+    if (gameMode === "casual") {
+      if (playerCorrect === 5) {
+        unlockAchievementHandler(
+          "fiveCorrectSameRunCasual",
+          "Achievement! Five correct in same casual run!"
+        );
+      }
+    }
+
+    if (gameMode === "competitive") {
+      if (playerCorrectCurrent && roundTime > 8000) {
+        unlockAchievementHandler(
+          "fastAnswer",
+          "Achievement! You answered correctly in less than 2 seconds!"
+        );
+      }
+
+      if (playerScore + playerRoundScore >= 1000) {
+        unlockAchievementHandler(
+          "competitivePoints",
+          "Achievement! 1000 points in a competitive run!"
+        );
+      }
+
+      if (playerCorrect === NUM_ROUNDS) {
+        unlockAchievementHandler("allCorrectCompetitive", "Achievement! You got them all right!");
+      }
+
+      if (round === NUM_ROUNDS && playerScore + playerRoundScore > aiScore + aiRoundScore) {
+        unlockAchievementHandler("firstCompetitiveWin", "Achievement! First competitive win!");
+      }
+    }
+  }, [
+    aiRoundScore,
+    aiScore,
+    enqueueSnackbar,
+    gameMode,
+    hinted,
+    inRound,
+    playerCorrect,
+    playerCorrectCurrent,
+    playerRoundScore,
+    playerScore,
+    round,
+    roundTime,
+  ]);
 
   /**
    * Called when the canvas is clicked
@@ -645,6 +639,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     setTimerColor(INITIAL_TIMER_COLOR);
 
     setClick(null);
+
+    setPlayerCorrectCurrent(false);
 
     setShowHeatmap(false);
 
