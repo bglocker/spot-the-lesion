@@ -9,8 +9,8 @@ const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
       [theme.breakpoints.up("md")]: {
-        height: "100%",
         flex: 1,
+        height: "100%",
         display: "flex",
         justifyContent: "flex-end",
         alignItems: "center",
@@ -32,9 +32,9 @@ const useStyles = makeStyles((theme) =>
       },
     },
     scoresContainer: {
+      width: "100%",
       display: "flex",
       [theme.breakpoints.down("sm")]: {
-        width: "100%",
         flexDirection: "row",
         justifyContent: "space-evenly",
       },
@@ -111,7 +111,7 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
   };
 
   const startRoundButton = () => {
-    if (gameMode === "competitive" && !(round < NUM_ROUNDS)) {
+    if (gameMode === "competitive" && round === NUM_ROUNDS) {
       return null;
     }
 

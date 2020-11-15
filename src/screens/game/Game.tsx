@@ -4,9 +4,12 @@ import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { OptionsObject, useSnackbar } from "notistack";
 import axios from "axios";
-import useInterval from "../../components/useInterval";
 import useCanvasContext from "../../components/useCanvasContext";
 import useUniqueRandomGenerator from "../../components/useUniqueRandomGenerator";
+import useInterval from "../../components/useInterval";
+import useHeatmap from "../../components/useHeatmap";
+import GameTopBar from "./GameTopBar";
+import GameSideBar from "./GameSideBar";
 import SubmitScoreDialog from "./SubmitScoreDialog";
 import {
   drawCircle,
@@ -23,9 +26,6 @@ import {
 } from "../../utils/GameUtils";
 import DbUtils from "../../utils/DbUtils";
 import { db, firebaseStorage } from "../../firebase/firebaseApp";
-import useHeatmap from "../../components/useHeatmap";
-import GameTopBar from "./GameTopBar";
-import GameSideBar from "./GameSideBar";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -85,6 +85,10 @@ const useStyles = makeStyles((theme) =>
     },
   })
 );
+
+/* TODO: add Math.round() around every division */
+/* TODO: error handling for axios and firebase requests */
+/* TODO: offline handling */
 
 const NUM_ROUNDS = 10;
 
@@ -709,7 +713,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
           <Typography className={classes.title}>Spot the Lesion</Typography>
 
-          <Button disabled={round === 0 || inRound} color="inherit" onClick={onToggleHeatmap}>
+          <Button color="inherit" disabled={round === 0 || inRound} onClick={onToggleHeatmap}>
             {showHeatmap ? "Hide Heatmap" : "Show Heatmap"}
           </Button>
         </Toolbar>
