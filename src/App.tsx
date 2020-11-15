@@ -25,7 +25,7 @@ const theme = createMuiTheme({
 const useStyles = makeStyles(() =>
   createStyles({
     container: {
-      height: "100vh",
+      height: "100%",
       display: "flex",
       flexDirection: "column",
       backgroundColor: colors.secondary,
