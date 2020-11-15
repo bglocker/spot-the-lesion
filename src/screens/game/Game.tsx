@@ -16,6 +16,7 @@ import {
   drawCross,
   drawRectangle,
   mapClickToCanvas,
+  mapCoordinatesToCanvasScale,
   mapToCanvasScale,
 } from "../../components/CanvasUtils";
 import {
@@ -86,7 +87,6 @@ const useStyles = makeStyles((theme) =>
   })
 );
 
-/* TODO: add Math.round() around every division */
 /* TODO: error handling for axios and firebase requests */
 /* TODO: offline handling */
 
@@ -192,8 +192,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     setHinted(true);
     setHintedAtLeastOnce(true);
 
-    const x = truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50;
-    const y = truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50;
+    const x = Math.round(truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50);
+    const y = Math.round(truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50);
     const radius = mapToCanvasScale(context, 100);
 
     drawCircle(context, x, y, radius, 2, INVALID_COLOUR);
@@ -257,8 +257,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       let isClickCorrect = false;
 
       const newClickPoint = {
-        x: Math.round((x * 10000) / context.canvas.width) / 100,
-        y: Math.round((y * 10000) / context.canvas.height) / 100,
+        x: Math.round((x * 10000) / context.canvas.width / 100),
+        y: Math.round((y * 10000) / context.canvas.height / 100),
         clickCount: 1,
       };
 
@@ -326,10 +326,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       if (click) {
         const { x, y } = click;
 
-        /* TODO: round x and y here */
         drawCross(context, x, y, 5, PLAYER_COLOUR);
 
-        uploadPlayerClick(Math.round(x), Math.round(y)).then(() => null);
+        uploadPlayerClick(x, y).then(() => {});
       }
 
       enqueueSnackbar("The system is thinking...", informationSnackbarOptions);
@@ -367,7 +366,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         const casualScore = hinted ? 0.5 : 1;
 
         /* Competitive Mode: function of round time left, doubled if no hint received */
-        const competitiveScore = (roundTime / 1000) * (hinted ? 10 : 20);
+        const competitiveScore = Math.round(roundTime / 100) * (hinted ? 1 : 2);
 
         setPlayerRoundScore(gameMode === "casual" ? casualScore : competitiveScore);
         setPlayerCorrect((prevState) => prevState + 1);
@@ -429,7 +428,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
    */
   useInterval(
     () => setAnimationPosition((prevState) => prevState + 1),
-    animationRunning ? ANIMATION_TIME / (NUM_SEARCH_CUBES * NUM_SEARCH_CUBES) : null
+    animationRunning ? Math.round(ANIMATION_TIME / NUM_SEARCH_CUBES ** 2) : null
   );
 
   /**
@@ -444,7 +443,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     animationContext.clearRect(0, 0, animationContext.canvas.width, animationContext.canvas.height);
 
     /* Stop when all cube positions were reached, and resume end timer with one tick passed */
-    if (animationPosition === NUM_SEARCH_CUBES * NUM_SEARCH_CUBES) {
+    if (animationPosition === NUM_SEARCH_CUBES ** 2) {
       setAnimationRunning(false);
       setEndTime((prevState) => prevState + 100);
       setEndRunning(true);
@@ -452,9 +451,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     }
 
     const cubeSide = animationContext.canvas.width / NUM_SEARCH_CUBES;
-    const baseX = (animationPosition % NUM_SEARCH_CUBES) * cubeSide;
-    const baseY = Math.floor(animationPosition / NUM_SEARCH_CUBES) * cubeSide;
-    const cube = [baseX, baseY, baseX + cubeSide, baseY + cubeSide];
+    const baseX = Math.round((animationPosition % NUM_SEARCH_CUBES) * cubeSide);
+    const baseY = Math.round(Math.floor(animationPosition / NUM_SEARCH_CUBES) * cubeSide);
+    const cube = [baseX, baseY, Math.round(baseX + cubeSide), Math.round(baseY + cubeSide)];
 
     drawRectangle(animationContext, cube, AI_COLOUR, 3);
   }, [AI_COLOUR, animationContext, animationPosition, animationRunning]);
@@ -540,15 +539,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   };
 
   /**
-   * Maps the coordinates of a given rectangle to the current canvas scale
-   *
-   * @param rect Coordinates for the corners of the rectangle to map
-   *
-   * @return Given rectangle coordinates, mapped to the canvas scale
-   */
-  const mapCoordinates = (rect: number[]) => rect.map((x) => mapToCanvasScale(context, x));
-
-  /**
    * Loads the data from the json corresponding to the given fileNumber
    *
    * @param fileNumber Number of the json file to load
@@ -565,8 +555,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       .then((url) => {
         axios.get(url).then((response) => {
           const content: JsonData = response.data;
-          setTruth(mapCoordinates(content.truth));
-          setPredicted(mapCoordinates(content.predicted));
+          setTruth(mapCoordinatesToCanvasScale(context, content.truth));
+          setPredicted(mapCoordinatesToCanvasScale(context, content.predicted));
         });
       })
       .catch((error) => {

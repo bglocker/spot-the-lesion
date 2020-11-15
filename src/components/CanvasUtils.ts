@@ -4,15 +4,26 @@ import React from "react";
 const DEFAULT_CANVAS_SIZE = 512;
 
 /**
- * Maps a given value to the given canvas scale
+ * Maps a given value to the scale of the given canvas
  *
  * @param ctx Canvas context, used to determine canvas size for scaling
  * @param x   Value to map
  *
- * @return Given value, mapped to the canvas scale
+ * @return Given value, mapped to the canvas scale, and rounded
  */
 const mapToCanvasScale = (ctx: CanvasRenderingContext2D, x: number): number =>
-  (x * ctx.canvas.width) / DEFAULT_CANVAS_SIZE;
+  Math.round((x * ctx.canvas.width) / DEFAULT_CANVAS_SIZE);
+
+/**
+ * Maps the coordinates of a given rectangle to the scale of the given canvas
+ *
+ * @param ctx  Canvas context, used to determine canvas size for scaling
+ * @param rect Coordinates for the corners of the rectangle to map
+ *
+ * @return Given rectangle coordinates, mapped to the canvas scale
+ */
+const mapCoordinatesToCanvasScale = (ctx: CanvasRenderingContext2D, rect: number[]): number[] =>
+  rect.map((x) => mapToCanvasScale(ctx, x));
 
 /**
  * Maps the click position relative to the canvas
@@ -20,7 +31,7 @@ const mapToCanvasScale = (ctx: CanvasRenderingContext2D, x: number): number =>
  * @param ctx   Canvas context to map relative to
  * @param event Mouse event, used to get click position
  *
- * @return Click coordinates relative to the canvas
+ * @return Click coordinates relative to the canvas, and rounded
  */
 const mapClickToCanvas = (
   ctx: CanvasRenderingContext2D,
@@ -31,8 +42,8 @@ const mapClickToCanvas = (
   const heightScale = ctx.canvas.height / rect.height;
 
   return {
-    x: (event.clientX - rect.left) * widthScale,
-    y: (event.clientY - rect.top) * heightScale,
+    x: Math.round((event.clientX - rect.left) * widthScale),
+    y: Math.round((event.clientY - rect.top) * heightScale),
   };
 };
 
@@ -115,4 +126,11 @@ const drawCircle = (
   ctx.stroke();
 };
 
-export { drawCircle, drawCross, drawRectangle, mapClickToCanvas, mapToCanvasScale };
+export {
+  drawCircle,
+  drawCross,
+  drawRectangle,
+  mapClickToCanvas,
+  mapCoordinatesToCanvasScale,
+  mapToCanvasScale,
+};
