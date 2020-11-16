@@ -2,13 +2,7 @@ import { RefObject, useEffect, useState } from "react";
 import h337 from "heatmap.js";
 import { db } from "../firebase/firebaseApp";
 import DbUtils from "../utils/DbUtils";
-
-interface ImageData {
-  clicks: { clickCount: number; x: number; y: number }[];
-  correctClicks: number;
-  hintCount: number;
-  wrongClicks: number;
-}
+import { toCanvasScale } from "../utils/CanvasUtils";
 
 /**
  * Custom hook for drawing a Heatmap over a canvas
@@ -39,7 +33,7 @@ const useHeatmap = (
         return [];
       }
 
-      return (data as ImageData).clicks;
+      return (data as FirestoreImageData).clicks;
     };
 
     if (container.current === null) {
@@ -49,9 +43,9 @@ const useHeatmap = (
     /* Remove heatmap when not showing */
     if (heatmapInstance !== null && !show) {
       // eslint-disable-next-line no-underscore-dangle
-      const { canvas } = heatmapInstance._renderer;
+      const { ctx } = heatmapInstance._renderer;
 
-      canvas.remove();
+      ctx.canvas.remove();
       setHeatmapInstance(null);
     }
 
@@ -65,21 +59,21 @@ const useHeatmap = (
       setHeatmapInstance(instance);
 
       // eslint-disable-next-line no-underscore-dangle
-      const { canvas } = instance._renderer;
+      const { ctx } = instance._renderer;
 
       /* Remove default canvas styles from heatmap library */
-      canvas.removeAttribute("style");
+      ctx.canvas.removeAttribute("style");
 
       /* Set canvas style */
-      canvas.className = className;
+      ctx.canvas.className = className;
 
       getClicks().then((clicks) => {
         instance.setData({
           min: 0,
           max: 1,
           data: clicks.map(({ x, y, clickCount }) => ({
-            x: Math.floor((x * canvas.width) / 100),
-            y: Math.floor((y * canvas.height) / 100),
+            x: toCanvasScale(ctx, x),
+            y: toCanvasScale(ctx, y),
             clickCount,
           })),
         });

@@ -1,19 +1,30 @@
 /* Default canvas size, used for scale mapping */
 import React from "react";
-
-/* TODO: extract this */
-const DEFAULT_CANVAS_SIZE = 512;
+import constants from "../res/constants";
 
 /**
- * Maps a given value to the scale of the given canvas
+ * Maps a given value from the scale of the given canvas to the default scale
+ * Equivalent to the inverse of toCanvasScale
  *
- * @param ctx Canvas context, used to determine canvas size for scaling
+ * @param ctx Canvas context, used to determine canvas scale
+ * @param x
+ *
+ * @return Given value, mapped to the default scale, and rounded
+ */
+const toDefaultScale = (ctx: CanvasRenderingContext2D, x: number): number =>
+  Math.round((x * constants.defaultImageSize) / ctx.canvas.width);
+
+/**
+ * Maps a given value from the default scale to the scale of the given canvas
+ * Equivalent to the inverse of toDefaultScale
+ *
+ * @param ctx Canvas context, used to determine canvas scale
  * @param x   Value to map
  *
  * @return Given value, mapped to the canvas scale, and rounded
  */
-const mapToCanvasScale = (ctx: CanvasRenderingContext2D, x: number): number =>
-  Math.round((x * ctx.canvas.width) / DEFAULT_CANVAS_SIZE);
+const toCanvasScale = (ctx: CanvasRenderingContext2D, x: number): number =>
+  Math.round((x * ctx.canvas.width) / constants.defaultImageSize);
 
 /**
  * Maps the coordinates of a given rectangle to the scale of the given canvas
@@ -24,7 +35,7 @@ const mapToCanvasScale = (ctx: CanvasRenderingContext2D, x: number): number =>
  * @return Given rectangle coordinates, mapped to the canvas scale
  */
 const mapCoordinatesToCanvasScale = (ctx: CanvasRenderingContext2D, rect: number[]): number[] =>
-  rect.map((x) => mapToCanvasScale(ctx, x));
+  rect.map((x) => toCanvasScale(ctx, x));
 
 /**
  * Maps the click position relative to the canvas
@@ -147,6 +158,7 @@ export {
   drawRectangle,
   mapClickToCanvas,
   mapCoordinatesToCanvasScale,
-  mapToCanvasScale,
   randomAround,
+  toCanvasScale,
+  toDefaultScale,
 };

@@ -13,6 +13,9 @@ const constants = {
   rounds: 10,
   roundTimeInitial: 10000,
   truthLineWidth: 3,
+
+  /* CanvasUtils */
+  defaultImageSize: 512,
 };
 
 export default constants;

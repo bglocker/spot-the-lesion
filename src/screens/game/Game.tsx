@@ -19,8 +19,9 @@ import {
   drawRectangle,
   mapClickToCanvas,
   mapCoordinatesToCanvasScale,
-  mapToCanvasScale,
   randomAround,
+  toCanvasScale,
+  toDefaultScale,
 } from "../../utils/CanvasUtils";
 import {
   getImagePath,
@@ -112,30 +113,6 @@ interface AnnotationData {
   predicted: number[];
 }
 
-interface ScoreData {
-  ai_score: number;
-  correct_ai_answers: number;
-  correct_player_answers: number;
-  day: number;
-  month:
-    | "Jan"
-    | "Feb"
-    | "Mar"
-    | "Apr"
-    | "May"
-    | "Jun"
-    | "Jul"
-    | "Aug"
-    | "Sep"
-    | "Oct"
-    | "Nov"
-    | "Dec";
-  score: number;
-  usedHints: boolean;
-  user: string;
-  year: number;
-}
-
 const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_ID }: GameProps) => {
   const classes = useStyles();
 
@@ -154,7 +131,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   const [animationPosition, setAnimationPosition] = useState(0);
 
   const [hinted, setHinted] = useState(false);
-  const [hintedAtLeastOnce, setHintedAtLeastOnce] = useState(false);
+
+  const [hintedCurrent, setHintedCurrent] = useState(false);
 
   const [timerColor, setTimerColor] = useState(colors.timerInitial);
 
@@ -203,11 +181,11 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
    * Draw the hint circle
    */
   const showHint = useCallback(() => {
+    setHintedCurrent(true);
     setHinted(true);
-    setHintedAtLeastOnce(true);
 
-    const radius = mapToCanvasScale(context, constants.hintRadius);
-    const hintRange = mapToCanvasScale(context, constants.hintRange);
+    const radius = toCanvasScale(context, constants.hintRadius);
+    const hintRange = toCanvasScale(context, constants.hintRange);
 
     const x = randomAround(Math.round(truth[0] + (truth[2] - truth[0]) / 2), hintRange);
     const y = randomAround(Math.round(truth[1] + (truth[3] - truth[1]) / 2), hintRange);
@@ -228,11 +206,11 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       /*
        * 5 seconds left
        *
-       * (if not already hinted)
+       * (if not already hinted this round)
        * set Timer color to timer orange
        * show hint
        */
-      if (!hinted) {
+      if (!hintedCurrent) {
         setTimerColor(colors.timerOrange);
 
         showHint();
@@ -253,7 +231,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       setEndRunning(true);
       setRoundRunning(false);
     }
-  }, [hinted, roundRunning, roundTime, showHint]);
+  }, [hintedCurrent, roundRunning, roundTime, showHint]);
 
   /**
    * End timer
@@ -267,63 +245,47 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   /**
    * Upload the player click, in order to gather statistics and generate heatmaps
    *
-   * @param x Width coordinate
-   * @param y Height coordinate
+   * @param x       Width coordinate
+   * @param y       Height coordinate
+   * @param correct Whether click was correct
    */
-  const uploadPlayerClick = useCallback(
-    async (x: number, y: number) => {
-      const docNameForImage = `image_${fileId}`;
-      let entry;
-      let pointWasClickedBefore = false;
-      let isClickCorrect = false;
-
-      const newClickPoint = {
-        x: Math.round((x * 10000) / context.canvas.width / 100),
-        y: Math.round((y * 10000) / context.canvas.height / 100),
+  const uploadClick = useCallback(
+    async (x: number, y: number, correct: boolean) => {
+      const newClick = {
+        x: toDefaultScale(context, x),
+        y: toDefaultScale(context, y),
         clickCount: 1,
       };
 
-      // Check whether click was correct
-      if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
-        isClickCorrect = true;
-      }
+      const docName = `image_${fileId}`;
 
-      const imageDoc = await db.collection(DbUtils.IMAGES).doc(docNameForImage).get();
+      const imageDoc = await db.collection(DbUtils.IMAGES).doc(docName).get();
 
-      if (!imageDoc.exists) {
-        // First time this image showed up in the game - entry will be singleton array
-        entry = {
-          clicks: [newClickPoint],
-          correctClicks: isClickCorrect ? 1 : 0,
-          wrongClicks: isClickCorrect ? 0 : 1,
-          hintCount: hinted ? 1 : 0,
-        };
+      /* Use image data if available, or default values  */
+      const { clicks = [], correctClicks = 0, hintCount = 0, wrongClicks = 0 } = (imageDoc.exists
+        ? imageDoc.data()
+        : {}) as FirestoreImageData;
+
+      /* Locate (if present) existing click with same coordinates */
+      const existingClick = clicks.find((clk) => clk.x === newClick.x && clk.y === newClick.y);
+
+      /* If not found, append to array, otherwise increment clickCount */
+      if (existingClick === undefined) {
+        clicks.push(newClick);
       } else {
-        const { clicks, correctClicks, wrongClicks, hintCount } = imageDoc.data()!;
-        clicks.forEach((clk: { x: number; y: number; count: number }) => {
-          if (clk.x === x && clk.y === y) {
-            clk.count += 1;
-            pointWasClickedBefore = true;
-          }
-        });
-
-        if (!pointWasClickedBefore) {
-          // First time this clicked occurred for this image, Add to this image's clicks array
-          clicks.push(newClickPoint);
-        }
-
-        // Construct the updated DB entry for this image
-        entry = {
-          clicks,
-          correctClicks: isClickCorrect ? correctClicks + 1 : correctClicks,
-          wrongClicks: isClickCorrect ? wrongClicks : wrongClicks + 1,
-          hintCount: hinted ? hintCount + 1 : hintCount,
-        };
+        existingClick.clickCount += 1;
       }
 
-      await db.collection(DbUtils.IMAGES).doc(docNameForImage).set(entry);
+      const imageData = {
+        clicks,
+        correctClicks: correctClicks + (correct ? 1 : 0),
+        wrongClicks: wrongClicks + (correct ? 0 : 1),
+        hintCount: hintCount + (hintedCurrent ? 1 : 0),
+      };
+
+      await db.collection(DbUtils.IMAGES).doc(docName).set(imageData);
     },
-    [context, fileId, hinted, truth]
+    [context, fileId, hintedCurrent]
   );
 
   /**
@@ -338,7 +300,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       /*
        * 0 seconds passed
        *
-       * draw and upload player click (if available)
+       * draw player click (if available)
        * start animation timer and pause end timer
        */
       if (click) {
@@ -352,9 +314,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
           constants.clickLineWidth,
           colors.clickInitial
         );
-
-        /* TODO: handle promise here */
-        uploadPlayerClick(x, y).then(() => {});
       }
 
       /* TODO: maybe remove this snackbar */
@@ -380,7 +339,10 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       /*
        * 1 second passed
        *
-       * evaluate player click (if available)
+       * (if click available)
+       * evaluate click
+       * draw click in valid or invalid color
+       * upload player click
        */
       if (click) {
         const { x, y } = click;
@@ -389,47 +351,45 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         enqueueSnackbar("Checking results...", informationSnackbarOptions);
 
         /* Player was successful if the click coordinates are inside the truth rectangle */
-        if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
+        const correct = truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
+
+        if (correct) {
           /* Casual Mode: half a point, doubled if no hint received */
-          const casualScore = hinted ? 0.5 : 1;
+          const casualScore = 0.5 * (hintedCurrent ? 1 : 2);
 
           /* Competitive Mode: function of round time left, doubled if no hint received */
-          const competitiveScore = Math.round(roundTime / 100) * (hinted ? 1 : 2);
+          const competitiveScore = Math.round(roundTime / 100) * (hintedCurrent ? 1 : 2);
 
           setPlayerRoundScore(gameMode === "casual" ? casualScore : competitiveScore);
           setPlayerCorrect((prevState) => prevState + 1);
           setPlayerCorrectCurrent(true);
-
-          drawCross(
-            context,
-            x,
-            y,
-            constants.clickSize,
-            constants.clickLineWidth,
-            colors.clickValid
-          );
-        } else {
-          drawCross(
-            context,
-            x,
-            y,
-            constants.clickSize,
-            constants.clickLineWidth,
-            colors.clickInvalid
-          );
         }
+
+        drawCross(
+          context,
+          x,
+          y,
+          constants.clickSize,
+          constants.clickLineWidth,
+          correct ? colors.clickValid : colors.clickInvalid
+        );
+
+        uploadClick(x, y, correct).then(() => {});
       }
     } else if (endTime === 1500) {
       /*
        * 1.5 seconds passed
        *
        * evaluate AI prediction
-       * stop end timer
+       * draw predicted rectangle in valid or invalid color
+       * stop end timer and current round
        */
       const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
 
       /* AI was successful if the ratio of the intersection over the union is greater than 0.5 */
-      if (intersectionOverUnion > 0.5) {
+      const correct = intersectionOverUnion > 0.5;
+
+      if (correct) {
         /* Casual mode: one point */
         const casualScore = 1;
 
@@ -440,11 +400,14 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
         setAiRoundScore(gameMode === "casual" ? casualScore : competitiveRoundScore);
         setAiCorrect((prevState) => prevState + 1);
-
-        drawRectangle(context, predicted, constants.predictedLineWidth, colors.predictedValid);
-      } else {
-        drawRectangle(context, predicted, constants.predictedLineWidth, colors.predictedInvalid);
       }
+
+      drawRectangle(
+        context,
+        predicted,
+        constants.predictedLineWidth,
+        correct ? colors.predictedValid : colors.predictedInvalid
+      );
 
       setInRound(false);
       setEndRunning(false);
@@ -456,11 +419,11 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     endTime,
     enqueueSnackbar,
     gameMode,
-    hinted,
+    hintedCurrent,
     predicted,
     roundTime,
     truth,
-    uploadPlayerClick,
+    uploadClick,
   ]);
 
   /**
@@ -514,14 +477,14 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     const unlockAchievementHandler = (key, message) =>
       unlockAchievement(key, message, enqueueSnackbar);
 
-    if (inRound || round === 0) {
+    if (round === 0 || inRound) {
       return;
     }
 
     if (playerCorrectCurrent) {
       unlockAchievementHandler("firstCorrect", "Achievement! First correct answer!");
 
-      if (!hinted) {
+      if (!hintedCurrent) {
         unlockAchievementHandler("firstCorrectWithoutHint", "Achievement! No hint needed!");
       }
     }
@@ -563,7 +526,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     aiScore,
     enqueueSnackbar,
     gameMode,
-    hinted,
+    hintedCurrent,
     inRound,
     playerCorrect,
     playerCorrectCurrent,
@@ -679,7 +642,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     setEndTime(0);
     setAnimationPosition(0);
 
-    setHinted(false);
+    setHintedCurrent(false);
     setTimerColor(colors.timerInitial);
 
     setClick(null);
@@ -701,12 +664,12 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   const submitScore = async (username: string) => {
     const date = new Date();
 
-    const scoreData: ScoreData = {
+    const scoreData: FirestoreScoreData = {
       user: username,
       score: playerScore + playerRoundScore,
       ai_score: aiScore + aiRoundScore,
       correct_player_answers: playerCorrect,
-      usedHints: hintedAtLeastOnce,
+      usedHints: hinted,
       correct_ai_answers: aiCorrect,
       day: date.getDate(),
       month: DbUtils.monthNames[date.getMonth()],
@@ -721,7 +684,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     const scoreDoc = await db.collection(leaderboard).doc(docName).get();
 
     /* Set if first time played today, or a higher score was achieved */
-    if (!scoreDoc.exists || (scoreDoc.data() as ScoreData).score < scoreData.score) {
+    if (!scoreDoc.exists || (scoreDoc.data() as FirestoreScoreData).score < scoreData.score) {
       await db.collection(leaderboard).doc(docName).set(scoreData);
     }
 
@@ -763,7 +726,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         <div className={classes.topBarCanvasContainer}>
           <GameTopBar
             gameMode={gameMode}
-            hintDisabled={hinted || !roundRunning}
+            hintDisabled={hintedCurrent || !roundRunning}
             onHintClick={showHint}
             roundTime={roundTime}
             timerColor={timerColor}
