@@ -1,9 +1,9 @@
 const colors = {
-  primary: "#07575B",
+  primary: "#07575b",
   secondary: "#63a2ab",
 
   /* Game */
-  animation: "#07575B",
+  animation: "#63a2ab",
   clickInitial: "red",
   clickInvalid: "red",
   clickValid: "green",
@@ -12,7 +12,7 @@ const colors = {
   timerOrange: "orange",
   timerRed: "red",
   truth: "blue",
-  predictedInitial: "#07575B",
+  predictedInitial: "#63a2ab",
   predictedInvalid: "red",
   predictedValid: "green",
 
