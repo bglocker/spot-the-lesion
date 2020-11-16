@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { AppBar, Button, Card, IconButton, Toolbar, Typography, useTheme } from "@material-ui/core";
+import { AppBar, Button, Card, IconButton, Toolbar, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { OptionsObject, useSnackbar } from "notistack";
@@ -20,6 +20,7 @@ import {
   mapClickToCanvas,
   mapCoordinatesToCanvasScale,
   mapToCanvasScale,
+  randomAround,
 } from "../../utils/CanvasUtils";
 import {
   getImagePath,
@@ -27,6 +28,8 @@ import {
   getJsonPath,
   unlockAchievement,
 } from "../../utils/GameUtils";
+import colors from "../../res/colors";
+import constants from "../../res/constants";
 import DbUtils from "../../utils/DbUtils";
 import { db, firebaseStorage } from "../../firebase/firebaseApp";
 
@@ -92,16 +95,7 @@ const useStyles = makeStyles((theme) =>
 /* TODO: error handling for axios and firebase requests */
 /* TODO: offline handling */
 
-const NUM_ROUNDS = 10;
-
-const ROUND_START_TIME = 10000;
-
-const ANIMATION_TIME = 3000;
-
-const AI_SCORE_INCREASE_RATE = 75;
-
-const NUM_SEARCH_CUBES = 10;
-
+/* TODO: extract this */
 const MAX_CANVAS_SIZE = 750;
 
 const informationSnackbarOptions: OptionsObject = {
@@ -109,22 +103,41 @@ const informationSnackbarOptions: OptionsObject = {
     vertical: "bottom",
     horizontal: "left",
   },
-  autoHideDuration: ANIMATION_TIME,
+  autoHideDuration: constants.animationTime,
   variant: "info",
 };
 
-type JsonData = { truth: number[]; predicted: number[] };
+interface AnnotationData {
+  truth: number[];
+  predicted: number[];
+}
+
+interface ScoreData {
+  ai_score: number;
+  correct_ai_answers: number;
+  correct_player_answers: number;
+  day: number;
+  month:
+    | "Jan"
+    | "Feb"
+    | "Mar"
+    | "Apr"
+    | "May"
+    | "Jun"
+    | "Jul"
+    | "Aug"
+    | "Sep"
+    | "Oct"
+    | "Nov"
+    | "Dec";
+  score: number;
+  usedHints: boolean;
+  user: string;
+  year: number;
+}
 
 const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_ID }: GameProps) => {
-  const theme = useTheme();
   const classes = useStyles();
-
-  const AI_COLOUR = theme.palette.secondary.main;
-  const INVALID_COLOUR = "red";
-  const PLAYER_COLOUR = "red";
-  const VALID_COLOUR = "green";
-  const TRUE_COLOUR = "blue";
-  const INITIAL_TIMER_COLOR = "#373737";
 
   const [context, canvasRef] = useCanvasContext();
   const [animationContext, animationCanvasRef] = useCanvasContext();
@@ -136,14 +149,14 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   const [endRunning, setEndRunning] = useState(false);
   const [animationRunning, setAnimationRunning] = useState(false);
 
-  const [roundTime, setRoundTime] = useState(ROUND_START_TIME);
+  const [roundTime, setRoundTime] = useState(constants.roundTimeInitial);
   const [endTime, setEndTime] = useState(0);
   const [animationPosition, setAnimationPosition] = useState(0);
 
   const [hinted, setHinted] = useState(false);
   const [hintedAtLeastOnce, setHintedAtLeastOnce] = useState(false);
 
-  const [timerColor, setTimerColor] = useState(INITIAL_TIMER_COLOR);
+  const [timerColor, setTimerColor] = useState(colors.timerInitial);
 
   const getNewFileId = useUniqueRandomGenerator(MIN_FILE_ID, MAX_FILE_ID);
   const [fileId, setFileId] = useState(0);
@@ -193,11 +206,13 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     setHinted(true);
     setHintedAtLeastOnce(true);
 
-    const x = Math.round(truth[0] + (truth[2] - truth[0]) / 2 + Math.random() * 100 - 50);
-    const y = Math.round(truth[1] + (truth[3] - truth[1]) / 2 + Math.random() * 100 - 50);
-    const radius = mapToCanvasScale(context, 100);
+    const radius = mapToCanvasScale(context, constants.hintRadius);
+    const hintRange = mapToCanvasScale(context, constants.hintRange);
 
-    drawCircle(context, x, y, radius, 2, INVALID_COLOUR);
+    const x = randomAround(Math.round(truth[0] + (truth[2] - truth[0]) / 2), hintRange);
+    const y = randomAround(Math.round(truth[1] + (truth[3] - truth[1]) / 2), hintRange);
+
+    drawCircle(context, x, y, radius, constants.hintLineWidth, colors.hint);
   }, [context, truth]);
 
   /**
@@ -208,30 +223,35 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       return;
     }
 
-    if (roundTime === 5000 && !hinted) {
+    /* TODO: think about extracting time constants */
+    if (roundTime === 5000) {
       /*
        * 5 seconds left
        *
-       * set Timer to orange
+       * (if not already hinted)
+       * set Timer color to timer orange
        * show hint
        */
-      setTimerColor("orange");
+      if (!hinted) {
+        setTimerColor(colors.timerOrange);
 
-      showHint();
+        showHint();
+      }
     } else if (roundTime === 2000) {
       /*
        * 2 seconds left
        *
-       * set Timer to red
+       * set Timer color to timer red
        */
-      setTimerColor("red");
+      setTimerColor(colors.timerRed);
     } else if (roundTime === 0) {
       /*
        * 0 seconds left
        *
-       * start end timer
+       * start end timer and stop round timer
        */
       setEndRunning(true);
+      setRoundRunning(false);
     }
   }, [hinted, roundRunning, roundTime, showHint]);
 
@@ -318,20 +338,26 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       /*
        * 0 seconds passed
        *
-       * stop round timer
        * draw and upload player click (if available)
        * start animation timer and pause end timer
        */
-      setRoundRunning(false);
-
       if (click) {
         const { x, y } = click;
 
-        drawCross(context, x, y, 5, PLAYER_COLOUR);
+        drawCross(
+          context,
+          x,
+          y,
+          constants.clickSize,
+          constants.clickLineWidth,
+          colors.clickInitial
+        );
 
+        /* TODO: handle promise here */
         uploadPlayerClick(x, y).then(() => {});
       }
 
+      /* TODO: maybe remove this snackbar */
       enqueueSnackbar("The system is thinking...", informationSnackbarOptions);
 
       setAnimationRunning(true);
@@ -340,42 +366,58 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       /*
        * 0.1 seconds passed
        *
-       * draw predicted rectangle in default color
+       * draw predicted rectangle in initial color
        */
-      drawRectangle(context, predicted, AI_COLOUR, 3);
+      drawRectangle(context, predicted, constants.predictedLineWidth, colors.predictedInitial);
     } else if (endTime === 500) {
       /*
        * 0.5 seconds passed
        *
        * draw truth rectangle
        */
-      drawRectangle(context, truth, TRUE_COLOUR, 3);
-    } else if (endTime === 1000 && click) {
+      drawRectangle(context, truth, constants.truthLineWidth, colors.truth);
+    } else if (endTime === 1000) {
       /*
        * 1 second passed
        *
        * evaluate player click (if available)
        */
-      const { x, y } = click;
+      if (click) {
+        const { x, y } = click;
 
-      /* TODO: maybe remove this snackbar */
-      enqueueSnackbar("Checking results...", informationSnackbarOptions);
+        /* TODO: maybe remove this snackbar */
+        enqueueSnackbar("Checking results...", informationSnackbarOptions);
 
-      /* Player was successful if the click coordinates are inside the truth rectangle */
-      if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
-        /* Casual Mode: half a point, doubled if no hint received */
-        const casualScore = hinted ? 0.5 : 1;
+        /* Player was successful if the click coordinates are inside the truth rectangle */
+        if (truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3]) {
+          /* Casual Mode: half a point, doubled if no hint received */
+          const casualScore = hinted ? 0.5 : 1;
 
-        /* Competitive Mode: function of round time left, doubled if no hint received */
-        const competitiveScore = Math.round(roundTime / 100) * (hinted ? 1 : 2);
+          /* Competitive Mode: function of round time left, doubled if no hint received */
+          const competitiveScore = Math.round(roundTime / 100) * (hinted ? 1 : 2);
 
-        setPlayerRoundScore(gameMode === "casual" ? casualScore : competitiveScore);
-        setPlayerCorrect((prevState) => prevState + 1);
-        setPlayerCorrectCurrent(true);
+          setPlayerRoundScore(gameMode === "casual" ? casualScore : competitiveScore);
+          setPlayerCorrect((prevState) => prevState + 1);
+          setPlayerCorrectCurrent(true);
 
-        drawCross(context, x, y, 5, VALID_COLOUR);
-      } else {
-        drawCross(context, x, y, 5, INVALID_COLOUR);
+          drawCross(
+            context,
+            x,
+            y,
+            constants.clickSize,
+            constants.clickLineWidth,
+            colors.clickValid
+          );
+        } else {
+          drawCross(
+            context,
+            x,
+            y,
+            constants.clickSize,
+            constants.clickLineWidth,
+            colors.clickInvalid
+          );
+        }
       }
     } else if (endTime === 1500) {
       /*
@@ -392,21 +434,22 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         const casualScore = 1;
 
         /* Competitive mode: function of prediction accuracy and constant increase rate */
-        const competitiveRoundScore = Math.round(intersectionOverUnion * AI_SCORE_INCREASE_RATE);
+        const competitiveRoundScore = Math.round(
+          intersectionOverUnion * constants.aiScoreMultiplier
+        );
 
         setAiRoundScore(gameMode === "casual" ? casualScore : competitiveRoundScore);
         setAiCorrect((prevState) => prevState + 1);
 
-        drawRectangle(context, predicted, VALID_COLOUR, 3);
+        drawRectangle(context, predicted, constants.predictedLineWidth, colors.predictedValid);
       } else {
-        drawRectangle(context, predicted, INVALID_COLOUR, 3);
+        drawRectangle(context, predicted, constants.predictedLineWidth, colors.predictedInvalid);
       }
 
       setInRound(false);
       setEndRunning(false);
     }
   }, [
-    AI_COLOUR,
     click,
     context,
     endRunning,
@@ -429,7 +472,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
    */
   useInterval(
     () => setAnimationPosition((prevState) => prevState + 1),
-    animationRunning ? Math.round(ANIMATION_TIME / NUM_SEARCH_CUBES ** 2) : null
+    animationRunning ? Math.round(constants.animationTime / constants.animationCubes ** 2) : null
   );
 
   /**
@@ -444,20 +487,25 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     animationContext.clearRect(0, 0, animationContext.canvas.width, animationContext.canvas.height);
 
     /* Stop when all cube positions were reached, and resume end timer with one tick passed */
-    if (animationPosition === NUM_SEARCH_CUBES ** 2) {
+    if (animationPosition === constants.animationCubes ** 2) {
       setAnimationRunning(false);
       setEndTime((prevState) => prevState + 100);
       setEndRunning(true);
       return;
     }
 
-    const cubeSide = animationContext.canvas.width / NUM_SEARCH_CUBES;
-    const baseX = Math.round((animationPosition % NUM_SEARCH_CUBES) * cubeSide);
-    const baseY = Math.round(Math.floor(animationPosition / NUM_SEARCH_CUBES) * cubeSide);
-    const cube = [baseX, baseY, Math.round(baseX + cubeSide), Math.round(baseY + cubeSide)];
+    const cubeSide = animationContext.canvas.width / constants.animationCubes;
+    const baseX = (animationPosition % constants.animationCubes) * cubeSide;
+    const baseY = Math.floor(animationPosition / constants.animationCubes) * cubeSide;
+    const cube = [
+      Math.round(baseX),
+      Math.round(baseY),
+      Math.round(baseX + cubeSide),
+      Math.round(baseY + cubeSide),
+    ];
 
-    drawRectangle(animationContext, cube, AI_COLOUR, 3);
-  }, [AI_COLOUR, animationContext, animationPosition, animationRunning]);
+    drawRectangle(animationContext, cube, constants.animationLineWidth, colors.animation);
+  }, [animationContext, animationPosition, animationRunning]);
 
   /**
    * After round end based events
@@ -488,7 +536,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     }
 
     if (gameMode === "competitive") {
-      if (playerCorrectCurrent && roundTime > 8000) {
+      if (playerCorrectCurrent && roundTime > constants.roundTimeInitial - 2000) {
         unlockAchievementHandler(
           "fastAnswer",
           "Achievement! You answered correctly in less than 2 seconds!"
@@ -502,11 +550,11 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         );
       }
 
-      if (playerCorrect === NUM_ROUNDS) {
+      if (playerCorrect === constants.rounds) {
         unlockAchievementHandler("allCorrectCompetitive", "Achievement! You got them all right!");
       }
 
-      if (round === NUM_ROUNDS && playerScore + playerRoundScore > aiScore + aiRoundScore) {
+      if (round === constants.rounds && playerScore + playerRoundScore > aiScore + aiRoundScore) {
         unlockAchievementHandler("firstCompetitiveWin", "Achievement! First competitive win!");
       }
     }
@@ -537,6 +585,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
     setClick(mapClickToCanvas(context, event));
     setEndRunning(true);
+    setRoundRunning(false);
   };
 
   /**
@@ -555,7 +604,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       .getDownloadURL()
       .then((url) => {
         axios.get(url).then((response) => {
-          const content: JsonData = response.data;
+          const content: AnnotationData = response.data;
           setTruth(mapCoordinatesToCanvasScale(context, content.truth));
           setPredicted(mapCoordinatesToCanvasScale(context, content.predicted));
         });
@@ -626,12 +675,12 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     await loadImage(newFileId);
 
     /* Reset game state */
-    setRoundTime(ROUND_START_TIME);
+    setRoundTime(constants.roundTimeInitial);
     setEndTime(0);
     setAnimationPosition(0);
 
     setHinted(false);
-    setTimerColor(INITIAL_TIMER_COLOR);
+    setTimerColor(colors.timerInitial);
 
     setClick(null);
 
@@ -649,9 +698,10 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
    * Snackbar triggered
    * Scores uploaded into Firebase
    */
-  const onSubmitScore = async (username: string) => {
+  const submitScore = async (username: string) => {
     const date = new Date();
-    const entry = {
+
+    const scoreData: ScoreData = {
       user: username,
       score: playerScore + playerRoundScore,
       ai_score: aiScore + aiRoundScore,
@@ -666,16 +716,13 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     const leaderboard =
       gameMode === "casual" ? DbUtils.LEADERBOARD_CASUAL : DbUtils.LEADERBOARD_COMPETITIVE;
 
-    const entryName = `${entry.year}.${entry.month}.${entry.day}.${entry.user}`;
+    const docName = `${scoreData.year}.${scoreData.month}.${scoreData.day}.${scoreData.user}`;
 
-    const playerDoc = await db.collection(leaderboard).doc(entryName).get();
+    const scoreDoc = await db.collection(leaderboard).doc(docName).get();
 
-    if (!playerDoc.exists) {
-      // First time played today - add this score to DB
-      await db.collection(leaderboard).doc(entryName).set(entry);
-    } else if (playerDoc.data()!.score < entry.score) {
-      // Current score is greater than what this player registered before => update it in the DB
-      await db.collection(leaderboard).doc(entryName).set(entry);
+    /* Set if first time played today, or a higher score was achieved */
+    if (!scoreDoc.exists || (scoreDoc.data() as ScoreData).score < scoreData.score) {
+      await db.collection(leaderboard).doc(docName).set(scoreData);
     }
 
     setRoute("home");
@@ -754,7 +801,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         />
       </div>
 
-      <SubmitScoreDialog open={showSubmit} onClose={onCloseSubmit} onSubmit={onSubmitScore} />
+      <SubmitScoreDialog open={showSubmit} onClose={onCloseSubmit} onSubmit={submitScore} />
     </>
   );
 };

@@ -4,6 +4,8 @@ import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import ScoreWithIncrement from "../../components/ScoreWithIncrement";
 import LoadingButton from "../../components/LoadingButton";
+import colors from "../../res/colors";
+import constants from "../../res/constants";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -61,12 +63,6 @@ const useStyles = makeStyles((theme) =>
   })
 );
 
-const NUM_ROUNDS = 10;
-
-const DEFAULT_COLOUR = "#gray";
-const INVALID_COLOUR = "red";
-const VALID_COLOUR = "green";
-
 const GameSideBar: React.FC<GameSideBarProps> = ({
   gameMode,
   round,
@@ -82,7 +78,7 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
   const classes = useStyles();
 
   const endingText = () => {
-    if (gameMode === "casual" || round < NUM_ROUNDS || inRound) {
+    if (gameMode === "casual" || round < constants.rounds || inRound) {
       return null;
     }
 
@@ -94,13 +90,13 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
 
     if (endPlayerScore > endAiScore) {
       text = "You won!";
-      color = VALID_COLOUR;
+      color = colors.playerWon;
     } else if (endPlayerScore < endAiScore) {
       text = "AI won!";
-      color = INVALID_COLOUR;
+      color = colors.playerLost;
     } else {
       text = "It was a draw!";
-      color = DEFAULT_COLOUR;
+      color = colors.draw;
     }
 
     return (
@@ -111,7 +107,7 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
   };
 
   const startRoundButton = () => {
-    if (gameMode === "competitive" && round === NUM_ROUNDS) {
+    if (gameMode === "competitive" && round === constants.rounds) {
       return null;
     }
 
@@ -132,7 +128,7 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
   const submitShareButtons = () => {
     if (
       (gameMode === "casual" && (round === 0 || inRound)) ||
-      (gameMode === "competitive" && (round < NUM_ROUNDS || inRound))
+      (gameMode === "competitive" && (round < constants.rounds || inRound))
     ) {
       return null;
     }

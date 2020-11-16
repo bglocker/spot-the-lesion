@@ -1,9 +1,7 @@
 import React from "react";
 import { Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-
-const VALID_COLOUR = "green";
-const INVALID_COLOUR = "red";
+import colors from "../res/colors";
 
 interface StylesProps {
   increment: number;
@@ -21,7 +19,8 @@ const useStyles = makeStyles((theme) =>
       },
     },
     incrementText: {
-      color: (props: StylesProps) => (props.increment > 0 ? VALID_COLOUR : INVALID_COLOUR),
+      color: (props: StylesProps) =>
+        props.increment > 0 ? colors.positiveIncrement : colors.zeroIncrement,
       display: (props: StylesProps) => (props.showIncrement ? "inline" : "none"),
     },
   })

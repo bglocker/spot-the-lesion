@@ -1,6 +1,7 @@
 /* Default canvas size, used for scale mapping */
 import React from "react";
 
+/* TODO: extract this */
 const DEFAULT_CANVAS_SIZE = 512;
 
 /**
@@ -48,18 +49,29 @@ const mapClickToCanvas = (
 };
 
 /**
+ * Get a random value in a range around a start point
+ *
+ * @param x     Start point
+ * @param range Random range (-range, range)
+ *
+ * @return Random value in range around x
+ */
+const randomAround = (x: number, range: number): number =>
+  x + Math.floor(Math.random() * (range * 2)) - range;
+
+/**
  * Draws a rectangle
  *
  * @param ctx         Context to draw the rectangle on
  * @param rect        Coordinates for the corners of the rectangle to draw
- * @param strokeStyle Style for drawing the rectangle
  * @param lineWidth   Width of the rectangle lines
+ * @param strokeStyle Style for drawing the rectangle
  */
 const drawRectangle = (
   ctx: CanvasRenderingContext2D,
   rect: number[],
-  strokeStyle: string,
-  lineWidth: number
+  lineWidth: number,
+  strokeStyle: string
 ): void => {
   const xBase = rect[0];
   const xEnd = rect[2];
@@ -69,8 +81,8 @@ const drawRectangle = (
   const width = xEnd - xBase;
   const height = yEnd - yBase;
 
-  ctx.strokeStyle = strokeStyle;
   ctx.lineWidth = lineWidth;
+  ctx.strokeStyle = strokeStyle;
   ctx.beginPath();
   ctx.rect(xBase, yBase, width, height);
   ctx.stroke();
@@ -83,6 +95,7 @@ const drawRectangle = (
  * @param x           Width coordinate
  * @param y           Height coordinate
  * @param size        Cross size from center to edge
+ * @param lineWidth   Width of the cross lines
  * @param strokeStyle Style for drawing the cross
  */
 const drawCross = (
@@ -90,8 +103,10 @@ const drawCross = (
   x: number,
   y: number,
   size: number,
+  lineWidth: number,
   strokeStyle: string
 ): void => {
+  ctx.lineWidth = lineWidth;
   ctx.strokeStyle = strokeStyle;
   ctx.beginPath();
   ctx.moveTo(x - size, y - size);
@@ -108,7 +123,7 @@ const drawCross = (
  * @param x           Width coordinate
  * @param y           Height coordinate
  * @param radius      Circle radius
- * @param width       Width of the circle line
+ * @param lineWidth   Width of the circle line
  * @param strokeStyle Style for drawing the circle
  */
 const drawCircle = (
@@ -116,11 +131,11 @@ const drawCircle = (
   x: number,
   y: number,
   radius: number,
-  width: number,
+  lineWidth: number,
   strokeStyle: string
 ): void => {
+  ctx.lineWidth = lineWidth;
   ctx.strokeStyle = strokeStyle;
-  ctx.lineWidth = width;
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, 2 * Math.PI);
   ctx.stroke();
@@ -133,4 +148,5 @@ export {
   mapClickToCanvas,
   mapCoordinatesToCanvasScale,
   mapToCanvasScale,
+  randomAround,
 };
