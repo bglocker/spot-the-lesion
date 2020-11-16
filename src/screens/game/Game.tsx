@@ -4,13 +4,15 @@ import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { OptionsObject, useSnackbar } from "notistack";
 import axios from "axios";
-import useCanvasContext from "../../components/useCanvasContext";
-import useUniqueRandomGenerator from "../../components/useUniqueRandomGenerator";
-import useInterval from "../../components/useInterval";
-import useHeatmap from "../../components/useHeatmap";
 import GameTopBar from "./GameTopBar";
 import GameSideBar from "./GameSideBar";
 import SubmitScoreDialog from "./SubmitScoreDialog";
+import {
+  useCanvasContext,
+  useUniqueRandomGenerator,
+  useInterval,
+  useHeatmap,
+} from "../../components";
 import {
   drawCircle,
   drawCross,
@@ -18,7 +20,7 @@ import {
   mapClickToCanvas,
   mapCoordinatesToCanvasScale,
   mapToCanvasScale,
-} from "../../components/CanvasUtils";
+} from "../../utils/CanvasUtils";
 import {
   getImagePath,
   getIntersectionOverUnion,
@@ -170,7 +172,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
   useHeatmap(showHeatmap, canvasContainer, fileId, classes.canvas);
 
-  /* TODO: check if upload to database fails to give different message */
   const { enqueueSnackbar } = useSnackbar();
 
   /**
@@ -237,7 +238,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   /**
    * End timer
    *
-   * Increment roundTime by 100, every 100ms
+   * Increment endTime by 100, every 100ms
    *
    * Running only while endRunning is true
    */

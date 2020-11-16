@@ -25,11 +25,6 @@ interface OptionsSelectInterface {
   options: [string, () => void][];
 }
 
-interface SubmitScoreDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (string) => void;
-}
-
 type GameMode = "casual" | "competitive";
+
 type Difficulty = "hard" | "medium" | "easy";
