@@ -93,24 +93,18 @@ const useStyles = makeStyles((theme) =>
       },
     },
     canvas: {
-      gridColumnStart: 1,
-      gridRowStart: 1,
       height: "100%",
       width: "100%",
+      gridColumnStart: 1,
+      gridRowStart: 1,
     },
   })
 );
 
-/* TODO: error handling for axios and firebase requests */
 /* TODO: offline handling */
 
 /* TODO: extract this */
 const MAX_CANVAS_SIZE = 750;
-
-interface AnnotationData {
-  truth: number[];
-  predicted: number[];
-}
 
 const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_ID }: GameProps) => {
   const classes = useStyles();
@@ -200,7 +194,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       return;
     }
 
-    /* TODO: think about extracting time constants */
     if (roundTime === constants.hintTime) {
       /*
        * (if not already hinted this round)

@@ -30,3 +30,8 @@ interface FirestoreScoreData {
   user: string;
   year: number;
 }
+
+interface AnnotationData {
+  truth: number[];
+  predicted: number[];
+}
