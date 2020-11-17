@@ -7,13 +7,13 @@ import firebaseConfig from "./firebaseConfig";
 /* TODO: test with firebase.auth() and firebase.firestore() later on */
 /* TODO: fix mutable exports */
 // eslint-disable-next-line import/no-mutable-exports
-export let auth: firebase.auth.Auth;
+let auth: firebase.auth.Auth;
 // eslint-disable-next-line import/no-mutable-exports
-export let db: firebase.firestore.Firestore;
+let db: firebase.firestore.Firestore;
 // eslint-disable-next-line import/no-mutable-exports
-export let firebaseStorage: firebase.storage.Storage;
+let firebaseStorage: firebase.storage.Storage;
 
-export const setupFirebase = (): void => {
+const setupFirebase = (): void => {
   if (process.env.REACT_APP_FIREBASE_API_KEY === undefined) {
     console.error("Firebase api key not set");
     return;
@@ -24,3 +24,5 @@ export const setupFirebase = (): void => {
   db = firebaseApp.firestore();
   firebaseStorage = firebaseApp.storage();
 };
+
+export { auth, db, firebaseStorage, setupFirebase };

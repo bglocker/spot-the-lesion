@@ -2,7 +2,7 @@ import { RefObject, useEffect, useState } from "react";
 import h337 from "heatmap.js";
 import { db } from "../firebase/firebaseApp";
 import DbUtils from "../utils/DbUtils";
-import { toCanvasScale } from "../utils/CanvasUtils";
+import { toCanvasScale } from "../utils/canvasUtils";
 
 /**
  * Custom hook for drawing a Heatmap over a canvas

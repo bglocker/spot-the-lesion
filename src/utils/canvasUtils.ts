@@ -1,4 +1,3 @@
-/* Default canvas size, used for scale mapping */
 import React from "react";
 import constants from "../res/constants";
 

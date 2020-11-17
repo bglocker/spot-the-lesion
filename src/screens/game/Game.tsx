@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { AppBar, Button, Card, IconButton, Toolbar, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
-import { OptionsObject, useSnackbar } from "notistack";
+import { useSnackbar } from "notistack";
 import axios from "axios";
 import GameTopBar from "./GameTopBar";
 import GameSideBar from "./GameSideBar";
@@ -22,17 +22,20 @@ import {
   randomAround,
   toCanvasScale,
   toDefaultScale,
-} from "../../utils/CanvasUtils";
+} from "../../utils/canvasUtils";
 import {
+  getAnnotationPath,
   getImagePath,
   getIntersectionOverUnion,
-  getJsonPath,
+  logImageLoadError,
   unlockAchievement,
 } from "../../utils/GameUtils";
 import colors from "../../res/colors";
 import constants from "../../res/constants";
 import DbUtils from "../../utils/DbUtils";
 import { db, firebaseStorage } from "../../firebase/firebaseApp";
+import { isAxiosError, logAxiosError } from "../../utils/axiosUtils";
+import { isFirebaseStorageError, logFirebaseStorageError } from "../../utils/firebaseUtils";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -98,15 +101,6 @@ const useStyles = makeStyles((theme) =>
 
 /* TODO: extract this */
 const MAX_CANVAS_SIZE = 750;
-
-const informationSnackbarOptions: OptionsObject = {
-  anchorOrigin: {
-    vertical: "bottom",
-    horizontal: "left",
-  },
-  autoHideDuration: constants.animationTime,
-  variant: "info",
-};
 
 interface AnnotationData {
   truth: number[];
@@ -202,10 +196,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     }
 
     /* TODO: think about extracting time constants */
-    if (roundTime === 5000) {
+    if (roundTime === constants.hintTime) {
       /*
-       * 5 seconds left
-       *
        * (if not already hinted this round)
        * set Timer color to timer orange
        * show hint
@@ -215,17 +207,13 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
         showHint();
       }
-    } else if (roundTime === 2000) {
+    } else if (roundTime === constants.redTime) {
       /*
-       * 2 seconds left
-       *
        * set Timer color to timer red
        */
       setTimerColor(colors.timerRed);
     } else if (roundTime === 0) {
       /*
-       * 0 seconds left
-       *
        * start end timer and stop round timer
        */
       setEndRunning(true);
@@ -317,7 +305,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       }
 
       /* TODO: maybe remove this snackbar */
-      enqueueSnackbar("The system is thinking...", informationSnackbarOptions);
+      enqueueSnackbar("The system is thinking...", constants.informationSnackbarOptions);
 
       setAnimationRunning(true);
       setEndRunning(false);
@@ -348,7 +336,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         const { x, y } = click;
 
         /* TODO: maybe remove this snackbar */
-        enqueueSnackbar("Checking results...", informationSnackbarOptions);
+        enqueueSnackbar("Checking results...", constants.informationSnackbarOptions);
 
         /* Player was successful if the click coordinates are inside the truth rectangle */
         const correct = truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
@@ -552,38 +540,33 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   };
 
   /**
-   * Loads the data from the json corresponding to the given fileNumber
+   * Loads the annotation data for the given annotationId
    *
-   * @param fileNumber Number of the json file to load
+   * @param annotationId Number of the annotation to load
+   *
+   * @return Void promise
    */
-  const loadJson = async (fileNumber: number) => {
-    const jsonStorageReference = firebaseStorage.refFromURL(
-      "gs://spot-the-lesion.appspot.com/annotations"
-    );
+  const loadAnnotation = async (annotationId: number) => {
+    const annotationRef = firebaseStorage.ref(getAnnotationPath(annotationId));
 
-    /* Download the JSON */
-    jsonStorageReference
-      .child(getJsonPath(fileNumber))
-      .getDownloadURL()
-      .then((url) => {
-        axios.get(url).then((response) => {
-          const content: AnnotationData = response.data;
-          setTruth(mapCoordinatesToCanvasScale(context, content.truth));
-          setPredicted(mapCoordinatesToCanvasScale(context, content.predicted));
-        });
-      })
-      .catch((error) => {
-        // eslint-disable-next-line no-console
-        console.log(`Ran into firebase storage error: ${error}`);
-      });
+    const url = await annotationRef.getDownloadURL();
+
+    const response = await axios.get<AnnotationData>(url);
+
+    const annotation = response.data;
+
+    setTruth(mapCoordinatesToCanvasScale(context, annotation.truth));
+    setPredicted(mapCoordinatesToCanvasScale(context, annotation.predicted));
   };
 
   /**
-   * Loads the image from the file corresponding to the given fileNumber
+   * Loads the image from for the given imageId
    *
-   * @param fileNumber
+   * @param imageId Number of the image to load
+   *
+   * @return Void promise
    */
-  const loadImage = (fileNumber: number): Promise<void> =>
+  const loadImage = (imageId: number): Promise<void> =>
     new Promise((resolve, reject) => {
       const image = new Image();
 
@@ -594,24 +577,18 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         resolve();
       };
 
-      // Create a reference from a Google Cloud Storage URI
-      const imageStorageReference = firebaseStorage.refFromURL(
-        "gs://spot-the-lesion.appspot.com/images"
-      );
+      image.onerror = (_ev, _src, _line, _col, error) => reject(error);
 
-      image.onerror = reject;
+      /* Set source after onload to ensure onload gets called (in case the image is cached) */
 
-      /* Set source after onLoad to ensure onLoad gets called (in case the image is cached) */
-      imageStorageReference
-        .child(getImagePath(fileNumber))
+      const imageRef = firebaseStorage.ref(getImagePath(imageId));
+
+      imageRef
         .getDownloadURL()
         .then((url) => {
           image.src = url;
         })
-        .catch((error) => {
-          // eslint-disable-next-line no-console
-          console.log(`Ran into firebase storage error: ${error}`);
-        });
+        .catch((error) => reject(error));
     });
 
   /**
@@ -628,14 +605,34 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     setAiScore((prevState) => prevState + aiRoundScore);
     setAiRoundScore(0);
 
-    setRound((prevState) => prevState + 1);
-
     /* Get a new file number and load the corresponding json and image */
     const newFileId = getNewFileId();
     setFileId(newFileId);
 
-    await loadJson(newFileId);
-    await loadImage(newFileId);
+    try {
+      await loadAnnotation(newFileId);
+      await loadImage(newFileId);
+    } catch (error) {
+      /* Log error for developers */
+      console.error(`Annotation/Image load error\n fileId: ${newFileId}`);
+
+      if (isFirebaseStorageError(error)) {
+        logFirebaseStorageError(error);
+      } else if (isAxiosError(error)) {
+        logAxiosError(error);
+      } else {
+        logImageLoadError(error as Error);
+      }
+
+      /* Notify user */
+      enqueueSnackbar("Sorry, that failed! Please try again.", constants.errorSnackbarOptions);
+
+      /* Reset state */
+      setInRound(false);
+      setLoading(false);
+    }
+
+    setRound((prevState) => prevState + 1);
 
     /* Reset game state */
     setRoundTime(constants.roundTimeInitial);
@@ -656,10 +653,10 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   };
 
   /**
-   * Function for triggering the effects associated with submitting the score
-   * Submit button becomes disabled
-   * Snackbar triggered
-   * Scores uploaded into Firebase
+   * Submit the achieved score for the given username
+   * (Over)write if achieved score is greater than stored one, or there is no stored value
+   *
+   * @param username Player username to identify achieved score
    */
   const submitScore = async (username: string) => {
     const date = new Date();

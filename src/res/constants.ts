@@ -1,3 +1,5 @@
+import { OptionsObject } from "notistack";
+
 const constants = {
   /* Game */
   aiScoreMultiplier: 75,
@@ -9,13 +11,41 @@ const constants = {
   hintLineWidth: 2,
   hintRadius: 100,
   hintRange: 50,
+  hintTime: 5000,
   predictedLineWidth: 3,
+  redTime: 2000,
   rounds: 10,
   roundTimeInitial: 10000,
   truthLineWidth: 3,
 
-  /* CanvasUtils */
+  /* canvasUtils */
   defaultImageSize: 512,
+
+  /* Snackbar */
+  achievementSnackbarOptions: {
+    anchorOrigin: {
+      vertical: "top",
+      horizontal: "right",
+    },
+    autoHideDuration: 3000,
+    variant: "success",
+  } as OptionsObject,
+  errorSnackbarOptions: {
+    anchorOrigin: {
+      vertical: "bottom",
+      horizontal: "right",
+    },
+    autoHideDuration: 3000,
+    variant: "error",
+  } as OptionsObject,
+  informationSnackbarOptions: {
+    anchorOrigin: {
+      vertical: "bottom",
+      horizontal: "left",
+    },
+    autoHideDuration: 3000,
+    variant: "info",
+  } as OptionsObject,
 };
 
 export default constants;

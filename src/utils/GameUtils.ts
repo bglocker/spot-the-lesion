@@ -1,19 +1,33 @@
 import { ReactNode } from "react";
 import { OptionsObject } from "notistack";
-/**
- * Returns the path to the json file corresponding to the given fileNumber
- *
- * @param fileNumber Number of the file to retrieve
- */
-
-const getJsonPath = (fileNumber: number): string => `${fileNumber}.json`;
+import constants from "../res/constants";
 
 /**
- * Returns the path to the image file corresponding to the given fileNumber
+ * Returns the path to the annotation file corresponding to the given annotationId
  *
- * @param fileNumber Number of the file to retrieve
+ * @param annotationId Id of the annotation file to retrieve
+ *
+ * @return Path to annotation file
  */
-const getImagePath = (fileNumber: number): string => `${fileNumber}.png`;
+
+const getAnnotationPath = (annotationId: number): string => `annotations/${annotationId}.json`;
+
+/**
+ * Returns the path to the image file corresponding to the given imageId
+ *
+ * @param imageId Id of the image file to retrieve
+ *
+ * @return Path to image file
+ */
+const getImagePath = (imageId: number): string => `images/${imageId}.png`;
+
+/**
+ * Logs the given image loading error
+ *
+ * @param error Image load error to log
+ */
+const logImageLoadError = (error: Error): void =>
+  console.error(`Image loading error\n message: ${error.message}`);
 
 /**
  * Given the coordinates of two rectangles, returns the ratio of their intersection
@@ -86,15 +100,6 @@ const shuffledRange = (start = 1, stop: number, step = 1): number[] => {
   return nums;
 };
 
-const achievementSnackbarOptions: OptionsObject = {
-  anchorOrigin: {
-    vertical: "top",
-    horizontal: "right",
-  },
-  autoHideDuration: 3000,
-  variant: "success",
-};
-
 /**
  * Unlock an achievement and display a snackbar to the user (if not already unlocked)
  *
@@ -108,16 +113,17 @@ const unlockAchievement = (
   enqueueSnackbar: (message: ReactNode, options?: OptionsObject) => void
 ): void => {
   if (localStorage.getItem(key) === null) {
-    enqueueSnackbar(message, achievementSnackbarOptions);
+    enqueueSnackbar(message, constants.achievementSnackbarOptions);
 
     localStorage.setItem(key, "true");
   }
 };
 
 export {
-  getJsonPath,
-  getIntersectionOverUnion,
+  getAnnotationPath,
   getImagePath,
+  getIntersectionOverUnion,
+  logImageLoadError,
   range,
   shuffledRange,
   unlockAchievement,

@@ -309,17 +309,11 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
    * @param imageIndex - index of the image to be retrieved
    */
   const loadImage = async (imageIndex: number) => {
-    // Create a reference from a Google Cloud Storage URI
-    const imageStorageReference = firebaseStorage.refFromURL(
-      "gs://spot-the-lesion.appspot.com/images"
-    );
+    const imageRef = firebaseStorage.ref(getImagePath(imageIndex));
 
-    /* Set source after onLoad to ensure onLoad gets called (in case the image is cached) */
-    const imageLink: string = await imageStorageReference
-      .child(getImagePath(imageIndex))
-      .getDownloadURL();
+    const url: string = await imageRef.getDownloadURL();
 
-    setImageUrl(imageLink);
+    setImageUrl(url);
   };
 
   /**
