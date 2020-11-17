@@ -21,6 +21,11 @@ const constants = {
   /* canvasUtils */
   defaultImageSize: 512,
 
+  /* Firebase */
+  scoresCasual: "leaderboard_casual",
+  scoresCompetitive: "leaderboard_competitive",
+  images: "images",
+
   /* Snackbar */
   achievementSnackbarOptions: {
     anchorOrigin: {
@@ -45,6 +50,14 @@ const constants = {
     },
     autoHideDuration: 3000,
     variant: "info",
+  } as OptionsObject,
+  successSnackbarOptions: {
+    anchorOrigin: {
+      vertical: "bottom",
+      horizontal: "left",
+    },
+    autoHideDuration: 3000,
+    variant: "success",
   } as OptionsObject,
 };
 

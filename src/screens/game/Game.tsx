@@ -4,6 +4,7 @@ import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { useSnackbar } from "notistack";
 import axios from "axios";
+import { db, firebaseStorage } from "../../firebase/firebaseApp";
 import GameTopBar from "./GameTopBar";
 import GameSideBar from "./GameSideBar";
 import SubmitScoreDialog from "./SubmitScoreDialog";
@@ -30,12 +31,16 @@ import {
   logImageLoadError,
   unlockAchievement,
 } from "../../utils/GameUtils";
+import { isAxiosError, logAxiosError } from "../../utils/axiosUtils";
+import {
+  getMonthName,
+  isFirebaseStorageError,
+  isFirestoreError,
+  logFirebaseStorageError,
+  logFirestoreError,
+} from "../../utils/firebaseUtils";
 import colors from "../../res/colors";
 import constants from "../../res/constants";
-import DbUtils from "../../utils/DbUtils";
-import { db, firebaseStorage } from "../../firebase/firebaseApp";
-import { isAxiosError, logAxiosError } from "../../utils/axiosUtils";
-import { isFirebaseStorageError, logFirebaseStorageError } from "../../utils/firebaseUtils";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -247,31 +252,39 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
       const docName = `image_${fileId}`;
 
-      const imageDoc = await db.collection(DbUtils.IMAGES).doc(docName).get();
+      try {
+        const imageDoc = await db.collection(constants.images).doc(docName).get();
 
-      /* Use image data if available, or default values  */
-      const { clicks = [], correctClicks = 0, hintCount = 0, wrongClicks = 0 } = (imageDoc.exists
-        ? imageDoc.data()
-        : {}) as FirestoreImageData;
+        /* Use image data if available, or use default values  */
+        const { clicks = [], correctClicks = 0, hintCount = 0, wrongClicks = 0 } = (imageDoc.exists
+          ? imageDoc.data()
+          : {}) as FirestoreImageData;
 
-      /* Locate (if present) existing click with same coordinates */
-      const existingClick = clicks.find((clk) => clk.x === newClick.x && clk.y === newClick.y);
+        /* Locate (if present) existing click with same coordinates */
+        const existingClick = clicks.find((clk) => clk.x === newClick.x && clk.y === newClick.y);
 
-      /* If not found, append to array, otherwise increment clickCount */
-      if (existingClick === undefined) {
-        clicks.push(newClick);
-      } else {
-        existingClick.clickCount += 1;
+        /* If not found, append to array, otherwise increment clickCount */
+        if (existingClick === undefined) {
+          clicks.push(newClick);
+        } else {
+          existingClick.clickCount += 1;
+        }
+
+        const imageData = {
+          clicks,
+          correctClicks: correctClicks + (correct ? 1 : 0),
+          wrongClicks: wrongClicks + (correct ? 0 : 1),
+          hintCount: hintCount + (hintedCurrent ? 1 : 0),
+        };
+
+        await db.collection(constants.images).doc(docName).set(imageData);
+      } catch (error) {
+        if (isFirestoreError(error)) {
+          logFirestoreError(error);
+        } else {
+          console.error(`Uncaught error in uploadClick:\n ${(error as Error).message}`);
+        }
       }
-
-      const imageData = {
-        clicks,
-        correctClicks: correctClicks + (correct ? 1 : 0),
-        wrongClicks: wrongClicks + (correct ? 0 : 1),
-        hintCount: hintCount + (hintedCurrent ? 1 : 0),
-      };
-
-      await db.collection(DbUtils.IMAGES).doc(docName).set(imageData);
     },
     [context, fileId, hintedCurrent]
   );
@@ -669,24 +682,34 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       usedHints: hinted,
       correct_ai_answers: aiCorrect,
       day: date.getDate(),
-      month: DbUtils.monthNames[date.getMonth()],
+      month: getMonthName(date.getMonth()),
       year: date.getFullYear(),
     };
 
-    const leaderboard =
-      gameMode === "casual" ? DbUtils.LEADERBOARD_CASUAL : DbUtils.LEADERBOARD_COMPETITIVE;
+    const scores = gameMode === "casual" ? constants.scoresCasual : constants.scoresCompetitive;
 
     const docName = `${scoreData.year}.${scoreData.month}.${scoreData.day}.${scoreData.user}`;
 
-    const scoreDoc = await db.collection(leaderboard).doc(docName).get();
+    try {
+      const scoreDoc = await db.collection(scores).doc(docName).get();
 
-    /* Set if first time played today, or a higher score was achieved */
-    if (!scoreDoc.exists || (scoreDoc.data() as FirestoreScoreData).score < scoreData.score) {
-      await db.collection(leaderboard).doc(docName).set(scoreData);
+      /* Set if first time played today, or a higher score was achieved */
+      if (!scoreDoc.exists || (scoreDoc.data() as FirestoreScoreData).score < scoreData.score) {
+        await db.collection(scores).doc(docName).set(scoreData);
+      }
+    } catch (error) {
+      if (isFirestoreError(error)) {
+        logFirestoreError(error);
+      } else {
+        console.error(`Uncaught error in submitScore\n ${(error as Error).message}`);
+      }
+
+      enqueueSnackbar("Sorry, that failed! Please try again.", constants.errorSnackbarOptions);
     }
 
+    enqueueSnackbar("Score successfully submitted!", constants.successSnackbarOptions);
+
     setRoute("home");
-    enqueueSnackbar("Score successfully submitted!");
   };
 
   const onToggleHeatmap = () => setShowHeatmap((prevState) => !prevState);
