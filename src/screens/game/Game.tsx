@@ -10,9 +10,9 @@ import GameSideBar from "./GameSideBar";
 import SubmitScoreDialog from "./SubmitScoreDialog";
 import {
   useCanvasContext,
-  useUniqueRandomGenerator,
-  useInterval,
   useHeatmap,
+  useInterval,
+  useUniqueRandomGenerator,
 } from "../../components";
 import {
   drawCircle,
@@ -41,6 +41,8 @@ import {
 } from "../../utils/firebaseUtils";
 import colors from "../../res/colors";
 import constants from "../../res/constants";
+import DbUtils from "../../utils/DbUtils";
+import ImageStatsDialog from "./ImageStatsDialog";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -151,6 +153,15 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showSubmit, setShowSubmit] = useState(false);
+
+  /**
+   * Hooks used for Per-Image Stats
+   */
+  const [correctAnswers, setCorrectAnswers] = useState(0);
+  const [wrongAnswers, setWrongAnswers] = useState(0);
+  const [totalHints, setTotalHints] = useState(0);
+
+  const [showImageStats, setShowImageStats] = useState(false);
 
   const canvasContainer = useRef<HTMLDivElement>(null);
 
@@ -598,6 +609,45 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     });
 
   /**
+   * Function for retrieving image statistics from Firebase
+   * @param fileNumber - index of the image for which we retrieve stats
+   */
+  const retrieveImageStats = async (fileNumber: number) => {
+    const table = DbUtils.IMAGES;
+    const docName = `image_${fileNumber}`;
+
+    const imageDoc = await db.collection(table).doc(docName).get();
+    if (imageDoc.exists) {
+      setCorrectAnswers(imageDoc.data()!.correctClicks);
+      setWrongAnswers(imageDoc.data()!.wrongClicks);
+      setTotalHints(imageDoc.data()!.hintCount);
+    }
+  };
+
+  const createPieChartData = () => {
+    return [
+      {
+        id: "Correct Answers",
+        label: "Correct Answers",
+        value: correctAnswers,
+        color: "hsl(332, 70%, 50%)",
+      },
+      {
+        id: "Wrong Answers",
+        label: "Wrong Answers",
+        value: wrongAnswers,
+        color: "hsl(194, 70%, 50%)",
+      },
+      {
+        id: "Total Hints",
+        label: "Total Hints",
+        value: totalHints,
+        color: "hsl(124, 43%, 81%)",
+      },
+    ];
+  };
+
+  /**
    * Starts a new round, loading a new image and its corresponding JSON data
    */
   const startRound = async () => {
@@ -618,6 +668,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     try {
       await loadAnnotation(newFileId);
       await loadImage(newFileId);
+      await retrieveImageStats(newFileId);
     } catch (error) {
       /* Log error for developers */
       console.error(`Annotation/Image load error\n fileId: ${newFileId}`);
@@ -711,6 +762,22 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
   const onCloseSubmit = () => setShowSubmit(false);
 
+  const onShowImageStats = () => setShowImageStats(true);
+
+  const onCloseImageStats = () => setShowImageStats(false);
+
+  const displayImageStats = () => {
+    return showImageStats ? (
+      <ImageStatsDialog
+        open={showImageStats}
+        data={createPieChartData()}
+        onClose={onCloseImageStats}
+      />
+    ) : (
+      <div className={classes.emptyDiv} />
+    );
+  };
+
   return (
     <>
       <AppBar position="sticky">
@@ -726,6 +793,16 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
           </IconButton>
 
           <Typography className={classes.title}>Spot the Lesion</Typography>
+          <Button
+            color="inherit"
+            disabled={round === 0 || inRound}
+            onClick={() => {
+              onShowImageStats();
+              displayImageStats();
+            }}
+          >
+            Show Image Stats
+          </Button>
 
           <Button color="inherit" disabled={round === 0 || inRound} onClick={onToggleHeatmap}>
             {showHeatmap ? "Hide Heatmap" : "Show Heatmap"}

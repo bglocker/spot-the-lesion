@@ -419,11 +419,6 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
           radialLabelsLinkHorizontalLength={32}
           radialLabelsLinkStrokeWidth={3}
           radialLabelsLinkColor={{ from: "color" }}
-          enableSlicesLabels={false}
-          slicesLabelsSkipAngle={10}
-          slicesLabelsTextColor="#333333"
-          motionStiffness={90}
-          motionDamping={15}
           defs={[
             {
               id: "dots",
