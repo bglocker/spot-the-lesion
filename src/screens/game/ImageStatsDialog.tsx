@@ -46,10 +46,17 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
 }: ImageStatsDialogProps) => {
   const classes = useStyles();
 
+  /**
+   * Handler function for closing the dialog box
+   * Delegates the call to the onClose param
+   */
   const onCloseDialog = () => {
     onClose();
   };
 
+  /**
+   * Function for displaying a message on the Dialog Box when a particular stat is 0
+   */
   const displayMessagesForZeroValuedStats = () => {
     let message;
     const components: JSX.Element[] = [];
@@ -62,6 +69,9 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
     return components;
   };
 
+  /**
+   * Main return from the ImageStatsDialog function component
+   */
   return (
     <Dialog className={classes.dialog} open={open} onClose={onCloseDialog}>
       <DialogTitle>

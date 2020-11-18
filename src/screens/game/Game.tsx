@@ -161,6 +161,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   const [wrongAnswers, setWrongAnswers] = useState(0);
   const [totalHints, setTotalHints] = useState(0);
 
+  /**
+   * Hook for conditional rendering of the Image Stats Dialog Box
+   */
   const [showImageStats, setShowImageStats] = useState(false);
 
   const canvasContainer = useRef<HTMLDivElement>(null);
@@ -636,6 +639,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     }
   };
 
+  /**
+   * Function for wrapping up the data that needs to be parsed in the Image Stats Pie Chart
+   */
   const createPieChartData = () => {
     return [
       {
@@ -767,6 +773,10 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     setRoute("home");
   };
 
+  /**
+   * Handler functions for conditional rendering of the
+   * Image Stats Dialog, Submit Dialog and heatmap
+   */
   const onToggleHeatmap = () => setShowHeatmap((prevState) => !prevState);
 
   const onShowSubmit = () => setShowSubmit(true);
@@ -777,6 +787,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
   const onCloseImageStats = () => setShowImageStats(false);
 
+  /**
+   * Main return from the Game function component
+   */
   return (
     <>
       <AppBar position="sticky">
