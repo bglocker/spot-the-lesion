@@ -8,8 +8,7 @@ import {
   DialogTitle,
   TextField,
 } from "@material-ui/core";
-
-const errorText = "Username cannot be empty";
+import { LoadingButton } from "../../components";
 
 const SubmitScoreDialog: React.FC<SubmitScoreDialogProps> = ({
   open,
@@ -18,19 +17,7 @@ const SubmitScoreDialog: React.FC<SubmitScoreDialogProps> = ({
 }: SubmitScoreDialogProps) => {
   const [username, setUsername] = useState("");
   const [error, setError] = useState(false);
-
-  const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setError(false);
-    setUsername(event.target.value);
-  };
-
-  const onClick = () => {
-    if (username === "") {
-      setError(true);
-    } else {
-      onSubmit(username);
-    }
-  };
+  const [loading, setLoading] = useState(false);
 
   const onCloseDialog = () => {
     setUsername("");
@@ -39,12 +26,33 @@ const SubmitScoreDialog: React.FC<SubmitScoreDialogProps> = ({
     onClose();
   };
 
+  const onUsernameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setError(false);
+    setUsername(event.target.value);
+  };
+
+  const onSubmitClick = async () => {
+    if (username !== "") {
+      try {
+        setLoading(true);
+
+        await onSubmit(username);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setError(true);
+    }
+  };
+
   return (
     <Dialog open={open} onClose={onCloseDialog}>
-      <DialogTitle>Submit scores</DialogTitle>
+      <DialogTitle>Submit</DialogTitle>
 
       <DialogContent>
-        <DialogContentText>To submit your score, please enter an username</DialogContentText>
+        <DialogContentText>
+          To submit your score, please enter your username here.
+        </DialogContentText>
 
         <TextField
           autoFocus
@@ -54,14 +62,20 @@ const SubmitScoreDialog: React.FC<SubmitScoreDialogProps> = ({
           type="text"
           fullWidth
           error={error}
-          helperText={error ? errorText : ""}
+          helperText={error ? "Username cannot be empty" : ""}
           value={username}
-          onChange={onChange}
+          onChange={onUsernameChange}
         />
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClick}>Submit</Button>
+        <Button color="primary" onClick={onCloseDialog}>
+          Cancel
+        </Button>
+
+        <LoadingButton color="primary" loading={loading} onClick={onSubmitClick}>
+          Submit
+        </LoadingButton>
       </DialogActions>
     </Dialog>
   );

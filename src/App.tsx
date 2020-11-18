@@ -25,7 +25,7 @@ const theme = createMuiTheme({
 const useStyles = makeStyles(() =>
   createStyles({
     container: {
-      height: "100vh",
+      height: "100%",
       display: "flex",
       flexDirection: "column",
       backgroundColor: colors.secondary,
@@ -69,7 +69,7 @@ const App: React.FC = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <SnackbarProvider maxSnack={2}>
+      <SnackbarProvider maxSnack={2} preventDuplicate>
         <div className={classes.container}>{currentScreen}</div>
       </SnackbarProvider>
     </ThemeProvider>

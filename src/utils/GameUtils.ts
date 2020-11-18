@@ -1,16 +1,25 @@
-/**
- * Returns the path to the json file corresponding to the given fileNumber
- *
- * @param fileNumber Number of the file to retrieve
- */
-const getJsonPath = (fileNumber: number): string => `${fileNumber}.json`;
+import { ReactNode } from "react";
+import { OptionsObject } from "notistack";
+import constants from "../res/constants";
 
 /**
- * Returns the path to the image file corresponding to the given fileNumber
+ * Returns the path to the annotation file corresponding to the given annotationId
  *
- * @param fileNumber Number of the file to retrieve
+ * @param annotationId Id of the annotation file to retrieve
+ *
+ * @return Path to annotation file
  */
-const getImagePath = (fileNumber: number): string => `${fileNumber}.png`;
+
+const getAnnotationPath = (annotationId: number): string => `annotations/${annotationId}.json`;
+
+/**
+ * Returns the path to the image file corresponding to the given imageId
+ *
+ * @param imageId Id of the image file to retrieve
+ *
+ * @return Path to image file
+ */
+const getImagePath = (imageId: number): string => `images/${imageId}.png`;
 
 /**
  * Given the coordinates of two rectangles, returns the ratio of their intersection
@@ -83,4 +92,30 @@ const shuffledRange = (start = 1, stop: number, step = 1): number[] => {
   return nums;
 };
 
-export { getJsonPath, getIntersectionOverUnion, getImagePath, range, shuffledRange };
+/**
+ * Unlock an achievement and display a snackbar to the user (if not already unlocked)
+ *
+ * @param key             Achievement key
+ * @param message         Snackbar message
+ * @param enqueueSnackbar Function to display a snackbar
+ */
+const unlockAchievement = (
+  key: string,
+  message: ReactNode,
+  enqueueSnackbar: (message: ReactNode, options?: OptionsObject) => void
+): void => {
+  if (localStorage.getItem(key) === null) {
+    enqueueSnackbar(message, constants.achievementSnackbarOptions);
+
+    localStorage.setItem(key, "true");
+  }
+};
+
+export {
+  getAnnotationPath,
+  getImagePath,
+  getIntersectionOverUnion,
+  range,
+  shuffledRange,
+  unlockAchievement,
+};

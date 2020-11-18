@@ -1,8 +1,8 @@
 interface GameProps {
   setRoute: (Route) => void;
   gameMode: GameMode;
-  MIN_FILE_ID: number;
-  MAX_FILE_ID: number;
+  minFileId: number;
+  maxFileId: number;
 }
 
 interface GameModeSelectProps {
@@ -25,11 +25,6 @@ interface OptionsSelectInterface {
   options: [string, () => void][];
 }
 
-interface SubmitScoreDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (string) => void;
-}
-
 type GameMode = "casual" | "competitive";
+
 type Difficulty = "hard" | "medium" | "easy";

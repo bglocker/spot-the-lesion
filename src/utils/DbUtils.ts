@@ -12,7 +12,7 @@ export default class DbUtils {
     "Oct",
     "Nov",
     "Dec",
-  ];
+  ] as const;
 
   public static GOLD = "#FFCC00";
 

@@ -24,13 +24,13 @@ const useStyles = makeStyles((theme: Theme) =>
 const ColoredLinearProgress: React.FC<ColoredLinearProgressProps> = ({
   barColor,
   barBackgroundColor,
-  ...props
+  ...other
 }: ColoredLinearProgressProps) => {
   const classes = useStyles({ barColor });
 
   // Props are properly destructured and passed
   // eslint-disable-next-line react/jsx-props-no-spreading
-  return <LinearProgress classes={classes} {...props} />;
+  return <LinearProgress classes={classes} {...other} />;
 };
 
 ColoredLinearProgress.defaultProps = {

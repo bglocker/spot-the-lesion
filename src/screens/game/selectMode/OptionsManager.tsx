@@ -69,7 +69,7 @@ const OptionsManager: React.FC<OptionsProps> = ({ setRoute }: OptionsProps) => {
   const [difficultySelected, setDifficultySelected] = useState(false);
 
   if (start) {
-    return <Game setRoute={setRoute} gameMode={gameMode} MIN_FILE_ID={minId} MAX_FILE_ID={maxId} />;
+    return <Game setRoute={setRoute} gameMode={gameMode} minFileId={minId} maxFileId={maxId} />;
   }
 
   return (
