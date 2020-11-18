@@ -2,7 +2,7 @@ interface GameSideBarProps {
   gameMode: GameMode;
   round: number;
   inRound: boolean;
-  loading: boolean;
+  roundLoading: boolean;
   playerScore: number;
   playerRoundScore: number;
   aiScore: number;

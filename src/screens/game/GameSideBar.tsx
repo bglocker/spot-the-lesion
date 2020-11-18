@@ -67,7 +67,7 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
   gameMode,
   round,
   inRound,
-  loading,
+  roundLoading,
   playerScore,
   playerRoundScore,
   aiScore,
@@ -78,7 +78,7 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
   const classes = useStyles();
 
   const endingText = () => {
-    if (gameMode === "casual" || round < constants.rounds || inRound) {
+    if (gameMode === "casual" || round < constants.rounds || roundLoading || inRound) {
       return null;
     }
 
@@ -116,7 +116,7 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
         variant="contained"
         color="primary"
         size="large"
-        loading={loading}
+        loading={roundLoading}
         disabled={inRound}
         onClick={onStartRound}
       >
@@ -127,8 +127,10 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
 
   const submitShareButtons = () => {
     if (
-      (gameMode === "casual" && (round === 0 || inRound)) ||
-      (gameMode === "competitive" && (round < constants.rounds || inRound))
+      (gameMode === "casual" && round === 0) ||
+      (gameMode === "competitive" && round < constants.rounds) ||
+      roundLoading ||
+      inRound
     ) {
       return null;
     }
@@ -157,7 +159,7 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
             player="You"
             score={playerScore}
             increment={playerRoundScore}
-            showIncrement={round > 0 && !inRound}
+            showIncrement={round > 0 && !roundLoading && !inRound}
           />
 
           <Typography className={classes.cardText}>vs</Typography>
@@ -166,7 +168,7 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
             player="AI"
             score={aiScore}
             increment={aiRoundScore}
-            showIncrement={round > 0 && !inRound}
+            showIncrement={round > 0 && !roundLoading && !inRound}
           />
         </div>
 

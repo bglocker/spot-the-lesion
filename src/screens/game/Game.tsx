@@ -475,7 +475,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     const unlockAchievementHandler = (key, message) =>
       unlockAchievement(key, message, enqueueSnackbar);
 
-    if (round === 0 || inRound) {
+    if (round === 0 || roundLoading || inRound) {
       return;
     }
 
@@ -531,6 +531,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     playerRoundScore,
     playerScore,
     round,
+    roundLoading,
     roundTime,
   ]);
 
@@ -606,7 +607,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
    */
   const startRound = async () => {
     setRoundLoading(true);
-    setInRound(true);
 
     /* Update scores with last round scores */
     setPlayerScore((prevState) => prevState + playerRoundScore);
@@ -617,11 +617,31 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
     /* Get a new file id and load the corresponding annotation and image */
     const newFileId = getNewFileId();
-    setFileId(newFileId);
 
     try {
       await loadAnnotation(newFileId);
       await loadImage(newFileId);
+
+      setFileId(newFileId);
+
+      setRound((prevState) => prevState + 1);
+
+      /* Reset game state */
+      setRoundTime(constants.roundTimeInitial);
+      setEndTime(0);
+      setAnimationPosition(0);
+
+      setHintedCurrent(false);
+      setTimerColor(colors.timerInitial);
+
+      setClick(null);
+
+      setPlayerCorrectCurrent(false);
+
+      setShowHeatmap(false);
+
+      setInRound(true);
+      setRoundRunning(true);
     } catch (error) {
       console.error(`Annotation/Image load error\n fileId: ${newFileId}`);
 
@@ -634,29 +654,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       }
 
       enqueueSnackbar("Sorry, that failed! Please try again.", constants.errorSnackbarOptions);
-
-      setInRound(false);
+    } finally {
       setRoundLoading(false);
     }
-
-    setRound((prevState) => prevState + 1);
-
-    /* Reset game state */
-    setRoundTime(constants.roundTimeInitial);
-    setEndTime(0);
-    setAnimationPosition(0);
-
-    setHintedCurrent(false);
-    setTimerColor(colors.timerInitial);
-
-    setClick(null);
-
-    setPlayerCorrectCurrent(false);
-
-    setShowHeatmap(false);
-
-    setRoundRunning(true);
-    setRoundLoading(false);
   };
 
   /**
@@ -733,7 +733,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
           <LoadingButton
             color="inherit"
-            disabled={round === 0 || inRound}
+            disabled={round === 0 || roundLoading || inRound}
             loading={heatmapLoading}
             onClick={onToggleHeatmap}
           >
@@ -776,7 +776,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
           gameMode={gameMode}
           round={round}
           inRound={inRound}
-          loading={roundLoading}
+          roundLoading={roundLoading}
           playerScore={playerScore}
           playerRoundScore={playerRoundScore}
           aiScore={aiScore}
