@@ -639,19 +639,19 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   const createPieChartData = () => {
     return [
       {
-        id: "Correct Answers",
+        id: "Correct",
         label: "Correct Answers",
         value: correctAnswers,
         color: "hsl(332, 70%, 50%)",
       },
       {
-        id: "Wrong Answers",
+        id: "Wrong",
         label: "Wrong Answers",
         value: wrongAnswers,
         color: "hsl(194, 70%, 50%)",
       },
       {
-        id: "Total Hints",
+        id: "Hints",
         label: "Total Hints",
         value: totalHints,
         color: "hsl(124, 43%, 81%)",

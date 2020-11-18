@@ -30,6 +30,7 @@ const useStyles = makeStyles(
     dialog: {
       width: "100%",
       height: "100%",
+      alignSelf: "center",
     },
   })
 );
@@ -68,18 +69,16 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
           cornerRadius={3}
           colors={{ scheme: "nivo" }}
           borderWidth={9}
-          borderColor={{ from: "color", modifiers: [["darker", 0.3]] }}
-          radialLabelsSkipAngle={10}
-          radialLabelsTextColor="#333333"
-          radialLabelsLinkHorizontalLength={36}
-          radialLabelsLinkColor={{ from: "color" }}
+          borderColor={{ from: "color", modifiers: [["darker", 2.5]] }}
+          enableRadialLabels={false}
+          sliceLabel="value"
           defs={[
             {
               id: "dots",
               type: "patternDots",
               background: "inherit",
               color: "rgba(255, 255, 255, 0.3)",
-              size: 4,
+              size: 10,
               padding: 1,
               stagger: true,
             },
