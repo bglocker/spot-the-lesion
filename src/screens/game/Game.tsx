@@ -116,8 +116,16 @@ const useStyles = makeStyles((theme) =>
       zIndex: 3,
       userSelect: "none",
       marginTop: 16,
-      fontSize: "4rem",
       textShadow: "-1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white",
+      [theme.breakpoints.only("xs")]: {
+        fontSize: "2rem",
+      },
+      [theme.breakpoints.only("sm")]: {
+        fontSize: "3rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        fontSize: "4rem",
+      },
     },
   })
 );
