@@ -69,7 +69,7 @@ const App: React.FC = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <SnackbarProvider maxSnack={2}>
+      <SnackbarProvider maxSnack={2} preventDuplicate>
         <div className={classes.container}>{currentScreen}</div>
       </SnackbarProvider>
     </ThemeProvider>

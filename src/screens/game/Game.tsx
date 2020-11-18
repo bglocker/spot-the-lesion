@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { AppBar, Button, Card, IconButton, Toolbar, Typography } from "@material-ui/core";
+import { AppBar, Card, IconButton, Toolbar, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { useSnackbar } from "notistack";
@@ -9,6 +9,7 @@ import GameTopBar from "./GameTopBar";
 import GameSideBar from "./GameSideBar";
 import SubmitScoreDialog from "./SubmitScoreDialog";
 import {
+  LoadingButton,
   useCanvasContext,
   useUniqueRandomGenerator,
   useInterval,
@@ -32,6 +33,7 @@ import {
   unlockAchievement,
 } from "../../utils/GameUtils";
 import { isAxiosError, logAxiosError } from "../../utils/axiosUtils";
+import logUncaughtError from "../../utils/errorUtils";
 import {
   getMonthName,
   isFirebaseStorageError,
@@ -113,7 +115,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   const [animationContext, animationCanvasRef] = useCanvasContext();
 
   const [inRound, setInRound] = useState(false);
-  const [loading, setLoading] = useState(false);
+
+  const [roundLoading, setRoundLoading] = useState(false);
+  const [heatmapLoading, setHeatmapLoading] = useState(false);
 
   const [roundRunning, setRoundRunning] = useState(false);
   const [endRunning, setEndRunning] = useState(false);
@@ -154,7 +158,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
   const canvasContainer = useRef<HTMLDivElement>(null);
 
-  useHeatmap(showHeatmap, canvasContainer, fileId, classes.canvas);
+  useHeatmap(showHeatmap, setHeatmapLoading, canvasContainer, fileId, classes.canvas);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -275,7 +279,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         if (isFirestoreError(error)) {
           logFirestoreError(error);
         } else {
-          console.error(`Uncaught error in uploadClick:\n ${(error as Error).message}`);
+          logUncaughtError("uploadClick", error);
         }
       }
     },
@@ -598,10 +602,10 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     });
 
   /**
-   * Starts a new round, loading a new image and its corresponding JSON data
+   * Starts a new round, loading a new annotation - image pair
    */
   const startRound = async () => {
-    setLoading(true);
+    setRoundLoading(true);
     setInRound(true);
 
     /* Update scores with last round scores */
@@ -611,7 +615,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     setAiScore((prevState) => prevState + aiRoundScore);
     setAiRoundScore(0);
 
-    /* Get a new file number and load the corresponding json and image */
+    /* Get a new file id and load the corresponding annotation and image */
     const newFileId = getNewFileId();
     setFileId(newFileId);
 
@@ -619,7 +623,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       await loadAnnotation(newFileId);
       await loadImage(newFileId);
     } catch (error) {
-      /* Log error for developers */
       console.error(`Annotation/Image load error\n fileId: ${newFileId}`);
 
       if (isFirebaseStorageError(error)) {
@@ -630,12 +633,10 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         logImageLoadError(error as Error);
       }
 
-      /* Notify user */
       enqueueSnackbar("Sorry, that failed! Please try again.", constants.errorSnackbarOptions);
 
-      /* Reset state */
       setInRound(false);
-      setLoading(false);
+      setRoundLoading(false);
     }
 
     setRound((prevState) => prevState + 1);
@@ -655,7 +656,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     setShowHeatmap(false);
 
     setRoundRunning(true);
-    setLoading(false);
+    setRoundLoading(false);
   };
 
   /**
@@ -694,7 +695,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       if (isFirestoreError(error)) {
         logFirestoreError(error);
       } else {
-        console.error(`Uncaught error in submitScore\n ${(error as Error).message}`);
+        logUncaughtError("submitScore", error);
       }
 
       enqueueSnackbar("Sorry, that failed! Please try again.", constants.errorSnackbarOptions);
@@ -705,7 +706,10 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     setRoute("home");
   };
 
-  const onToggleHeatmap = () => setShowHeatmap((prevState) => !prevState);
+  const onToggleHeatmap = () => {
+    setHeatmapLoading(!showHeatmap);
+    setShowHeatmap((prevState) => !prevState);
+  };
 
   const onShowSubmit = () => setShowSubmit(true);
 
@@ -727,9 +731,14 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
           <Typography className={classes.title}>Spot the Lesion</Typography>
 
-          <Button color="inherit" disabled={round === 0 || inRound} onClick={onToggleHeatmap}>
+          <LoadingButton
+            color="inherit"
+            disabled={round === 0 || inRound}
+            loading={heatmapLoading}
+            onClick={onToggleHeatmap}
+          >
             {showHeatmap ? "Hide Heatmap" : "Show Heatmap"}
-          </Button>
+          </LoadingButton>
         </Toolbar>
       </AppBar>
 
@@ -767,7 +776,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
           gameMode={gameMode}
           round={round}
           inRound={inRound}
-          loading={loading}
+          loading={roundLoading}
           playerScore={playerScore}
           playerRoundScore={playerRoundScore}
           aiScore={aiScore}

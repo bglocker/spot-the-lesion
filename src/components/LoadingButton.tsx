@@ -16,7 +16,7 @@ const LoadingButton: React.FC<LoadingButtonProps> = ({
     // Props are properly destructured and passed
     // eslint-disable-next-line react/jsx-props-no-spreading
     <Button disabled={disabled || loading} {...other}>
-      {loading ? <CircularProgress color="primary" size={24} /> : children}
+      {loading ? <CircularProgress color="secondary" size={24} /> : children}
     </Button>
   );
 };

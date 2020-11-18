@@ -29,9 +29,9 @@ const months: Month[] = [
 const getMonthName = (month: number): Month => months[month];
 
 /**
- * Check if the given error is a FirestoreError
+ * Checks if an error is a Firestore error
  *
- * @param error Error to type check
+ * @param error Error to check
  *
  * @return FirestoreError type predicate
  */
@@ -39,17 +39,17 @@ const isFirestoreError = (error: Error): error is FirestoreError =>
   (error as FirestoreError).code !== undefined;
 
 /**
- * Logs the given FirestoreError
+ * Logs a Firestore error
  *
- * @param error FirestoreError to log
+ * @param error Firestore error to log
  */
 const logFirestoreError = (error: FirestoreError): void =>
   console.error(`Firebase firestore error\n code: ${error.code}\n message: ${error.message}`);
 
 /**
- * Check if the given error is a FirebaseStorageError
+ * Checks if an error is a Firebase storage error
  *
- * @param error Error to type check
+ * @param error Error to check
  *
  * @return FirebaseStorageError type predicate
  */
@@ -57,9 +57,9 @@ const isFirebaseStorageError = (error: Error): error is FirebaseStorageError =>
   (error as FirebaseStorageError).serverResponse !== undefined;
 
 /**
- * Logs the given FirebaseStorageError
+ * Logs a Firebase storage error
  *
- * @param error FirebaseStorageError to log
+ * @param error Firebase storage error to log
  */
 const logFirebaseStorageError = (error: FirebaseStorageError): void =>
   console.error(`Firebase storage error\n code: ${error.code}\n message: ${error.message}`);

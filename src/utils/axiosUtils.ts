@@ -1,9 +1,9 @@
 import { AxiosError } from "axios";
 
 /**
- * Checks if the given error is an AxiosError
+ * Checks if an error is an Axios error
  *
- * @param error Error to type check
+ * @param error Error to check
  *
  * @return AxiosError type predicate
  */
@@ -11,9 +11,9 @@ const isAxiosError = (error: Error): error is AxiosError =>
   (error as AxiosError).isAxiosError !== undefined;
 
 /**
- * Logs the given AxiosError
+ * Logs an axios error
  *
- * @param error AxiosError to log
+ * @param error Axios error to log
  */
 const logAxiosError = (error: AxiosError): void => {
   if (error.response) {
