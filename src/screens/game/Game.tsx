@@ -78,8 +78,11 @@ const useStyles = makeStyles((theme) =>
       alignItems: "center",
     },
     canvasContainer: {
-      display: "grid",
+      position: "relative",
       padding: 8,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
       [theme.breakpoints.down("sm")]: {
         height: "80vw",
         width: "80vw",
@@ -96,8 +99,25 @@ const useStyles = makeStyles((theme) =>
     canvas: {
       height: "100%",
       width: "100%",
-      gridColumnStart: 1,
-      gridRowStart: 1,
+      position: "absolute",
+      left: 0,
+      top: 0,
+    },
+    imageCanvas: {
+      zIndex: 0,
+    },
+    animationCanvas: {
+      zIndex: 1,
+    },
+    heatmapCanvas: {
+      zIndex: 2,
+    },
+    playerValidationText: {
+      zIndex: 3,
+      userSelect: "none",
+      marginTop: 16,
+      fontSize: "4rem",
+      textShadow: "-1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white",
     },
   })
 );
@@ -158,7 +178,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
     setHeatmapLoading,
     canvasContainer,
     fileId,
-    classes.canvas
+    `${classes.canvas} ${classes.heatmapCanvas}`
   );
 
   const { enqueueSnackbar } = useSnackbar();
@@ -305,14 +325,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
       if (click) {
         const { x, y } = click;
 
-        drawCross(
-          context,
-          x,
-          y,
-          constants.clickSize,
-          constants.clickLineWidth,
-          colors.clickInitial
-        );
+        drawCross(context, x, y, constants.clickSize, constants.clickLineWidth, colors.click);
       }
 
       /* TODO: maybe remove this snackbar */
@@ -326,7 +339,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
        *
        * draw predicted rectangle in initial color
        */
-      drawRectangle(context, predicted, constants.predictedLineWidth, colors.predictedInitial);
+      drawRectangle(context, predicted, constants.predictedLineWidth, colors.predicted);
     } else if (endTime === 500) {
       /*
        * 0.5 seconds passed
@@ -364,15 +377,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
           setPlayerCorrectCurrent(true);
         }
 
-        drawCross(
-          context,
-          x,
-          y,
-          constants.clickSize,
-          constants.clickLineWidth,
-          correct ? colors.clickValid : colors.clickInvalid
-        );
-
         uploadClick(x, y, correct).then(() => {});
       }
     } else if (endTime === 1500) {
@@ -400,13 +404,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
         setAiRoundScore(gameMode === "casual" ? casualScore : competitiveRoundScore);
         setAiCorrect((prevState) => prevState + 1);
       }
-
-      drawRectangle(
-        context,
-        predicted,
-        constants.predictedLineWidth,
-        correct ? colors.predictedValid : colors.predictedInvalid
-      );
 
       setInRound(false);
       setEndRunning(false);
@@ -749,19 +746,29 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
 
           <Card className={classes.canvasContainer} ref={canvasContainer}>
             <canvas
-              className={classes.canvas}
+              className={`${classes.canvas} ${classes.imageCanvas}`}
               ref={canvasRef}
               width={MAX_CANVAS_SIZE}
               height={MAX_CANVAS_SIZE}
             />
 
             <canvas
-              className={classes.canvas}
+              className={`${classes.canvas} ${classes.animationCanvas}`}
               ref={animationCanvasRef}
               width={MAX_CANVAS_SIZE}
               height={MAX_CANVAS_SIZE}
               onClick={onCanvasClick}
             />
+
+            <Typography
+              className={classes.playerValidationText}
+              style={{
+                display: round === 0 || roundLoading || inRound ? "none" : "block",
+                color: playerCorrectCurrent ? colors.playerCorrect : colors.playerIncorrect,
+              }}
+            >
+              {playerCorrectCurrent ? "Well spotted!" : "Missed!"}
+            </Typography>
           </Card>
         </div>
 

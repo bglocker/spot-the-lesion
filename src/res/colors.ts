@@ -4,17 +4,15 @@ const colors = {
 
   /* Game */
   animation: "#63a2ab",
-  clickInitial: "red",
-  clickInvalid: "red",
-  clickValid: "green",
+  click: "orange",
   hint: "red",
   timerInitial: "#373737",
   timerOrange: "orange",
   timerRed: "red",
-  truth: "blue",
-  predictedInitial: "#63a2ab",
-  predictedInvalid: "red",
-  predictedValid: "green",
+  truth: "red",
+  playerCorrect: "green",
+  playerIncorrect: "red",
+  predicted: "green",
 
   /* GameSideBar */
   draw: "gray",
