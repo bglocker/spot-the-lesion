@@ -1,4 +1,7 @@
 import firebase from "firebase";
+import { ReactNode } from "react";
+import { OptionsObject } from "notistack";
+import constants from "../res/constants";
 
 type FirestoreError = firebase.firestore.FirestoreError;
 
@@ -47,6 +50,30 @@ const logFirestoreError = (error: FirestoreError): void =>
   console.error(`Firebase firestore error\n code: ${error.code}\n message: ${error.message}`);
 
 /**
+ * Log the given error, optionally displaying a snackbar
+ *
+ * @param error           Error to handle
+ * @param enqueueSnackbar Function to display a snackbar
+ */
+const handleFirestoreError = (
+  error: FirestoreError,
+  enqueueSnackbar?: (message: ReactNode, options?: OptionsObject) => void
+): void => {
+  logFirestoreError(error);
+
+  /* Snackbar should be displayed */
+  if (enqueueSnackbar) {
+    let message = "Please try again";
+
+    if (error.code === "unavailable") {
+      message = "Please check your internet connection and try again.";
+    }
+
+    enqueueSnackbar(message, constants.errorSnackbarOptions);
+  }
+};
+
+/**
  * Checks if an error is a Firebase storage error
  *
  * @param error Error to check
@@ -64,10 +91,35 @@ const isFirebaseStorageError = (error: Error): error is FirebaseStorageError =>
 const logFirebaseStorageError = (error: FirebaseStorageError): void =>
   console.error(`Firebase storage error\n code: ${error.code}\n message: ${error.message}`);
 
+/**
+ * Log the given error, optionally displaying a snackbar
+ *
+ * @param error           Error to handle
+ * @param enqueueSnackbar Function to display a snackbar
+ */
+const handleFirebaseStorageError = (
+  error: FirebaseStorageError,
+  enqueueSnackbar?: (message: ReactNode, options?: OptionsObject) => void
+): void => {
+  logFirebaseStorageError(error);
+
+  /* Snackbar should be displayed */
+  if (enqueueSnackbar) {
+    let message = "Please try again";
+
+    /* Internet connection error */
+    if (error.code === "storage/retry-limit-exceeded") {
+      message = "Please check your internet connection and try again.";
+    }
+
+    enqueueSnackbar(message, constants.errorSnackbarOptions);
+  }
+};
+
 export {
   getMonthName,
+  handleFirebaseStorageError,
+  handleFirestoreError,
   isFirebaseStorageError,
   isFirestoreError,
-  logFirebaseStorageError,
-  logFirestoreError,
 };

@@ -3,14 +3,15 @@ import h337 from "heatmap.js";
 import { useSnackbar } from "notistack";
 import { db } from "../firebase/firebaseApp";
 import { toCanvasScale } from "../utils/canvasUtils";
-import logUncaughtError from "../utils/errorUtils";
-import { isFirestoreError, logFirestoreError } from "../utils/firebaseUtils";
+import { handleUncaughtError } from "../utils/errorUtils";
+import { handleFirestoreError, isFirestoreError } from "../utils/firebaseUtils";
 import constants from "../res/constants";
 
 /**
  * Custom hook for drawing a Heatmap over a canvas
  *
  * @param show       If true, the heatmap is shown
+ * @param setShow    Function to update the show state of the heatmap
  * @param setLoading Function to update the loading state of the heatmap
  * @param container  Ref to the container element to draw the heatmap in
  * @param fileId     Id of the file for which to retrieve values from database
@@ -18,6 +19,7 @@ import constants from "../res/constants";
  */
 const useHeatmap = (
   show: boolean,
+  setShow: (boolean) => void,
   setLoading: (boolean) => void,
   container: RefObject<HTMLDivElement>,
   fileId: number,
@@ -88,26 +90,16 @@ const useHeatmap = (
         })
         .catch((error) => {
           if (isFirestoreError(error)) {
-            logFirestoreError(error);
-
-            /* Check if error occurred because of the client's internet connection */
-            if (error.code === "unavailable") {
-              enqueueSnackbar(
-                "Please check your internet connection and try again.",
-                constants.errorSnackbarOptions
-              );
-
-              return;
-            }
+            handleFirestoreError(error, enqueueSnackbar);
           } else {
-            logUncaughtError("getClicks", error);
+            handleUncaughtError(error, "getClicks", enqueueSnackbar);
           }
 
-          enqueueSnackbar("Please try again.", constants.errorSnackbarOptions);
+          setShow(false);
         })
         .finally(() => setLoading(false));
     }
-  }, [className, container, enqueueSnackbar, heatmapInstance, fileId, show, setLoading]);
+  }, [className, container, enqueueSnackbar, heatmapInstance, fileId, show, setLoading, setShow]);
 };
 
 export default useHeatmap;

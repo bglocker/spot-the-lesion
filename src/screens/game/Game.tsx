@@ -29,17 +29,16 @@ import {
   getAnnotationPath,
   getImagePath,
   getIntersectionOverUnion,
-  logImageLoadError,
   unlockAchievement,
 } from "../../utils/GameUtils";
-import { isAxiosError, logAxiosError } from "../../utils/axiosUtils";
-import logUncaughtError from "../../utils/errorUtils";
+import { handleAxiosError, isAxiosError } from "../../utils/axiosUtils";
+import { handleImageLoadError, handleUncaughtError } from "../../utils/errorUtils";
 import {
   getMonthName,
+  handleFirebaseStorageError,
+  handleFirestoreError,
   isFirebaseStorageError,
   isFirestoreError,
-  logFirebaseStorageError,
-  logFirestoreError,
 } from "../../utils/firebaseUtils";
 import colors from "../../res/colors";
 import constants from "../../res/constants";
@@ -156,7 +155,14 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
   const canvasContainer = useRef<HTMLDivElement>(null);
 
-  useHeatmap(showHeatmap, setHeatmapLoading, canvasContainer, fileId, classes.canvas);
+  useHeatmap(
+    showHeatmap,
+    setShowHeatmap,
+    setHeatmapLoading,
+    canvasContainer,
+    fileId,
+    classes.canvas
+  );
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -275,9 +281,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         await db.collection(constants.images).doc(docName).set(imageData);
       } catch (error) {
         if (isFirestoreError(error)) {
-          logFirestoreError(error);
+          handleFirestoreError(error);
         } else {
-          logUncaughtError("uploadClick", error);
+          handleUncaughtError(error, "uploadClick");
         }
       }
     },
@@ -556,9 +562,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
    * @return Void promise
    */
   const loadAnnotation = async (annotationId: number) => {
-    const annotationRef = firebaseStorage.ref(getAnnotationPath(annotationId));
-
-    const url = await annotationRef.getDownloadURL();
+    const url = await firebaseStorage.ref(getAnnotationPath(annotationId)).getDownloadURL();
 
     const response = await axios.get<AnnotationData>(url, { timeout: constants.getTimeout });
 
@@ -589,10 +593,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       image.onerror = (_ev, _src, _line, _col, error) => reject(error);
 
       /* Set source after onload to ensure onload gets called (in case the image is cached) */
-
-      const imageRef = firebaseStorage.ref(getImagePath(imageId));
-
-      imageRef
+      firebaseStorage
+        .ref(getImagePath(imageId))
         .getDownloadURL()
         .then((url) => {
           image.src = url;
@@ -644,34 +646,12 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       console.error(`Annotation/Image load error\n fileId: ${newFileId}`);
 
       if (isFirebaseStorageError(error)) {
-        logFirebaseStorageError(error);
-
-        /* Check if error occurred because of the client's internet connection */
-        if (error.code === "storage/retry-limit-exceeded") {
-          enqueueSnackbar(
-            "Please check your internet connection and try again.",
-            constants.errorSnackbarOptions
-          );
-
-          return;
-        }
+        handleFirebaseStorageError(error, enqueueSnackbar);
       } else if (isAxiosError(error)) {
-        logAxiosError(error);
-
-        /* Check if error occurred because of the client's internet connection */
-        if (error.message.includes("timeout")) {
-          enqueueSnackbar(
-            "Please check your internet connection and try again.",
-            constants.errorSnackbarOptions
-          );
-
-          return;
-        }
+        handleAxiosError(error, enqueueSnackbar);
       } else {
-        logImageLoadError(error as Error);
+        handleImageLoadError(error, enqueueSnackbar);
       }
-
-      enqueueSnackbar("Please try again.", constants.errorSnackbarOptions);
     } finally {
       setRoundLoading(false);
     }
@@ -709,19 +689,17 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       if (!scoreDoc.exists || (scoreDoc.data() as FirestoreScoreData).score < scoreData.score) {
         await db.collection(scores).doc(docName).set(scoreData);
       }
+
+      enqueueSnackbar("Score successfully submitted!", constants.successSnackbarOptions);
+
+      setRoute("home");
     } catch (error) {
       if (isFirestoreError(error)) {
-        logFirestoreError(error);
+        handleFirestoreError(error, enqueueSnackbar);
       } else {
-        logUncaughtError("submitScore", error);
+        handleUncaughtError(error, "submitScore", enqueueSnackbar);
       }
-
-      enqueueSnackbar("Sorry, that failed! Please try again.", constants.errorSnackbarOptions);
     }
-
-    enqueueSnackbar("Score successfully submitted!", constants.successSnackbarOptions);
-
-    setRoute("home");
   };
 
   const onToggleHeatmap = () => {

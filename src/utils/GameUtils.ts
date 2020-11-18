@@ -22,14 +22,6 @@ const getAnnotationPath = (annotationId: number): string => `annotations/${annot
 const getImagePath = (imageId: number): string => `images/${imageId}.png`;
 
 /**
- * Logs the given image loading error
- *
- * @param error Image load error to log
- */
-const logImageLoadError = (error: Error): void =>
-  console.error(`Image loading error\n message: ${error.message}`);
-
-/**
  * Given the coordinates of two rectangles, returns the ratio of their intersection
  * over their union.
  *
@@ -123,7 +115,6 @@ export {
   getAnnotationPath,
   getImagePath,
   getIntersectionOverUnion,
-  logImageLoadError,
   range,
   shuffledRange,
   unlockAchievement,

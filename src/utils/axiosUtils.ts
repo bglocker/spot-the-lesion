@@ -1,4 +1,7 @@
 import { AxiosError } from "axios";
+import { ReactNode } from "react";
+import { OptionsObject } from "notistack";
+import constants from "../res/constants";
 
 /**
  * Checks if an error is an Axios error
@@ -30,4 +33,29 @@ const logAxiosError = (error: AxiosError): void => {
   }
 };
 
-export { isAxiosError, logAxiosError };
+/**
+ * Logs the given error, optionally displaying a snackbar
+ *
+ * @param error           Error to handle
+ * @param enqueueSnackbar Function to display a snackbar
+ */
+const handleAxiosError = (
+  error: AxiosError,
+  enqueueSnackbar?: (message: ReactNode, options?: OptionsObject) => void
+): void => {
+  logAxiosError(error);
+
+  /* Snackbar should be displayed */
+  if (enqueueSnackbar) {
+    let message = "Please try again";
+
+    /* Internet connection error */
+    if (error.message.includes("timeout")) {
+      message = "Please check your internet connection and try again.";
+    }
+
+    enqueueSnackbar(message, constants.errorSnackbarOptions);
+  }
+};
+
+export { handleAxiosError, isAxiosError };
