@@ -390,7 +390,11 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
        * evaluate AI prediction
        * draw predicted rectangle in valid or invalid color
        * stop end timer and current round
+       * retrieve the image stats corresponding to current file if player has not answered
        */
+      if (!click) {
+        retrieveImageStats(fileId).then(() => {});
+      }
       const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
 
       /* AI was successful if the ratio of the intersection over the union is greater than 0.5 */
@@ -431,6 +435,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     roundTime,
     truth,
     uploadClick,
+    fileId,
   ]);
 
   /**
