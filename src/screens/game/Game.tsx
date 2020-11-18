@@ -476,43 +476,38 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     }
 
     if (playerCorrectCurrent) {
-      unlockAchievementHandler("firstCorrect", "Achievement! First correct answer!");
+      unlockAchievementHandler("firstCorrect", "Achievement! First Step!");
 
       if (!hintedCurrent) {
-        unlockAchievementHandler("firstCorrectWithoutHint", "Achievement! No hint needed!");
+        unlockAchievementHandler("firstCorrectWithoutHint", "Achievement! Independent Spotter!");
       }
     }
 
     if (gameMode === "casual") {
       if (playerCorrect === 5) {
-        unlockAchievementHandler(
-          "fiveCorrectSameRunCasual",
-          "Achievement! Five correct in same casual run!"
-        );
+        unlockAchievementHandler("fiveCorrectSameRunCasual", "Achievement! Going the distance!");
       }
     }
 
     if (gameMode === "competitive") {
       if (playerCorrectCurrent && roundTime > constants.roundTimeInitial - 2000) {
-        unlockAchievementHandler(
-          "fastAnswer",
-          "Achievement! You answered correctly in less than 2 seconds!"
-        );
+        unlockAchievementHandler("fastAnswer", "Achievement! The flash!");
       }
 
       if (playerScore + playerRoundScore >= 1000) {
-        unlockAchievementHandler(
-          "competitivePoints",
-          "Achievement! 1000 points in a competitive run!"
-        );
+        unlockAchievementHandler("competitivePoints", "Achievement! IT'S OVER 1000!!!");
       }
 
       if (playerCorrect === constants.rounds) {
-        unlockAchievementHandler("allCorrectCompetitive", "Achievement! You got them all right!");
+        unlockAchievementHandler("allCorrectCompetitive", "Achievement! Perfectionist!");
       }
 
       if (round === constants.rounds && playerScore + playerRoundScore > aiScore + aiRoundScore) {
-        unlockAchievementHandler("firstCompetitiveWin", "Achievement! First competitive win!");
+        unlockAchievementHandler("firstCompetitiveWin", "Achievement! Competitive Winner!");
+      }
+
+      if (round === constants.rounds && playerCorrect === 5) {
+        unlockAchievementHandler("fiveCorrectSameRunCompetitive", "Achievement! Master Spotter!");
       }
     }
   }, [
@@ -701,6 +696,10 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     }
 
     enqueueSnackbar("Score successfully submitted!", constants.successSnackbarOptions);
+
+    if (playerScore + playerRoundScore > aiCorrect) {
+      unlockAchievement("firstCasualWin", "Achievement! Casually Winning!", enqueueSnackbar);
+    }
 
     setRoute("home");
   };
