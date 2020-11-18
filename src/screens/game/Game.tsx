@@ -379,7 +379,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
           correct ? colors.clickValid : colors.clickInvalid
         );
 
-        uploadClick(x, y, correct).then(() => {});
+        uploadClick(x, y, correct).then(() => {
+          retrieveImageStats(fileId).then(() => {});
+        });
       }
     } else if (endTime === 1500) {
       /*
@@ -614,7 +616,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
    */
   const retrieveImageStats = async (fileNumber: number) => {
     const table = DbUtils.IMAGES;
-    // Next 4 lines just for testing the stats on image 1
+    // // Next 4 lines just for testing the stats on image 1
     // let index = 1;
     // if (fileNumber !== 1) {
     //   index = 2;
@@ -673,7 +675,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
     try {
       await loadAnnotation(newFileId);
       await loadImage(newFileId);
-      await retrieveImageStats(newFileId);
     } catch (error) {
       /* Log error for developers */
       console.error(`Annotation/Image load error\n fileId: ${newFileId}`);
