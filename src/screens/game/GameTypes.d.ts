@@ -1,8 +1,8 @@
 interface GameProps {
   setRoute: (Route) => void;
   gameMode: GameMode;
-  MIN_FILE_ID: number;
-  MAX_FILE_ID: number;
+  minFileId: number;
+  maxFileId: number;
 }
 
 interface GameModeSelectProps {

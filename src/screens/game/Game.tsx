@@ -105,11 +105,23 @@ const useStyles = makeStyles((theme) =>
 /* TODO: extract this */
 const MAX_CANVAS_SIZE = 750;
 
-const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_ID }: GameProps) => {
+const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }: GameProps) => {
   const classes = useStyles();
 
   const [context, canvasRef] = useCanvasContext();
   const [animationContext, animationCanvasRef] = useCanvasContext();
+
+  const canvasContainer = useRef<HTMLDivElement>(null);
+
+  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showSubmit, setShowSubmit] = useState(false);
+
+  const getNewFileId = useUniqueRandomGenerator(minFileId, maxFileId);
+  const [fileId, setFileId] = useState(0);
+
+  const [truth, setTruth] = useState<number[]>([]);
+  const [predicted, setPredicted] = useState<number[]>([]);
+  const [click, setClick] = useState<{ x: number; y: number } | null>(null);
 
   const [inRound, setInRound] = useState(false);
 
@@ -124,36 +136,21 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   const [endTime, setEndTime] = useState(0);
   const [animationPosition, setAnimationPosition] = useState(0);
 
-  const [hinted, setHinted] = useState(false);
-
-  const [hintedCurrent, setHintedCurrent] = useState(false);
-
   const [timerColor, setTimerColor] = useState(colors.timerInitial);
-
-  const getNewFileId = useUniqueRandomGenerator(MIN_FILE_ID, MAX_FILE_ID);
-  const [fileId, setFileId] = useState(0);
-
-  const [truth, setTruth] = useState<number[]>([]);
-  const [predicted, setPredicted] = useState<number[]>([]);
-  const [click, setClick] = useState<{ x: number; y: number } | null>(null);
 
   const [round, setRound] = useState(0);
 
+  const [hinted, setHinted] = useState(false);
+  const [hintedCurrent, setHintedCurrent] = useState(false);
+
   const [playerScore, setPlayerScore] = useState(0);
-  const [aiScore, setAiScore] = useState(0);
-
   const [playerRoundScore, setPlayerRoundScore] = useState(0);
-  const [aiRoundScore, setAiRoundScore] = useState(0);
-
   const [playerCorrect, setPlayerCorrect] = useState(0);
-  const [aiCorrect, setAiCorrect] = useState(0);
-
   const [playerCorrectCurrent, setPlayerCorrectCurrent] = useState(false);
 
-  const [showHeatmap, setShowHeatmap] = useState(false);
-  const [showSubmit, setShowSubmit] = useState(false);
-
-  const canvasContainer = useRef<HTMLDivElement>(null);
+  const [aiScore, setAiScore] = useState(0);
+  const [aiRoundScore, setAiRoundScore] = useState(0);
+  const [aiCorrect, setAiCorrect] = useState(0);
 
   useHeatmap(
     showHeatmap,
