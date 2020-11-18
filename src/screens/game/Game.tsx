@@ -621,12 +621,12 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
    */
   const retrieveImageStats = async (fileNumber: number) => {
     const table = DbUtils.IMAGES;
-    // // Next 4 lines just for testing the stats on image 1
-    // let index = 1;
-    // if (fileNumber !== 1) {
-    //   index = 2;
-    // }
-    const docName = `image_${fileNumber}`;
+    // Next 4 lines are just for testing the stats on images 1 and 2
+    let index = 1;
+    if (fileNumber !== 1) {
+      index = 2;
+    }
+    const docName = `image_${index}`;
 
     const imageDoc = await db.collection(table).doc(docName).get();
     if (imageDoc.exists) {
@@ -639,13 +639,13 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
   const createPieChartData = () => {
     return [
       {
-        id: "Correct",
+        id: "Correct Answers",
         label: "Correct Answers",
         value: correctAnswers,
         color: "hsl(332, 70%, 50%)",
       },
       {
-        id: "Wrong",
+        id: "Wrong Answers",
         label: "Wrong Answers",
         value: wrongAnswers,
         color: "hsl(194, 70%, 50%)",
@@ -851,7 +851,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
       <ImageStatsDialog
         open={showImageStats}
-        fileNumber={fileId}
         data={createPieChartData()}
         onClose={onCloseImageStats}
       />

@@ -37,7 +37,6 @@ const useStyles = makeStyles(
 
 const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
   open,
-  fileNumber,
   data,
   onClose,
 }: ImageStatsDialogProps) => {
@@ -45,6 +44,18 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
 
   const onCloseDialog = () => {
     onClose();
+  };
+
+  const displayMessagesForZeroValuedStats = () => {
+    let message;
+    const components: JSX.Element[] = [];
+    data.forEach((stat) => {
+      if (stat.value === 0) {
+        message = `\nThere are no ${stat.id} registered for this image!`;
+        components.push(<Typography className={classes.statTitle}>{message}</Typography>);
+      }
+    });
+    return components;
   };
 
   return (
@@ -55,12 +66,11 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
         </Button>
       </DialogActions>
 
-      <DialogTitle />
+      <DialogTitle>
+        <Typography className={classes.statTitle}>Statistics for current image</Typography>
+      </DialogTitle>
 
       <Card className={classes.imageStatsCard}>
-        <Typography
-          className={classes.statTitle}
-        >{`Statistics for Image ${fileNumber}`}</Typography>
         <ResponsivePie
           data={data}
           margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
@@ -119,6 +129,7 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
           ]}
         />
       </Card>
+      {displayMessagesForZeroValuedStats()}
     </Dialog>
   );
 };
