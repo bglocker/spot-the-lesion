@@ -103,8 +103,6 @@ const useStyles = makeStyles((theme) =>
   })
 );
 
-/* TODO: offline handling */
-
 /* TODO: extract this */
 const MAX_CANVAS_SIZE = 750;
 
@@ -562,7 +560,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
     const url = await annotationRef.getDownloadURL();
 
-    const response = await axios.get<AnnotationData>(url);
+    const response = await axios.get<AnnotationData>(url, { timeout: constants.getTimeout });
 
     const annotation = response.data;
 
@@ -647,13 +645,33 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
       if (isFirebaseStorageError(error)) {
         logFirebaseStorageError(error);
+
+        /* Check if error occurred because of the client's internet connection */
+        if (error.code === "storage/retry-limit-exceeded") {
+          enqueueSnackbar(
+            "Please check your internet connection and try again.",
+            constants.errorSnackbarOptions
+          );
+
+          return;
+        }
       } else if (isAxiosError(error)) {
         logAxiosError(error);
+
+        /* Check if error occurred because of the client's internet connection */
+        if (error.message.includes("timeout")) {
+          enqueueSnackbar(
+            "Please check your internet connection and try again.",
+            constants.errorSnackbarOptions
+          );
+
+          return;
+        }
       } else {
         logImageLoadError(error as Error);
       }
 
-      enqueueSnackbar("Sorry, that failed! Please try again.", constants.errorSnackbarOptions);
+      enqueueSnackbar("Please try again.", constants.errorSnackbarOptions);
     } finally {
       setRoundLoading(false);
     }

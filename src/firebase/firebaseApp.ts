@@ -1,13 +1,11 @@
 import firebase from "firebase/app";
-import "firebase/auth";
 import "firebase/firestore";
 import "firebase/storage";
 import firebaseConfig from "./firebaseConfig";
+import constants from "../res/constants";
 
 /* TODO: test with firebase.auth() and firebase.firestore() later on */
 /* TODO: fix mutable exports */
-// eslint-disable-next-line import/no-mutable-exports
-let auth: firebase.auth.Auth;
 // eslint-disable-next-line import/no-mutable-exports
 let db: firebase.firestore.Firestore;
 // eslint-disable-next-line import/no-mutable-exports
@@ -20,9 +18,10 @@ const setupFirebase = (): void => {
   }
 
   const firebaseApp = firebase.initializeApp(firebaseConfig);
-  auth = firebaseApp.auth();
   db = firebaseApp.firestore();
   firebaseStorage = firebaseApp.storage();
+
+  firebaseStorage.setMaxOperationRetryTime(constants.maxOperationRetryTime);
 };
 
-export { auth, db, firebaseStorage, setupFirebase };
+export { db, firebaseStorage, setupFirebase };

@@ -21,10 +21,16 @@ const constants = {
   /* canvasUtils */
   defaultImageSize: 512,
 
-  /* Firebase */
+  /* axios */
+  getTimeout: 3000,
+
+  /* Firestore */
   scoresCasual: "leaderboard_casual",
   scoresCompetitive: "leaderboard_competitive",
   images: "images",
+
+  /* Storage */
+  maxOperationRetryTime: 3000,
 
   /* Snackbar */
   achievementSnackbarOptions: {
