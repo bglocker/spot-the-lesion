@@ -766,18 +766,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
   const onCloseImageStats = () => setShowImageStats(false);
 
-  const displayImageStats = () => {
-    return showImageStats ? (
-      <ImageStatsDialog
-        open={showImageStats}
-        data={createPieChartData()}
-        onClose={onCloseImageStats}
-      />
-    ) : (
-      <div className={classes.emptyDiv} />
-    );
-  };
-
   return (
     <>
       <AppBar position="sticky">
@@ -793,14 +781,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
           </IconButton>
 
           <Typography className={classes.title}>Spot the Lesion</Typography>
-          <Button
-            color="inherit"
-            disabled={round === 0 || inRound}
-            onClick={() => {
-              onShowImageStats();
-              displayImageStats();
-            }}
-          >
+
+          <Button color="inherit" disabled={round === 0 || inRound} onClick={onShowImageStats}>
             Show Image Stats
           </Button>
 
@@ -855,6 +837,11 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
       </div>
 
       <SubmitScoreDialog open={showSubmit} onClose={onCloseSubmit} onSubmit={submitScore} />
+      <ImageStatsDialog
+        open={showImageStats}
+        data={createPieChartData()}
+        onClose={onCloseImageStats}
+      />
     </>
   );
 };
