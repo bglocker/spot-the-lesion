@@ -1,105 +1,61 @@
 import { RefObject, useEffect, useState } from "react";
 import h337 from "heatmap.js";
-import { useSnackbar } from "notistack";
-import { db } from "../firebase/firebaseApp";
-import { toCanvasScale } from "../utils/canvasUtils";
-import { handleUncaughtError } from "../utils/errorUtils";
-import { handleFirestoreError, isFirestoreError } from "../utils/firebaseUtils";
-import constants from "../res/constants";
 
 /**
  * Custom hook for drawing a Heatmap over a canvas
  *
  * @param show       If true, the heatmap is shown
- * @param setShow    Function to update the show state of the heatmap
- * @param setLoading Function to update the loading state of the heatmap
+ * @param loadData   Function to load heatmap data
  * @param container  Ref to the container element to draw the heatmap in
- * @param fileId     Id of the file for which to retrieve values from database
  * @param className  Canvas className
  */
 const useHeatmap = (
   show: boolean,
-  setShow: (boolean) => void,
-  setLoading: (boolean) => void,
+  loadData: (any) => void,
   container: RefObject<HTMLDivElement>,
-  fileId: number,
   className: string
 ): void => {
   const [heatmapInstance, setHeatmapInstance] = useState<h337>(null!);
 
-  const { enqueueSnackbar } = useSnackbar();
-
   useEffect(() => {
-    const getClicks = async () => {
-      const docName = `image_${fileId}`;
-
-      const imageDoc = await db.collection(constants.images).doc(docName).get();
-
-      const imageData = imageDoc.data();
-
-      if (imageData === undefined) {
-        return [];
-      }
-
-      return (imageData as FirestoreImageData).clicks;
-    };
-
     if (container.current === null) {
       return;
     }
 
-    /* Remove heatmap when not showing */
-    if (heatmapInstance !== null && !show) {
-      // eslint-disable-next-line no-underscore-dangle
-      const { ctx } = heatmapInstance._renderer;
+    /* Initialize heatmap instance */
+    const instance = h337.create({
+      container: container.current,
+      valueField: "clickCount",
+    });
 
-      ctx.canvas.remove();
+    // eslint-disable-next-line no-underscore-dangle
+    const { canvas } = instance._renderer;
 
-      setHeatmapInstance(null);
+    /* Replace default style with Game canvas style */
+    canvas.setAttribute("style", "display: block;");
+    canvas.className = className;
+
+    setHeatmapInstance(instance);
+  }, [className, container]);
+
+  useEffect(() => {
+    if (heatmapInstance === null) {
+      return;
     }
 
-    /* Draw heatmap when showing */
-    if (heatmapInstance === null && show) {
-      const instance = h337.create({
-        container: container.current,
-        valueField: "clickCount",
-      });
+    // eslint-disable-next-line no-underscore-dangle
+    const { canvas } = heatmapInstance._renderer;
 
-      // eslint-disable-next-line no-underscore-dangle
-      const { ctx } = instance._renderer;
+    if (show) {
+      /* Show heatmap and load data */
+      canvas.style.display = "block";
 
-      /* Replace default style with Game canvas style */
-      ctx.canvas.removeAttribute("style");
-      ctx.canvas.className = className;
-
-      setHeatmapInstance(instance);
-
-      getClicks()
-        .then((clicks) => {
-          const heatmapData = {
-            min: 0,
-            max: 1,
-            data: clicks.map(({ x, y, clickCount }) => ({
-              x: toCanvasScale(ctx, x),
-              y: toCanvasScale(ctx, y),
-              clickCount,
-            })),
-          };
-
-          instance.setData(heatmapData);
-        })
-        .catch((error) => {
-          if (isFirestoreError(error)) {
-            handleFirestoreError(error, enqueueSnackbar);
-          } else {
-            handleUncaughtError(error, "getClicks", enqueueSnackbar);
-          }
-
-          setShow(false);
-        })
-        .finally(() => setLoading(false));
+      loadData(heatmapInstance);
+    } else {
+      /* Hide heatmap */
+      canvas.style.display = "none";
     }
-  }, [className, container, enqueueSnackbar, heatmapInstance, fileId, show, setLoading, setShow]);
+  }, [heatmapInstance, loadData, show]);
 };
 
 export default useHeatmap;

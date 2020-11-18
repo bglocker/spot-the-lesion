@@ -172,15 +172,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
   const [aiRoundScore, setAiRoundScore] = useState(0);
   const [aiCorrect, setAiCorrect] = useState(0);
 
-  useHeatmap(
-    showHeatmap,
-    setShowHeatmap,
-    setHeatmapLoading,
-    canvasContainer,
-    fileId,
-    `${classes.canvas} ${classes.heatmapCanvas}`
-  );
-
   const { enqueueSnackbar } = useSnackbar();
 
   /**
@@ -555,7 +546,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
    *
    * @return Void promise
    */
-  const loadAnnotation = async (annotationId: number) => {
+  const loadAnnotation = async (annotationId: number): Promise<void> => {
     const url = await firebaseStorage.ref(getAnnotationPath(annotationId)).getDownloadURL();
 
     const response = await axios.get<AnnotationData>(url, { timeout: constants.getTimeout });
@@ -652,12 +643,55 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
   };
 
   /**
+   * Load the data to display on the given heatmap instance
+   *
+   * @param instance Heatmap instance
+   */
+  const loadHeatmapData = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async (instance: any): Promise<void> => {
+      setHeatmapLoading(true);
+
+      const docName = `image_${fileId}`;
+
+      try {
+        const imageDoc = await db.collection(constants.images).doc(docName).get();
+
+        const { clicks = [] } = (imageDoc.data() || {}) as FirestoreImageData;
+
+        const heatmapData = {
+          min: 0,
+          max: 1,
+          data: clicks.map(({ x, y, clickCount }) => ({
+            x: toCanvasScale(context, x),
+            y: toCanvasScale(context, y),
+            clickCount,
+          })),
+        };
+
+        instance.setData(heatmapData);
+      } catch (error) {
+        if (isFirestoreError(error)) {
+          handleFirestoreError(error, enqueueSnackbar);
+        } else {
+          handleUncaughtError(error, "loadHeatmapData", enqueueSnackbar);
+        }
+
+        setShowHeatmap(false);
+      } finally {
+        setHeatmapLoading(false);
+      }
+    },
+    [context, enqueueSnackbar, fileId]
+  );
+
+  /**
    * Submit the achieved score for the given username
    * (Over)write if achieved score is greater than stored one, or there is no stored value
    *
    * @param username Player username to identify achieved score
    */
-  const submitScore = async (username: string) => {
+  const submitScore = async (username: string): Promise<void> => {
     const date = new Date();
 
     const scoreData: FirestoreScoreData = {
@@ -693,6 +727,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
       } else {
         handleUncaughtError(error, "submitScore", enqueueSnackbar);
       }
+
+      /* Catch again in caller */
+      throw error;
     }
   };
 
@@ -704,6 +741,13 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
   const onShowSubmit = () => setShowSubmit(true);
 
   const onCloseSubmit = () => setShowSubmit(false);
+
+  useHeatmap(
+    showHeatmap,
+    loadHeatmapData,
+    canvasContainer,
+    `${classes.canvas} ${classes.heatmapCanvas}`
+  );
 
   return (
     <>

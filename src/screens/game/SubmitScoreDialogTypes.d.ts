@@ -1,5 +1,5 @@
 interface SubmitScoreDialogProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (string) => void;
+  onSubmit: (string) => Promise<void>;
 }

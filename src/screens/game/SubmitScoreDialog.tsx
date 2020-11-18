@@ -8,6 +8,7 @@ import {
   DialogTitle,
   TextField,
 } from "@material-ui/core";
+import { LoadingButton } from "../../components";
 
 const SubmitScoreDialog: React.FC<SubmitScoreDialogProps> = ({
   open,
@@ -16,6 +17,7 @@ const SubmitScoreDialog: React.FC<SubmitScoreDialogProps> = ({
 }: SubmitScoreDialogProps) => {
   const [username, setUsername] = useState("");
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const onCloseDialog = () => {
     setUsername("");
@@ -29,9 +31,15 @@ const SubmitScoreDialog: React.FC<SubmitScoreDialogProps> = ({
     setUsername(event.target.value);
   };
 
-  const onSubmitClick = () => {
+  const onSubmitClick = async () => {
     if (username !== "") {
-      onSubmit(username);
+      try {
+        setLoading(true);
+
+        await onSubmit(username);
+      } finally {
+        setLoading(false);
+      }
     } else {
       setError(true);
     }
@@ -65,9 +73,9 @@ const SubmitScoreDialog: React.FC<SubmitScoreDialogProps> = ({
           Cancel
         </Button>
 
-        <Button color="primary" onClick={onSubmitClick}>
+        <LoadingButton color="primary" loading={loading} onClick={onSubmitClick}>
           Submit
-        </Button>
+        </LoadingButton>
       </DialogActions>
     </Dialog>
   );
