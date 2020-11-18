@@ -54,6 +54,8 @@ const useHeatmap = (
     } else {
       /* Hide heatmap */
       canvas.style.display = "none";
+
+      heatmapInstance.setData({ min: 0, max: 1, data: [] });
     }
   }, [heatmapInstance, loadData, show]);
 };

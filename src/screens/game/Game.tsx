@@ -659,12 +659,15 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
 
         const { clicks = [] } = (imageDoc.data() || {}) as FirestoreImageData;
 
+        // eslint-disable-next-line no-underscore-dangle
+        const { ctx } = instance._renderer;
+
         const heatmapData = {
           min: 0,
           max: 1,
           data: clicks.map(({ x, y, clickCount }) => ({
-            x: toCanvasScale(context, x),
-            y: toCanvasScale(context, y),
+            x: toCanvasScale(ctx, x),
+            y: toCanvasScale(ctx, y),
             clickCount,
           })),
         };
@@ -682,7 +685,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
         setHeatmapLoading(false);
       }
     },
-    [context, enqueueSnackbar, fileId]
+    [enqueueSnackbar, fileId]
   );
 
   /**
