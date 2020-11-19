@@ -119,6 +119,12 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
+/**
+ * New type representing the direction of Legends in the Pie Chart
+ * To be used for the 'direction' prop of the Pie component
+ */
+type Direction = "row" | "column";
+
 const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) => {
   const classes = useStyles();
 
@@ -153,11 +159,15 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
   const [slideDirection, setSlideDirection] = useState<SlideProps["direction"]>("down");
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
-  type Direction = "row" | "column";
-
+  /**
+   * Media Queries for Window width and height
+   */
   const screenWidthMatches = useMediaQuery("(min-width:600px)");
   const screenHeightMatches = useMediaQuery("(min-height:750px");
 
+  /**
+   * Hook for obtaining the Device Window Dimensions
+   */
   const { windowWidth, windowHeight } = useWindowDimensions();
 
   const numSlides = 2;
@@ -288,6 +298,9 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     return <div className={classes.emptyDiv} />;
   };
 
+  /**
+   * Function for scaling the pie chart according to device window size
+   */
   const getPieChartOptions = (): {
     itemsSpacing: number;
     translateY: number;
@@ -420,7 +433,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
    */
   const onArrowClick = (direction: SlideProps["direction"]) => {
     const increment = direction === "left" ? -1 : 1;
-    const newIndex = (currentSlideIndex + increment) % numSlides;
+    const newIndex = (currentSlideIndex + increment + numSlides) % numSlides;
     const oppDirection = direction === "left" ? "right" : "left";
 
     setSlideDirection(direction);

@@ -1,23 +1,28 @@
 import { useState, useEffect } from "react";
 
+/**
+ * Function for wrapping up the Window Dimensions into a dictionary
+ */
 const getWindowDimensions = () => {
-  const { innerWidth: windowWidth, innerHeight: windowHeight } = window;
   return {
-    windowWidth,
-    windowHeight,
+    windowWidth: window.innerWidth,
+    windowHeight: window.innerHeight,
   };
 };
 
+/**
+ * Custom Hook for getting the dimensions of the Device Window
+ */
 const useWindowDimensions = (): { windowWidth: number; windowHeight: number } => {
   const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
 
   useEffect(() => {
-    function handleResize() {
+    const resize = () => {
       setWindowDimensions(getWindowDimensions());
-    }
+    };
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
   }, []);
 
   return windowDimensions;

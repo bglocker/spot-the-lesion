@@ -38,6 +38,10 @@ const useStyles = makeStyles(
   })
 );
 
+/**
+ * New type representing the direction of Legends in the Pie Chart
+ * To be used for the 'direction' prop of the Pie component
+ */
 type Direction = "row" | "column";
 
 const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
@@ -47,9 +51,15 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
 }: ImageStatsDialogProps) => {
   const classes = useStyles();
 
+  /**
+   * Media Queries for Window width and height
+   */
   const screenWidthMatches = useMediaQuery("(min-width:600px)");
   const screenHeightMatches = useMediaQuery("(min-height:750px");
 
+  /**
+   * Function for scaling the pie chart according to device window size
+   */
   const getPieChartOptions = (): {
     itemsSpacing: number;
     translateY: number;
@@ -60,6 +70,7 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
       ? { itemsSpacing: 100, translateY: yPos, direction: "row" }
       : { itemsSpacing: 6, translateY: yPos, direction: "column" };
   };
+
   /**
    * Handler function for closing the dialog box
    * Delegates the call to the onClose param
@@ -101,7 +112,7 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
           startAngle={-180}
           padAngle={0.7}
           cornerRadius={3}
-          colors={["hsl(150, 100%, 40%)", "hsl(0, 100%, 50%)", "hsl(60, 100%, 40%)"]}
+          colors={["hsl(150, 100%, 35%)", "hsl(0, 100%, 50%)", "hsl(48, 100%, 45%)"]}
           borderWidth={9}
           borderColor={{ from: "color", modifiers: [["darker", 2.5]] }}
           enableRadialLabels={false}
