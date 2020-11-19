@@ -18,14 +18,12 @@ const useStyles = makeStyles(
       flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
-      marginTop: 24,
-      padding: 8,
+      position: "relative",
       width: "100%",
       height: "60vh",
     },
     statTitle: {
-      alignSelf: "center",
-      textAlign: "center",
+      textAlign: "left",
     },
     message: {
       fontWeight: "bold",
@@ -73,7 +71,7 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
    * Main return from the ImageStatsDialog function component
    */
   return (
-    <Dialog className={classes.dialog} open={open} onClose={onCloseDialog}>
+    <Dialog className={classes.dialog} open={open} onClose={onCloseDialog} maxWidth="sm" fullWidth>
       <DialogTitle>
         <Typography className={[classes.message, classes.statTitle].join(" ")}>
           Statistics for current image
