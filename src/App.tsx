@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { createMuiTheme, createStyles, makeStyles, ThemeProvider } from "@material-ui/core/styles";
 import { SnackbarProvider } from "notistack";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import colors from "./res/colors";
 import Home from "./screens/home/Home";
 import Tutorial from "./screens/tutorial/Tutorial";
@@ -35,7 +36,6 @@ const useStyles = makeStyles(() =>
 
 const App: React.FC = () => {
   const classes = useStyles();
-
   const [route, setRoute] = useState<Route>("home");
 
   let currentScreen: React.ReactNode;
@@ -67,12 +67,26 @@ const App: React.FC = () => {
       break;
   }
 
+  // eslint-disable-next-line no-console,no-restricted-globals
+  console.log(location.pathname);
+
   return (
-    <ThemeProvider theme={theme}>
-      <SnackbarProvider maxSnack={2}>
-        <div className={classes.container}>{currentScreen}</div>
-      </SnackbarProvider>
-    </ThemeProvider>
+    <Router>
+      <ThemeProvider theme={theme}>
+        {/* A <Switch> looks through its children <Route>s and
+         renders the first one that matches the current URL. */}
+        <Switch>
+          <Route path="/spot-the-lesion/admin">
+            <h3>Admin Page</h3>
+          </Route>
+          <Route exact path="/spot-the-lesion/">
+            <SnackbarProvider maxSnack={2}>
+              <div className={classes.container}>{currentScreen}</div>
+            </SnackbarProvider>
+          </Route>
+        </Switch>
+      </ThemeProvider>
+    </Router>
   );
 };
 
