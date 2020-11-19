@@ -50,7 +50,7 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
   const screenWidthMatches = useMediaQuery("(min-width:600px)");
   const screenHeightMatches = useMediaQuery("(min-height:750px");
 
-  const pieChartOptions = (): {
+  const getPieChartOptions = (): {
     itemsSpacing: number;
     translateY: number;
     direction: Direction;
@@ -129,11 +129,11 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
           legends={[
             {
               anchor: "bottom",
-              direction: pieChartOptions().direction,
+              direction: getPieChartOptions().direction,
               justify: false,
               translateX: 0,
-              translateY: pieChartOptions().translateY,
-              itemsSpacing: pieChartOptions().itemsSpacing,
+              translateY: getPieChartOptions().translateY,
+              itemsSpacing: getPieChartOptions().itemsSpacing,
               itemWidth: 100,
               itemHeight: 18,
               itemTextColor: "#999",

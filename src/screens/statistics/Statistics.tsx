@@ -13,12 +13,14 @@ import {
   Theme,
   Toolbar,
   Typography,
+  useMediaQuery,
 } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { ArrowBack, ArrowForward, KeyboardBackspace } from "@material-ui/icons";
-import { ResponsivePie } from "@nivo/pie";
+import { Pie } from "@nivo/pie";
 import { db } from "../../firebase/firebaseApp";
 import DbUtils from "../../utils/DbUtils";
+import useWindowDimensions from "../../components/useWindowDimensions";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -31,7 +33,7 @@ const useStyles = makeStyles((theme: Theme) =>
       justifyContent: "center",
       alignItems: "center",
       marginTop: 24,
-      padding: 16,
+      padding: 8,
     },
     userStatsCard: {
       width: "90%",
@@ -52,6 +54,7 @@ const useStyles = makeStyles((theme: Theme) =>
       alignItems: "center",
       overflow: "hidden",
       alignSelf: "center",
+      marginTop: 8,
     },
     gameTypeAppBar: {
       alignItems: "center",
@@ -70,6 +73,7 @@ const useStyles = makeStyles((theme: Theme) =>
     statTitle: {
       fontWeight: "bold",
       margin: "inherit",
+      textAlign: "center",
     },
     buttonGroup: {
       marginTop: 16,
@@ -148,6 +152,13 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
   const [slideIn, setSlideIn] = useState(true);
   const [slideDirection, setSlideDirection] = useState<SlideProps["direction"]>("down");
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+  type Direction = "row" | "column";
+
+  const screenWidthMatches = useMediaQuery("(min-width:600px)");
+  const screenHeightMatches = useMediaQuery("(min-height:750px");
+
+  const { windowWidth, windowHeight } = useWindowDimensions();
 
   const numSlides = 2;
   /**
@@ -277,6 +288,39 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     return <div className={classes.emptyDiv} />;
   };
 
+  const getPieChartOptions = (): {
+    itemsSpacing: number;
+    translateY: number;
+    width: number;
+    height: number;
+    direction: Direction;
+  } => {
+    let translateY;
+    let height;
+    let width;
+    let itemsSpacing;
+    let direction;
+
+    if (screenHeightMatches) {
+      translateY = windowHeight * 0.03;
+      height = windowHeight * 0.8;
+    } else {
+      translateY = windowHeight * 0.04;
+      height = windowHeight * 0.7;
+    }
+
+    if (screenWidthMatches) {
+      width = windowWidth * 0.7;
+      itemsSpacing = 50;
+      direction = "row";
+    } else {
+      width = windowWidth * 0.9;
+      itemsSpacing = 6;
+      direction = "column";
+    }
+    return { itemsSpacing, translateY, width, height, direction };
+  };
+
   /**
    * Function for displaying a Pie Chart with statistics
    * @param title - Title of the stats page to be displayed
@@ -289,14 +333,14 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
     return (
       <Card className={[classes.basicCard, classes.userStatsCard].join(" ")}>
         <Typography className={classes.statTitle}>{title}</Typography>
-        <ResponsivePie
+        <Pie
           data={data}
           margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
-          innerRadius={0.5}
+          innerRadius={0.4}
           padAngle={0.7}
           cornerRadius={3}
           colors={{ scheme: "red_blue" }}
-          borderWidth={5}
+          borderWidth={9}
           borderColor={{ theme: "background" }}
           enableRadialLabels={false}
           radialLabelsSkipAngle={5}
@@ -308,6 +352,8 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
           radialLabelsLinkStrokeWidth={3}
           radialLabelsLinkColor={{ from: "color" }}
           enableSliceLabels={false}
+          height={getPieChartOptions().height}
+          width={getPieChartOptions().width}
           defs={[
             {
               id: "dots",
@@ -345,13 +391,13 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
           legends={[
             {
               anchor: "bottom",
-              direction: "row",
-              translateY: 35,
+              direction: getPieChartOptions().direction,
+              translateY: getPieChartOptions().translateY,
               itemWidth: 100,
               itemHeight: 18,
               itemTextColor: "#999",
               symbolSize: 18,
-              itemsSpacing: 100,
+              itemsSpacing: getPieChartOptions().itemsSpacing,
               symbolShape: "circle",
               effects: [
                 {
