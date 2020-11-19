@@ -9,10 +9,10 @@ const colors = {
   timerInitial: "#373737",
   timerOrange: "orange",
   timerRed: "red",
-  truth: "red",
+  truth: "green",
   playerCorrect: "green",
   playerIncorrect: "red",
-  predicted: "green",
+  predicted: "red",
 
   /* GameSideBar */
   draw: "gray",
