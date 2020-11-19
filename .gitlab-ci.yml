@@ -1,6 +1,3 @@
-variables:
-  PUBLIC_URL: "/spot-the-lesion"
-
 default:
   image: node:lts-alpine
 
