@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { AppBar, Card, IconButton, Toolbar, Typography } from "@material-ui/core";
+import { AppBar, Button, Card, IconButton, Toolbar, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { useSnackbar } from "notistack";
@@ -11,9 +11,9 @@ import SubmitScoreDialog from "./SubmitScoreDialog";
 import {
   LoadingButton,
   useCanvasContext,
-  useUniqueRandomGenerator,
-  useInterval,
   useHeatmap,
+  useInterval,
+  useUniqueRandomGenerator,
 } from "../../components";
 import {
   drawCircle,
@@ -42,6 +42,8 @@ import {
 } from "../../utils/firebaseUtils";
 import colors from "../../res/colors";
 import constants from "../../res/constants";
+import DbUtils from "../../utils/DbUtils";
+import ImageStatsDialog from "./ImageStatsDialog";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -179,6 +181,18 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
   const [aiScore, setAiScore] = useState(0);
   const [aiRoundScore, setAiRoundScore] = useState(0);
   const [aiCorrect, setAiCorrect] = useState(0);
+
+  /**
+   * Hooks used for Per-Image Stats
+   */
+  const [correctAnswers, setCorrectAnswers] = useState(0);
+  const [wrongAnswers, setWrongAnswers] = useState(0);
+  const [totalHints, setTotalHints] = useState(0);
+
+  /**
+   * Hook for conditional rendering of the Image Stats Dialog Box
+   */
+  const [showImageStats, setShowImageStats] = useState(false);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -386,6 +400,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
        * draw predicted rectangle in valid or invalid color
        * stop end timer and current round
        */
+      retrieveImageStats(fileId).then(() => {});
+
       const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
 
       /* AI was successful if the ratio of the intersection over the union is greater than 0.5 */
@@ -413,6 +429,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
     endRunning,
     endTime,
     enqueueSnackbar,
+    fileId,
     gameMode,
     hintedCurrent,
     predicted,
@@ -596,6 +613,58 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
     });
 
   /**
+   * Function for retrieving image statistics from Firebase
+   *
+   * @param fileNumber - index of the image for which we retrieve stats
+   */
+  const retrieveImageStats = async (fileNumber: number) => {
+    const table = DbUtils.IMAGES;
+
+    /** Testing code: for images 1 and 2
+     let index;
+     if (fileNumber !== 1) {
+      index = 1;
+    } else {
+      index = 2;
+    } */
+
+    const docName = `image_${fileNumber}`;
+
+    const imageDoc = await db.collection(table).doc(docName).get();
+    if (imageDoc.exists) {
+      setCorrectAnswers(imageDoc.data()!.correctClicks);
+      setWrongAnswers(imageDoc.data()!.wrongClicks);
+      setTotalHints(imageDoc.data()!.hintCount);
+    }
+  };
+
+  /**
+   * Function for wrapping up the data that needs to be parsed in the Image Stats Pie Chart
+   */
+  const createPieChartData = () => {
+    return [
+      {
+        id: "Correct Answers",
+        label: "Correct Answers",
+        value: correctAnswers,
+        color: "hsl(150, 100%, 35%)",
+      },
+      {
+        id: "Wrong Answers",
+        label: "Wrong Answers",
+        value: wrongAnswers,
+        color: "hsl(0, 100%, 50%)",
+      },
+      {
+        id: "Hints",
+        label: "Total Hints",
+        value: totalHints,
+        color: "hsl(48, 100%, 45%)",
+      },
+    ];
+  };
+
+  /**
    * Starts a new round, loading a new annotation - image pair
    */
   const startRound = async () => {
@@ -753,6 +822,10 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
 
   const onCloseSubmit = () => setShowSubmit(false);
 
+  const onShowImageStats = () => setShowImageStats(true);
+
+  const onCloseImageStats = () => setShowImageStats(false);
+
   useHeatmap(
     showHeatmap,
     loadHeatmapData,
@@ -775,6 +848,10 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
           </IconButton>
 
           <Typography className={classes.title}>Spot the Lesion</Typography>
+
+          <Button color="inherit" disabled={round === 0 || inRound} onClick={onShowImageStats}>
+            Show Image Stats
+          </Button>
 
           <LoadingButton
             color="inherit"
@@ -842,6 +919,12 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
       </div>
 
       <SubmitScoreDialog open={showSubmit} onClose={onCloseSubmit} onSubmit={submitScore} />
+
+      <ImageStatsDialog
+        open={showImageStats}
+        data={createPieChartData()}
+        onClose={onCloseImageStats}
+      />
     </>
   );
 };
