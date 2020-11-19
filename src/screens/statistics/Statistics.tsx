@@ -31,7 +31,7 @@ const useStyles = makeStyles((theme: Theme) =>
       justifyContent: "center",
       alignItems: "center",
       marginTop: 24,
-      padding: 8,
+      padding: 16,
     },
     userStatsCard: {
       width: "90%",
@@ -346,7 +346,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
             {
               anchor: "bottom",
               direction: "row",
-              translateY: 56,
+              translateY: 35,
               itemWidth: 100,
               itemHeight: 18,
               itemTextColor: "#999",

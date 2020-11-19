@@ -7,6 +7,7 @@ import {
   DialogActions,
   DialogTitle,
   Typography,
+  useMediaQuery,
 } from "@material-ui/core";
 import { ResponsivePie } from "@nivo/pie";
 import { makeStyles } from "@material-ui/core/styles";
@@ -37,6 +38,8 @@ const useStyles = makeStyles(
   })
 );
 
+type Direction = "row" | "column";
+
 const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
   open,
   data,
@@ -44,6 +47,19 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
 }: ImageStatsDialogProps) => {
   const classes = useStyles();
 
+  const screenWidthMatches = useMediaQuery("(min-width:600px)");
+  const screenHeightMatches = useMediaQuery("(min-height:750px");
+
+  const pieChartOptions = (): {
+    itemsSpacing: number;
+    translateY: number;
+    direction: Direction;
+  } => {
+    const yPos = screenHeightMatches ? 56 : 75;
+    return screenWidthMatches
+      ? { itemsSpacing: 100, translateY: yPos, direction: "row" }
+      : { itemsSpacing: 6, translateY: yPos, direction: "column" };
+  };
   /**
    * Handler function for closing the dialog box
    * Delegates the call to the onClose param
@@ -113,11 +129,11 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
           legends={[
             {
               anchor: "bottom",
-              direction: "row",
+              direction: pieChartOptions().direction,
               justify: false,
               translateX: 0,
-              translateY: 56,
-              itemsSpacing: 100,
+              translateY: pieChartOptions().translateY,
+              itemsSpacing: pieChartOptions().itemsSpacing,
               itemWidth: 100,
               itemHeight: 18,
               itemTextColor: "#999",
