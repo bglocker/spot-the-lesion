@@ -28,6 +28,12 @@ const useStyles = makeStyles(() =>
       padding: 24,
       boxSizing: "border-box",
     },
+    inline: {
+      display: "flex",
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+    },
   })
 );
 
@@ -36,14 +42,28 @@ const Settings: React.FC = () => {
 
   const [loadData, setLoadData] = useState<boolean>(true);
 
-  const [roundInitialTime, setRoundInitialTime] = useState<number>(0);
+  const [animationTime, setAnimationTime] = useState<number>(0);
+  const [hintTime, setHintTime] = useState<number>(0);
+  const [roundTimeInitial, setRoundTimeInitial] = useState<number>(0);
+
+  const optionsList: SettingType[] = [
+    { name: "Animation Time", state: animationTime, changer: setAnimationTime },
+    { name: "Hint Time", state: hintTime, changer: setHintTime },
+    { name: "Initial Round Time", state: roundTimeInitial, changer: setRoundTimeInitial },
+  ];
 
   const getData = useCallback(async () => {
     const settingsDoc = await db.collection("game_options").doc("current_options").get();
 
-    const { roundTimeInitial } = (settingsDoc.exists ? settingsDoc.data() : {}) as SettingsData;
+    const {
+      animationTime: dbAnimTime,
+      hintTime: dbHintTime,
+      roundTimeInitial: dbRoundTimeInitial,
+    } = (settingsDoc.exists ? settingsDoc.data() : {}) as SettingsData;
 
-    setRoundInitialTime(roundTimeInitial);
+    setRoundTimeInitial(dbRoundTimeInitial);
+    setHintTime(dbHintTime);
+    setAnimationTime(dbAnimTime);
     setLoadData(false);
   }, []);
 
@@ -52,7 +72,7 @@ const Settings: React.FC = () => {
   }
 
   const pushChanges = () => {
-    const newData: SettingsData = { roundTimeInitial: roundInitialTime };
+    const newData: SettingsData = { animationTime, hintTime, roundTimeInitial };
     db.collection("game_options").doc("current_options").set(newData);
   };
 
@@ -79,17 +99,26 @@ const Settings: React.FC = () => {
 
       <div className={classes.container}>
         <div className={classes.box}>
-          <Typography>Initial Time</Typography>
-          <input
-            type="number"
-            value={roundInitialTime}
-            onChange={(change) => {
-              setRoundInitialTime(Number(change.target.value));
-            }}
-          />
+          {optionsList.map((option) => {
+            return (
+              <div key={option.name} className={classes.inline}>
+                <Typography>{option.name}</Typography>
+                <input
+                  type="number"
+                  value={option.state}
+                  onChange={(change) => {
+                    option.changer(Number(change.target.value));
+                  }}
+                />
+              </div>
+            );
+          })}
+
+          <div className={classes.inline}>
+            <input type="submit" value="Update" onClick={pushChanges} />
+            <input type="submit" value="Reset Default" onClick={resetChanges} />
+          </div>
         </div>
-        <input type="submit" value="Update" onClick={pushChanges} />
-        <input type="submit" value="Reset Default" onClick={resetChanges} />
       </div>
     </>
   );

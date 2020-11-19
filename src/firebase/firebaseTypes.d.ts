@@ -37,5 +37,7 @@ interface AnnotationData {
 }
 
 interface SettingsData {
+  animationTime: number;
+  hintTime: number;
   roundTimeInitial: number;
 }
