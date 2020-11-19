@@ -19,6 +19,7 @@ import {
   drawCircle,
   drawCross,
   drawRectangle,
+  drawStrokedText,
   mapClickToCanvas,
   mapCoordinatesToCanvasScale,
   randomAround,
@@ -113,21 +114,6 @@ const useStyles = makeStyles((theme) =>
     },
     heatmapCanvas: {
       zIndex: 2,
-    },
-    playerValidationText: {
-      zIndex: 3,
-      userSelect: "none",
-      marginTop: 16,
-      textShadow: "-1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white",
-      [theme.breakpoints.only("xs")]: {
-        fontSize: "2rem",
-      },
-      [theme.breakpoints.only("sm")]: {
-        fontSize: "3rem",
-      },
-      [theme.breakpoints.up("md")]: {
-        fontSize: "4rem",
-      },
     },
   })
 );
@@ -350,7 +336,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
       /*
        * 0.1 seconds passed
        *
-       * draw predicted rectangle in initial color
+       * draw predicted rectangle
        */
       drawRectangle(context, predicted, constants.predictedLineWidth, colors.predicted);
     } else if (endTime === 500) {
@@ -366,7 +352,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
        *
        * (if click available)
        * evaluate click
-       * draw click in valid or invalid color
        * upload player click
        */
       if (click) {
@@ -390,6 +375,20 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
           setPlayerCorrectCurrent(true);
         }
 
+        const textX = Math.round(MAX_CANVAS_SIZE / 2);
+        const textY = Math.round(MAX_CANVAS_SIZE / 10);
+
+        drawStrokedText(
+          context,
+          correct ? "Well spotted!" : "Missed!",
+          textX,
+          textY,
+          "center",
+          3,
+          "white",
+          correct ? colors.playerCorrect : colors.playerIncorrect
+        );
+
         uploadClick(x, y, correct).then(() => {});
       }
     } else if (endTime === 1500) {
@@ -397,7 +396,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
        * 1.5 seconds passed
        *
        * evaluate AI prediction
-       * draw predicted rectangle in valid or invalid color
        * stop end timer and current round
        */
       retrieveImageStats(fileId).then(() => {});
@@ -891,16 +889,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
               height={MAX_CANVAS_SIZE}
               onClick={onCanvasClick}
             />
-
-            <Typography
-              className={classes.playerValidationText}
-              style={{
-                display: round === 0 || roundLoading || inRound ? "none" : "block",
-                color: playerCorrectCurrent ? colors.playerCorrect : colors.playerIncorrect,
-              }}
-            >
-              {playerCorrectCurrent ? "Well spotted!" : "Missed!"}
-            </Typography>
           </Card>
         </div>
 
