@@ -18,6 +18,9 @@ const constants = {
   roundTimeInitial: 10000,
   truthLineWidth: 3,
 
+  /* Achievements */
+  numberOfAchievements: 12,
+
   /* canvasUtils */
   defaultImageSize: 512,
 

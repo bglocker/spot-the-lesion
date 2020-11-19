@@ -26,6 +26,7 @@ import allCorrectCompetitive from "../../res/images/achievements/brainstorm.png"
 import fastAnswer from "../../res/images/achievements/flash.png";
 import slowAnswer from "../../res/images/achievements/timer.png";
 import correctAnswers from "../../res/images/achievements/confetti.png";
+import constants from "../../res/constants";
 
 const LightTooltip = withStyles((theme: Theme) => ({
   tooltip: {
@@ -48,7 +49,7 @@ const useStyles = makeStyles((theme) =>
       marginLeft: "auto",
       marginRight: "auto",
       width: "100%",
-      marginTop: 32,
+      marginTop: 16,
       textAlign: "center",
       display: "flex",
       justifyContent: "center",
@@ -73,6 +74,11 @@ const useStyles = makeStyles((theme) =>
     text: {
       textAlign: "center",
       fontSize: "16px",
+    },
+    gameModeSelectionText: {
+      fontSize: "135%",
+      fontWeight: "bold",
+      textAlign: "center",
     },
   })
 );
@@ -608,6 +614,11 @@ const Achievements: React.FC<AchievementsProps> = ({ setRoute }: AchievementsPro
           <Typography>Spot the Lesion</Typography>
         </Toolbar>
       </AppBar>
+
+      <Typography className={classes.gameModeSelectionText}>
+        Number of achievements unlocked: {localStorage.length > 0 ? localStorage.length - 1 : 0} out
+        of {constants.numberOfAchievements}; Press on achievements to see more about them!
+      </Typography>
 
       <>
         <Grid container spacing={6} className={classes.grid}>
