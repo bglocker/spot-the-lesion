@@ -200,7 +200,6 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
    * Function for triggering the re-render of the statistics according to the new stats index
    * @param newTabIndex - index of the Game mode for which to retrieve stats
    *                      - 0 for Casual, 1 for Competitive
-   * @param newStatsIndex - index of the next Stats page to display
    */
   const onTabChange = async (newTabIndex: number) => {
     setCurrentTabIndex(newTabIndex);

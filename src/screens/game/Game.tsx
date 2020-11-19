@@ -624,11 +624,15 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
    */
   const retrieveImageStats = async (fileNumber: number) => {
     const table = DbUtils.IMAGES;
-    // Next 4 lines are just for testing the stats on images 1 and 2
-    // let index = 1;
-    // if (fileNumber !== 1) {
-    //   index = 2;
-    // }
+
+    /** Testing code: for images 1 and 2
+    let index;
+    if (fileNumber !== 1) {
+      index = 1;
+    } else {
+      index = 2;
+    } */
+
     const docName = `image_${fileNumber}`;
 
     const imageDoc = await db.collection(table).doc(docName).get();
@@ -648,19 +652,19 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
         id: "Correct Answers",
         label: "Correct Answers",
         value: correctAnswers,
-        color: "hsl(332, 70%, 50%)",
+        color: "hsl(150, 100%, 40%)",
       },
       {
         id: "Wrong Answers",
         label: "Wrong Answers",
         value: wrongAnswers,
-        color: "hsl(194, 70%, 50%)",
+        color: "hsl(0, 100%, 50%)",
       },
       {
         id: "Hints",
         label: "Total Hints",
         value: totalHints,
-        color: "hsl(124, 43%, 81%)",
+        color: "hsl(60, 100%, 40%)",
       },
     ];
   };

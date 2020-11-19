@@ -74,7 +74,7 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
     <Dialog className={classes.dialog} open={open} onClose={onCloseDialog} maxWidth="sm" fullWidth>
       <DialogTitle>
         <Typography className={[classes.message, classes.statTitle].join(" ")}>
-          Statistics for current image
+          Image Statistics
         </Typography>
       </DialogTitle>
 
@@ -85,7 +85,7 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
           startAngle={-180}
           padAngle={0.7}
           cornerRadius={3}
-          colors={{ scheme: "nivo" }}
+          colors={["hsl(150, 100%, 40%)", "hsl(0, 100%, 50%)", "hsl(60, 100%, 40%)"]}
           borderWidth={9}
           borderColor={{ from: "color", modifiers: [["darker", 2.5]] }}
           enableRadialLabels={false}
