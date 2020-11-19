@@ -70,12 +70,11 @@ const App: React.FC = () => {
   return (
     <Router basename={process.env.PUBLIC_URL}>
       <ThemeProvider theme={theme}>
-        {/* A <Switch> looks through its children <Route>s and
-         renders the first one that matches the current URL. */}
         <Switch>
           <Route path="/admin">
             <h3>Admin Page</h3>
           </Route>
+
           <Route path="/">
             <SnackbarProvider maxSnack={2}>
               <div className={classes.container}>{currentScreen}</div>
