@@ -57,8 +57,16 @@ const Settings: React.FC = () => {
   };
 
   const resetChanges = useCallback(async () => {
-    // const defaultSettings = await db.collection("game_options").doc("default_options");
-    // db.collection("game_options").doc("current_options").set(defaultSettings);
+    const defaultSettingsSnapshot = await db
+      .collection("game_options")
+      .doc("default_options")
+      .get();
+
+    db.collection("game_options")
+      .doc("current_options")
+      .set(defaultSettingsSnapshot.data() as SettingsData);
+
+    setLoadData(true);
   }, []);
 
   return (
