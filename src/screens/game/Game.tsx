@@ -485,13 +485,26 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, MIN_FILE_ID, MAX_FILE_I
 
     if (gameMode === "casual") {
       if (playerCorrect === 5) {
-        unlockAchievementHandler("fiveCorrectSameRunCasual", "Achievement! Going the distance!");
+        unlockAchievementHandler(
+          "fiveCorrectSameRunCasual",
+          "Achievement! Practice makes perfect!"
+        );
+      }
+      if (playerCorrect === 20) {
+        unlockAchievementHandler("twentyCorrectSameRunCasual", "Achievement! Going the distance!");
+      }
+      if (playerCorrect === 50) {
+        unlockAchievementHandler("fiftyCorrectSameRunCasual", "Achievement! Still going?!");
       }
     }
 
     if (gameMode === "competitive") {
       if (playerCorrectCurrent && roundTime > constants.roundTimeInitial - 2000) {
         unlockAchievementHandler("fastAnswer", "Achievement! The flash!");
+      }
+
+      if (playerCorrectCurrent && roundTime > constants.roundTimeInitial - 9500) {
+        unlockAchievementHandler("slowAnswer", "Achievement! Nerves of steel!");
       }
 
       if (playerScore + playerRoundScore >= 1000) {

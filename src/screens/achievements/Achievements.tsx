@@ -24,6 +24,8 @@ import fiveCorrectAnswers from "../../res/images/achievements/5.png";
 import competitivePoints from "../../res/images/achievements/summit.png";
 import allCorrectCompetitive from "../../res/images/achievements/brainstorm.png";
 import fastAnswer from "../../res/images/achievements/flash.png";
+import slowAnswer from "../../res/images/achievements/timer.png";
+import correctAnswers from "../../res/images/achievements/confetti.png";
 
 const LightTooltip = withStyles((theme: Theme) => ({
   tooltip: {
@@ -323,7 +325,7 @@ const Achievements: React.FC<AchievementsProps> = ({ setRoute }: AchievementsPro
           <LightTooltip
             title={
               localStorage.getItem("fiveCorrectSameRunCasual")
-                ? "Going the distance"
+                ? "Practice makes perfect"
                 : "Not found yet"
             }
           >
@@ -339,7 +341,7 @@ const Achievements: React.FC<AchievementsProps> = ({ setRoute }: AchievementsPro
                 <DialogTitle>
                   <Typography className={classes.title}>
                     {localStorage.getItem("fiveCorrectSameRunCasual")
-                      ? "Going the distance"
+                      ? "Practice makes perfect"
                       : "Not found yet"}
                   </Typography>
                 </DialogTitle>
@@ -496,28 +498,24 @@ const Achievements: React.FC<AchievementsProps> = ({ setRoute }: AchievementsPro
       <Grid container spacing={2}>
         <Grid item xs={4}>
           <LightTooltip
-            title={
-              localStorage.getItem("competitivePointsRun") ? "IT'S OVER 1000!!!" : "Not found yet"
-            }
+            title={localStorage.getItem("slowAnswer") ? "Nerves of steel" : "Not found yet"}
           >
             <Container className={classes.container} onClick={handleClickOpenTenth}>
               <img
                 className={classes.image}
-                src={localStorage.getItem("competitivePointsRun") ? competitivePoints : question}
+                src={localStorage.getItem("slowAnswer") ? slowAnswer : question}
                 alt="Not found yet"
               />
               <Dialog open={openTenth} onClose={handleCloseTenth}>
                 <DialogTitle>
                   <Typography className={classes.title}>
-                    {localStorage.getItem("competitivePointsRun")
-                      ? "IT'S OVER 1000!!!"
-                      : "Not found yet"}
+                    {localStorage.getItem("slowAnswer") ? "Nerves of steel" : "Not found yet"}
                   </Typography>
                 </DialogTitle>
                 <DialogContent>
                   <Typography className={classes.text}>
-                    {localStorage.getItem("competitivePointsRun")
-                      ? "1000 ponts?! You really have an eye for spotting lesions!"
+                    {localStorage.getItem("slowAnswer")
+                      ? "You operate well under difficult circumstances. You spotted a lesion with less than 0.5 seconds remaining"
                       : "Play more in order to unlock this achievement"}
                   </Typography>
                 </DialogContent>
@@ -528,29 +526,29 @@ const Achievements: React.FC<AchievementsProps> = ({ setRoute }: AchievementsPro
         <Grid item xs={4}>
           <LightTooltip
             title={
-              localStorage.getItem("allCorrectCompetitive") ? "Perfectionist" : "Not found yet"
+              localStorage.getItem("twentyCorrectSameRunCasual")
+                ? "Going the distance"
+                : "Not found yet"
             }
           >
             <Container className={classes.container} onClick={handleClickOpenEleventh}>
               <img
                 className={classes.image}
-                src={
-                  localStorage.getItem("allCorrectCompetitive") ? allCorrectCompetitive : question
-                }
+                src={localStorage.getItem("twentyCorrectSameRunCasual") ? correctAnswers : question}
                 alt="Not found yet"
               />
               <Dialog open={openEleventh} onClose={handleCloseEleventh}>
                 <DialogTitle>
                   <Typography className={classes.title}>
-                    {localStorage.getItem("allCorrectCompetitive")
-                      ? "Perfectionist"
+                    {localStorage.getItem("twentyCorrectSameRunCasual")
+                      ? "Going the distance"
                       : "Not found yet"}
                   </Typography>
                 </DialogTitle>
                 <DialogContent>
                   <Typography className={classes.text}>
-                    {localStorage.getItem("allCorrectCompetitive")
-                      ? "You got them all right! Have you considered a career in medicine?"
+                    {localStorage.getItem("twentyCorrectSameRunCasual")
+                      ? "20 correct answers? You are spot-on!"
                       : "Play more in order to unlock this achievement"}
                   </Typography>
                 </DialogContent>
@@ -559,23 +557,29 @@ const Achievements: React.FC<AchievementsProps> = ({ setRoute }: AchievementsPro
           </LightTooltip>
         </Grid>
         <Grid item xs={4}>
-          <LightTooltip title={localStorage.getItem("fastAnswer") ? "The flash!" : "Not found yet"}>
+          <LightTooltip
+            title={
+              localStorage.getItem("fiftyCorrectSameRunCasual") ? "Still going?!" : "Not found yet"
+            }
+          >
             <Container className={classes.container} onClick={handleClickOpenTwelfth}>
               <img
                 className={classes.image}
-                src={localStorage.getItem("fastAnswer") ? fastAnswer : question}
+                src={localStorage.getItem("fiftyCorrectSameRunCasual") ? correctAnswers : question}
                 alt="Not found yet"
               />
               <Dialog open={openTwelfth} onClose={handleCloseTwelfth}>
                 <DialogTitle>
                   <Typography className={classes.title}>
-                    {localStorage.getItem("fastAnswer") ? "The flash!" : "Not found yet"}
+                    {localStorage.getItem("fiftyCorrectSameRunCasual")
+                      ? "Still going?!"
+                      : "Not found yet"}
                   </Typography>
                 </DialogTitle>
                 <DialogContent>
                   <Typography className={classes.text}>
-                    {localStorage.getItem("fastAnswer")
-                      ? "You spotted a lesion in less than 2 seconds! Are you even human?"
+                    {localStorage.getItem("fiftyCorrectSameRunCasual")
+                      ? "50 correct answers? You really put the spot in spot-the-lesion!"
                       : "Play more in order to unlock this achievement"}
                   </Typography>
                 </DialogContent>
