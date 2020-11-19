@@ -1,3 +1,6 @@
+variables:
+  PUBLIC_URL: "/spot-the-lesion"
+
 default:
   image: node:lts-alpine
 
@@ -48,6 +51,7 @@ pages:
   stage: deploy
   script:
     - rm -rf public
+    - cp public/index.html public/404.html
     - mv build public
   artifacts:
     paths:

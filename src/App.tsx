@@ -67,19 +67,16 @@ const App: React.FC = () => {
       break;
   }
 
-  // eslint-disable-next-line no-console,no-restricted-globals
-  console.log(location.pathname);
-
   return (
-    <Router>
+    <Router basename={process.env.PUBLIC_URL}>
       <ThemeProvider theme={theme}>
         {/* A <Switch> looks through its children <Route>s and
          renders the first one that matches the current URL. */}
         <Switch>
-          <Route path="/spot-the-lesion/admin">
+          <Route path="/admin">
             <h3>Admin Page</h3>
           </Route>
-          <Route exact path="/spot-the-lesion/">
+          <Route path="/">
             <SnackbarProvider maxSnack={2}>
               <div className={classes.container}>{currentScreen}</div>
             </SnackbarProvider>
