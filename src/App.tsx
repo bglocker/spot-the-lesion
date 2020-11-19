@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { createMuiTheme, createStyles, makeStyles, ThemeProvider } from "@material-ui/core/styles";
 import { SnackbarProvider } from "notistack";
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import { BrowserRouter, Switch, Route } from "react-router-dom";
 import colors from "./res/colors";
 import Home from "./screens/home/Home";
 import Tutorial from "./screens/tutorial/Tutorial";
@@ -69,21 +69,25 @@ const App: React.FC = () => {
   }
 
   return (
-    <Router basename={process.env.PUBLIC_URL}>
+    <BrowserRouter basename={process.env.PUBLIC_URL}>
       <ThemeProvider theme={theme}>
         <Switch>
-          <Route path="/admin">
-            <h3>Admin Page</h3>
-          </Route>
-
-          <Route path="/">
+          <Route exact path="/">
             <SnackbarProvider maxSnack={2} preventDuplicate>
               <div className={classes.container}>{currentScreen}</div>
             </SnackbarProvider>
           </Route>
+
+          <Route path="/admin">
+            <h3>Admin Page</h3>
+          </Route>
+
+          <Route path="*">
+            <h1>Error 404</h1>
+          </Route>
         </Switch>
       </ThemeProvider>
-    </Router>
+    </BrowserRouter>
   );
 };
 
