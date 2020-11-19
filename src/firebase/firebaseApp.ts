@@ -1,6 +1,7 @@
 import firebase from "firebase/app";
 import "firebase/firestore";
 import "firebase/storage";
+import "firebase/auth";
 import firebaseConfig from "./firebaseConfig";
 import constants from "../res/constants";
 
@@ -10,6 +11,8 @@ import constants from "../res/constants";
 let db: firebase.firestore.Firestore;
 // eslint-disable-next-line import/no-mutable-exports
 let firebaseStorage: firebase.storage.Storage;
+// eslint-disable-next-line import/no-mutable-exports
+let firebaseAuth: firebase.auth.Auth;
 
 const setupFirebase = (): void => {
   if (process.env.REACT_APP_FIREBASE_API_KEY === undefined) {
@@ -20,8 +23,9 @@ const setupFirebase = (): void => {
   const firebaseApp = firebase.initializeApp(firebaseConfig);
   db = firebaseApp.firestore();
   firebaseStorage = firebaseApp.storage();
+  firebaseAuth = firebaseApp.auth();
 
   firebaseStorage.setMaxOperationRetryTime(constants.maxOperationRetryTime);
 };
 
-export { db, firebaseStorage, setupFirebase };
+export { db, firebaseStorage, firebaseAuth, setupFirebase };
