@@ -87,6 +87,9 @@ const Achievements: React.FC<AchievementsProps> = ({ setRoute }: AchievementsPro
   const [openSeventh, setOpenSeventh] = useState(false);
   const [openEighth, setOpenEighth] = useState(false);
   const [openNinth, setOpenNinth] = useState(false);
+  const [openTenth, setOpenTenth] = useState(false);
+  const [openEleventh, setOpenEleventh] = useState(false);
+  const [openTwelfth, setOpenTwelfth] = useState(false);
 
   const handleClickOpenFirst = () => {
     setOpenFirst(true);
@@ -158,6 +161,30 @@ const Achievements: React.FC<AchievementsProps> = ({ setRoute }: AchievementsPro
 
   const handleCloseNinth = () => {
     setOpenNinth(false);
+  };
+
+  const handleClickOpenTenth = () => {
+    setOpenTenth(true);
+  };
+
+  const handleCloseTenth = () => {
+    setOpenTenth(false);
+  };
+
+  const handleClickOpenEleventh = () => {
+    setOpenEleventh(true);
+  };
+
+  const handleCloseEleventh = () => {
+    setOpenEleventh(false);
+  };
+
+  const handleClickOpenTwelfth = () => {
+    setOpenTwelfth(true);
+  };
+
+  const handleCloseTwelfth = () => {
+    setOpenTwelfth(false);
   };
 
   const FirstFormRow = () => {
@@ -464,6 +491,102 @@ const Achievements: React.FC<AchievementsProps> = ({ setRoute }: AchievementsPro
     );
   };
 
+  const FourthFormRow = () => {
+    return (
+      <Grid container spacing={2}>
+        <Grid item xs={4}>
+          <LightTooltip
+            title={
+              localStorage.getItem("competitivePointsRun") ? "IT'S OVER 1000!!!" : "Not found yet"
+            }
+          >
+            <Container className={classes.container} onClick={handleClickOpenTenth}>
+              <img
+                className={classes.image}
+                src={localStorage.getItem("competitivePointsRun") ? competitivePoints : question}
+                alt="Not found yet"
+              />
+              <Dialog open={openTenth} onClose={handleCloseTenth}>
+                <DialogTitle>
+                  <Typography className={classes.title}>
+                    {localStorage.getItem("competitivePointsRun")
+                      ? "IT'S OVER 1000!!!"
+                      : "Not found yet"}
+                  </Typography>
+                </DialogTitle>
+                <DialogContent>
+                  <Typography className={classes.text}>
+                    {localStorage.getItem("competitivePointsRun")
+                      ? "1000 ponts?! You really have an eye for spotting lesions!"
+                      : "Play more in order to unlock this achievement"}
+                  </Typography>
+                </DialogContent>
+              </Dialog>
+            </Container>
+          </LightTooltip>
+        </Grid>
+        <Grid item xs={4}>
+          <LightTooltip
+            title={
+              localStorage.getItem("allCorrectCompetitive") ? "Perfectionist" : "Not found yet"
+            }
+          >
+            <Container className={classes.container} onClick={handleClickOpenEleventh}>
+              <img
+                className={classes.image}
+                src={
+                  localStorage.getItem("allCorrectCompetitive") ? allCorrectCompetitive : question
+                }
+                alt="Not found yet"
+              />
+              <Dialog open={openEleventh} onClose={handleCloseEleventh}>
+                <DialogTitle>
+                  <Typography className={classes.title}>
+                    {localStorage.getItem("allCorrectCompetitive")
+                      ? "Perfectionist"
+                      : "Not found yet"}
+                  </Typography>
+                </DialogTitle>
+                <DialogContent>
+                  <Typography className={classes.text}>
+                    {localStorage.getItem("allCorrectCompetitive")
+                      ? "You got them all right! Have you considered a career in medicine?"
+                      : "Play more in order to unlock this achievement"}
+                  </Typography>
+                </DialogContent>
+              </Dialog>
+            </Container>
+          </LightTooltip>
+        </Grid>
+        <Grid item xs={4}>
+          <LightTooltip title={localStorage.getItem("fastAnswer") ? "The flash!" : "Not found yet"}>
+            <Container className={classes.container} onClick={handleClickOpenTwelfth}>
+              <img
+                className={classes.image}
+                src={localStorage.getItem("fastAnswer") ? fastAnswer : question}
+                alt="Not found yet"
+              />
+              <Dialog open={openTwelfth} onClose={handleCloseTwelfth}>
+                <DialogTitle>
+                  <Typography className={classes.title}>
+                    {localStorage.getItem("fastAnswer") ? "The flash!" : "Not found yet"}
+                  </Typography>
+                </DialogTitle>
+                <DialogContent>
+                  <Typography className={classes.text}>
+                    {localStorage.getItem("fastAnswer")
+                      ? "You spotted a lesion in less than 2 seconds! Are you even human?"
+                      : "Play more in order to unlock this achievement"}
+                  </Typography>
+                </DialogContent>
+              </Dialog>
+            </Container>
+          </LightTooltip>
+        </Grid>
+      </Grid>
+    );
+  };
+
   return (
     <div className={classes.root}>
       <AppBar position="sticky">
@@ -492,6 +615,9 @@ const Achievements: React.FC<AchievementsProps> = ({ setRoute }: AchievementsPro
           </Grid>
           <Grid container item xs={12} spacing={3}>
             <ThirdFormRow />
+          </Grid>
+          <Grid container item xs={12} spacing={3}>
+            <FourthFormRow />
           </Grid>
         </Grid>
       </>
