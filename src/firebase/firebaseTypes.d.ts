@@ -35,3 +35,7 @@ interface AnnotationData {
   truth: number[];
   predicted: number[];
 }
+
+interface SettingsData {
+  roundTimeInitial: number;
+}

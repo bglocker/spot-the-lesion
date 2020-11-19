@@ -3,6 +3,7 @@ import { AppBar, Toolbar, Typography } from "@material-ui/core";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 import { firebaseAuth } from "../../firebase/firebaseApp";
 import colors from "../../res/colors";
+import Settings from "./Settings";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -57,6 +58,11 @@ const AdminAuth: React.FC = () => {
   const classes = useStyles();
 
   const [password, setPassword] = useState<string>("");
+  const [wasLogged, setWasLogged] = useState<boolean>(false);
+
+  if (wasLogged) {
+    return <Settings />;
+  }
 
   const submitClick = () => {
     firebaseAuth
@@ -64,6 +70,8 @@ const AdminAuth: React.FC = () => {
       .then(() => {
         // eslint-disable-next-line no-console
         console.log("Managed to log in");
+
+        setWasLogged(true);
       })
       .catch((error) => {
         // eslint-disable-next-line no-console
