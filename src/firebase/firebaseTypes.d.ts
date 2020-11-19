@@ -38,6 +38,9 @@ interface AnnotationData {
 
 interface SettingsData {
   animationTime: number;
+  hintLineWidth: number;
+  hintRadius: number;
   hintTime: number;
+  rounds: number;
   roundTimeInitial: number;
 }
