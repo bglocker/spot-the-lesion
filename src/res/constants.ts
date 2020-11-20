@@ -6,6 +6,7 @@ const constants = {
   animationCubes: 10,
   animationLineWidth: 5,
   animationTime: 3000,
+  canvasSize: 750,
   clickLineWidth: 5,
   clickSize: 10,
   hintLineWidth: 2,

@@ -1,12 +1,11 @@
 interface GameSideBarProps {
-  gameMode: GameMode;
-  round: number;
-  inRound: boolean;
+  gameStarted: boolean;
+  gameEnded: boolean;
+  roundEnded: boolean;
   roundLoading: boolean;
-  playerScore: number;
-  playerRoundScore: number;
-  aiScore: number;
-  aiRoundScore: number;
+  showIncrement: boolean;
   onStartRound: () => void;
   onSubmitClick: () => void;
+  playerScore: { total: number; round: number };
+  aiScore: { total: number; round: number };
 }
