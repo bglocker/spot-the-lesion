@@ -2,60 +2,38 @@ import React from "react";
 import {
   Button,
   Card,
-  createStyles,
   Dialog,
   DialogActions,
   DialogTitle,
   Typography,
   useMediaQuery,
 } from "@material-ui/core";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { ResponsivePie } from "@nivo/pie";
-import { makeStyles } from "@material-ui/core/styles";
+import { LegendDirection } from "@nivo/legends";
 
 const useStyles = makeStyles(
   createStyles({
-    imageStatsCard: {
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "center",
-      position: "relative",
+    container: {
       width: "100%",
       height: "60vh",
     },
-    statTitle: {
-      textAlign: "left",
-    },
-    message: {
+    zeroValueText: {
+      margin: 8,
       fontWeight: "bold",
-      margin: "inherit",
-    },
-    dialog: {
-      width: "100%",
-      height: "100%",
-      alignSelf: "center",
     },
   })
 );
 
-/**
- * New type representing the direction of Legends in the Pie Chart
- * To be used for the 'direction' prop of the Pie component
- */
-type Direction = "row" | "column";
-
 const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
   open,
-  data,
   onClose,
+  data,
 }: ImageStatsDialogProps) => {
   const classes = useStyles();
 
-  /**
-   * Media Queries for Window width and height
-   */
-  const screenWidthMatches = useMediaQuery("(min-width:600px)");
-  const screenHeightMatches = useMediaQuery("(min-height:750px");
+  const mediumWidth = useMediaQuery("(min-width:600px)");
+  const mediumHeight = useMediaQuery("(min-height:750px");
 
   /**
    * Function for scaling the pie chart according to device window size
@@ -63,49 +41,23 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
   const getPieChartOptions = (): {
     itemsSpacing: number;
     translateY: number;
-    direction: Direction;
+    direction: LegendDirection;
   } => {
-    const yPos = screenHeightMatches ? 56 : 75;
-    return screenWidthMatches
+    const yPos = mediumHeight ? 56 : 75;
+    return mediumWidth
       ? { itemsSpacing: 100, translateY: yPos, direction: "row" }
       : { itemsSpacing: 6, translateY: yPos, direction: "column" };
   };
 
-  /**
-   * Handler function for closing the dialog box
-   * Delegates the call to the onClose param
-   */
   const onCloseDialog = () => {
     onClose();
   };
 
-  /**
-   * Function for displaying a message on the Dialog Box when a particular stat is 0
-   */
-  const displayMessagesForZeroValuedStats = () => {
-    let message;
-    const components: JSX.Element[] = [];
-    data.forEach((stat) => {
-      if (stat.value === 0) {
-        message = `\nThere are no ${stat.id} registered for this image!`;
-        components.push(<Typography className={classes.message}>{message}</Typography>);
-      }
-    });
-    return components;
-  };
-
-  /**
-   * Main return from the ImageStatsDialog function component
-   */
   return (
-    <Dialog className={classes.dialog} open={open} onClose={onCloseDialog} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        <Typography className={[classes.message, classes.statTitle].join(" ")}>
-          Image Statistics
-        </Typography>
-      </DialogTitle>
+    <Dialog open={open} onClose={onCloseDialog} fullWidth maxWidth="sm">
+      <DialogTitle>Image Statistics</DialogTitle>
 
-      <Card className={classes.imageStatsCard}>
+      <Card className={classes.container}>
         <ResponsivePie
           data={data}
           margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
@@ -164,7 +116,19 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
           ]}
         />
       </Card>
-      {displayMessagesForZeroValuedStats()}
+
+      {data.map((stat) => {
+        if (stat.value === 0) {
+          return (
+            <Typography key={stat.id} className={classes.zeroValueText}>
+              {`There are no ${stat.id} registered for this image!`}
+            </Typography>
+          );
+        }
+
+        return null;
+      })}
+
       <DialogActions>
         <Button color="primary" onClick={onCloseDialog}>
           Close

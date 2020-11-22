@@ -908,8 +908,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
 
       <ImageStatsDialog
         open={showImageStats}
-        data={createPieChartData()}
         onClose={onCloseImageStats}
+        data={createPieChartData()}
       />
     </>
   );
