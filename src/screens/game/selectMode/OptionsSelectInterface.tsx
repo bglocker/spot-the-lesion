@@ -1,20 +1,18 @@
 import React from "react";
 import { Button, ButtonGroup, Typography } from "@material-ui/core";
-import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
+import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     container: {
-      height: "100%",
       display: "flex",
       flexDirection: "column",
-      justifyContent: "space-evenly",
+      justifyContent: "center",
       alignItems: "center",
     },
     selectText: {
       fontSize: "3rem",
       fontWeight: "bold",
-      textAlign: "center",
       [theme.breakpoints.only("xs")]: {
         fontSize: "150%",
       },
@@ -25,7 +23,7 @@ const useStyles = makeStyles((theme: Theme) =>
         fontSize: "3rem",
       },
     },
-    buttonDesign: {
+    button: {
       margin: 8,
       borderRadius: 20,
       [theme.breakpoints.only("xs")]: {
@@ -55,14 +53,14 @@ const OptionsSelectInterface: React.FC<OptionsSelectInterface> = ({
 
   return (
     <div className={classes.container}>
-      <Typography className={classes.selectText}>Choose a {optionName}</Typography>
+      <Typography className={classes.selectText}>{optionName}</Typography>
 
       <ButtonGroup orientation="vertical">
         {options.map(([optionDefinition, optionFunction]) => (
           <Button
             key={optionDefinition}
             id={optionDefinition}
-            className={classes.buttonDesign}
+            className={classes.button}
             variant="contained"
             color="primary"
             size="large"

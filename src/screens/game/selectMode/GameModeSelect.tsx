@@ -9,22 +9,24 @@ const GameModeSelect: React.FC<GameModeSelectProps> = ({
   const theme = useTheme();
 
   const onCasualClick = () => {
-    setGameModeSelected(true);
     document.getElementById("Casual")!.style.backgroundColor = theme.palette.primary.main;
     document.getElementById("Competitive")!.style.backgroundColor = "gray";
+
+    setGameModeSelected(true);
     setGameMode("casual");
   };
 
   const onCompetitiveClick = () => {
-    setGameModeSelected(true);
     document.getElementById("Casual")!.style.backgroundColor = "gray";
     document.getElementById("Competitive")!.style.backgroundColor = theme.palette.primary.main;
+
+    setGameModeSelected(true);
     setGameMode("competitive");
   };
 
   return (
     <OptionsSelectInterface
-      optionName="mode"
+      optionName="Game mode"
       options={[
         ["Casual", onCasualClick],
         ["Competitive", onCompetitiveClick],

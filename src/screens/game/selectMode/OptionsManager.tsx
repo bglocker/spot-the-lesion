@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { AppBar, Button, IconButton, Theme, Toolbar, Typography } from "@material-ui/core";
-import { KeyboardBackspace } from "@material-ui/icons";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
+import { KeyboardBackspace } from "@material-ui/icons";
 import Game from "../Game";
 import GameModeSelect from "./GameModeSelect";
 import DifficultySelect from "./DifficultySelect";
@@ -14,8 +14,26 @@ const useStyles = makeStyles((theme: Theme) =>
     title: {
       flexGrow: 1,
     },
-    buttonDesign: {
-      margin: 8,
+    container: {
+      height: "100%",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "space-evenly",
+      alignItems: "center",
+    },
+    selectors: {
+      width: "100%",
+      display: "flex",
+      justifyContent: "space-evenly",
+      [theme.breakpoints.down("sm")]: {
+        flex: 0.8,
+        flexDirection: "column",
+      },
+      [theme.breakpoints.up("md")]: {
+        flexDirection: "row",
+      },
+    },
+    startButton: {
       borderRadius: 20,
       [theme.breakpoints.only("xs")]: {
         width: 300,
@@ -31,25 +49,6 @@ const useStyles = makeStyles((theme: Theme) =>
         width: 370,
         height: 61,
         fontSize: "1.25rem",
-      },
-    },
-    rows: {
-      height: "100%",
-      justifyContent: "space-evenly",
-      alignItems: "center",
-      display: "flex",
-      flexDirection: "column",
-    },
-    columns: {
-      justifyContent: "space-evenly",
-      alignItems: "center",
-      [theme.breakpoints.down("sm")]: {
-        display: "flex",
-        flexDirection: "column",
-      },
-      [theme.breakpoints.up("md")]: {
-        display: "flex",
-        flexDirection: "row",
       },
     },
   })
@@ -89,24 +88,25 @@ const OptionsManager: React.FC<OptionsProps> = ({ setRoute }: OptionsProps) => {
           <Typography className={classes.title}>Spot the Lesion</Typography>
         </Toolbar>
       </AppBar>
-      <div className={classes.rows}>
-        <div className={classes.columns}>
+
+      <div className={classes.container}>
+        <div className={classes.selectors}>
           <GameModeSelect setGameMode={setGameMode} setGameModeSelected={setGameModeSelected} />
+
           <DifficultySelect
             setMin={setMinId}
             setMax={setMaxId}
             setDifficultySelected={setDifficultySelected}
           />
         </div>
+
         <Button
-          className={classes.buttonDesign}
+          className={classes.startButton}
           variant="contained"
           color="primary"
           size="large"
-          disabled={!(gameModeSelected && difficultySelected)}
-          onClick={() => {
-            setStart(true);
-          }}
+          disabled={!gameModeSelected || !difficultySelected}
+          onClick={() => setStart(true)}
         >
           Start
         </Button>

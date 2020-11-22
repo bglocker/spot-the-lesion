@@ -8,6 +8,7 @@ import { db, firebaseStorage } from "../../firebase/firebaseApp";
 import GameTopBar from "./GameTopBar";
 import GameSideBar from "./GameSideBar";
 import SubmitScoreDialog from "./SubmitScoreDialog";
+import ImageStatsDialog from "./ImageStatsDialog";
 import {
   LoadingButton,
   useCanvasContext,
@@ -43,8 +44,6 @@ import {
 } from "../../utils/firebaseUtils";
 import colors from "../../res/colors";
 import constants from "../../res/constants";
-import DbUtils from "../../utils/DbUtils";
-import ImageStatsDialog from "./ImageStatsDialog";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -616,8 +615,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
    * @param fileNumber - index of the image for which we retrieve stats
    */
   const retrieveImageStats = async (fileNumber: number) => {
-    const table = DbUtils.IMAGES;
-
     /** Testing code: for images 1 and 2
      let index;
      if (fileNumber !== 1) {
@@ -628,7 +625,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
 
     const docName = `image_${fileNumber}`;
 
-    const imageDoc = await db.collection(table).doc(docName).get();
+    const imageDoc = await db.collection(constants.images).doc(docName).get();
+
     if (imageDoc.exists) {
       setCorrectAnswers(imageDoc.data()!.correctClicks);
       setWrongAnswers(imageDoc.data()!.wrongClicks);
