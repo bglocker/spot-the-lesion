@@ -19,7 +19,6 @@ import {
   drawCircle,
   drawCross,
   drawRectangle,
-  drawStrokedText,
   mapClickToCanvas,
   mapCoordinatesToCanvasScale,
   randomAround,
@@ -27,6 +26,7 @@ import {
   toDefaultScale,
 } from "../../utils/canvasUtils";
 import {
+  drawRoundEndText,
   getAnnotationPath,
   getImagePath,
   getIntersectionOverUnion,
@@ -147,7 +147,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
   const [showIncrement, setShowIncrement] = useState(false);
 
   const [roundRunning, setRoundRunning] = useState(false);
-  const [roundTime, setRoundTime] = useState(constants.roundTimeInitial);
+  const [roundTime, setRoundTime] = useState(constants.roundDuration);
 
   const [endRunning, setEndRunning] = useState(false);
   const [endTime, setEndTime] = useState(0);
@@ -250,17 +250,15 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
   /**
    * Upload the player click (if available), in order to gather statistics and generate heatmaps
    *
+   * @param x       Width coordinate
+   * @param y       Height coordinate
    * @param correct Whether click was correct
    */
   const uploadClick = useCallback(
-    async (correct: boolean) => {
-      if (!click) {
-        return;
-      }
-
+    async (x: number, y: number, correct: boolean) => {
       const newClick = {
-        x: toDefaultScale(context, click.x),
-        y: toDefaultScale(context, click.y),
+        x: toDefaultScale(context, x),
+        y: toDefaultScale(context, y),
         clickCount: 1,
       };
 
@@ -300,7 +298,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
         }
       }
     },
-    [click, context, fileId, hintedCurrent]
+    [context, fileId, hintedCurrent]
   );
 
   /**
@@ -328,52 +326,56 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
 
       setAnimationRunning(true);
       setEndRunning(false);
-    } else if (endTime === 100) {
+    } else if (endTime === constants.drawPredictedTime) {
       /*
-       * 0.1 seconds passed
-       *
        * draw predicted rectangle
        */
       drawRectangle(context, predicted, constants.predictedLineWidth, colors.predicted);
-    } else if (endTime === 500) {
+    } else if (endTime === constants.drawTruthTime) {
       /*
-       * 0.5 seconds passed
-       *
        * draw truth rectangle
        */
       drawRectangle(context, truth, constants.truthLineWidth, colors.truth);
-    } else if (endTime === 1000) {
+    } else if (endTime === constants.evaluationTime) {
       /*
-       * 1 second passed
-       * evaluate player and AI
-       * draw player validation text
+       * evaluate player
        * upload player click
+       * draw round end text
+       * evaluate AI
        * retrieve image statistics
        * stop end timer
        * end round
        */
       enqueueSnackbar("Checking results...", constants.informationSnackbarOptions);
 
-      /* Player was successful if the click coordinates are inside the truth rectangle */
-      const playerCorrect =
-        click !== null &&
-        truth[0] <= click.x &&
-        click.x <= truth[2] &&
-        truth[1] <= click.y &&
-        click.y <= truth[3];
+      if (click) {
+        const { x, y } = click;
 
-      if (playerCorrect) {
-        /* Casual Mode: half a point, doubled if no hint received */
-        const casualScore = 0.5 * (hintedCurrent ? 1 : 2);
+        /* Player was successful if the click coordinates are inside the truth rectangle */
+        const playerCorrect = truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
 
-        /* Competitive Mode: function of round time left, doubled if no hint received */
-        const competitiveScore = Math.round(roundTime / 100) * (hintedCurrent ? 1 : 2);
+        uploadClick(x, y, playerCorrect).then(() => {});
 
-        const roundScore = gameMode === "casual" ? casualScore : competitiveScore;
+        if (playerCorrect) {
+          /* Casual Mode: half a point, doubled if no hint received */
+          const casualScore = 0.5 * (hintedCurrent ? 1 : 2);
 
-        setPlayerScore(({ total }) => ({ total, round: roundScore }));
-        setPlayerCorrectAnswers((prevState) => prevState + 1);
-        setPlayerCorrectCurrent(true);
+          /* Competitive Mode: function of round time left, doubled if no hint received */
+          const competitiveScore = Math.round(roundTime / 100) * (hintedCurrent ? 1 : 2);
+
+          const roundScore = gameMode === "casual" ? casualScore : competitiveScore;
+
+          setPlayerScore(({ total }) => ({ total, round: roundScore }));
+          setPlayerCorrectAnswers((prevState) => prevState + 1);
+          setPlayerCorrectCurrent(true);
+        }
+
+        const text = playerCorrect ? "Well spotted!" : "Missed!";
+        const textColor = playerCorrect ? colors.playerCorrect : colors.playerIncorrect;
+
+        drawRoundEndText(context, text, textColor);
+      } else {
+        drawRoundEndText(context, "Too slow!", colors.playerIncorrect);
       }
 
       const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
@@ -395,15 +397,6 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
         setAiScore(({ total }) => ({ total, round: roundScore }));
         setAiCorrectAnswers((prevState) => prevState + 1);
       }
-
-      const textX = Math.round(constants.canvasSize / 2);
-      const textY = Math.round(constants.canvasSize / 10);
-      const text = playerCorrect ? "Well spotted!" : "Missed!";
-      const textColor = playerCorrect ? colors.playerCorrect : colors.playerIncorrect;
-
-      drawStrokedText(context, text, textX, textY, "center", 3, "white", textColor);
-
-      uploadClick(playerCorrect).then(() => {});
 
       retrieveImageStats(fileId).then(() => {});
 
@@ -434,7 +427,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
    */
   useInterval(
     () => setAnimationPosition((prevState) => prevState + 1),
-    animationRunning ? Math.round(constants.animationTime / constants.animationCubes ** 2) : null
+    animationRunning
+      ? Math.round(constants.animationDuration / constants.animationCubesNumber ** 2)
+      : null
   );
 
   /**
@@ -449,16 +444,16 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
     animationContext.clearRect(0, 0, animationContext.canvas.width, animationContext.canvas.height);
 
     /* Stop when all cube positions were reached, and resume end timer with one tick passed */
-    if (animationPosition === constants.animationCubes ** 2) {
+    if (animationPosition === constants.animationCubesNumber ** 2) {
       setAnimationRunning(false);
       setEndTime((prevState) => prevState + 100);
       setEndRunning(true);
       return;
     }
 
-    const cubeSide = animationContext.canvas.width / constants.animationCubes;
-    const baseX = (animationPosition % constants.animationCubes) * cubeSide;
-    const baseY = Math.floor(animationPosition / constants.animationCubes) * cubeSide;
+    const cubeSide = animationContext.canvas.width / constants.animationCubesNumber;
+    const baseX = (animationPosition % constants.animationCubesNumber) * cubeSide;
+    const baseY = Math.floor(animationPosition / constants.animationCubesNumber) * cubeSide;
     const cube = [
       Math.round(baseX),
       Math.round(baseY),
@@ -481,7 +476,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
 
     setShowIncrement(true);
 
-    if (gameMode === "competitive" && roundNumber === constants.rounds) {
+    if (gameMode === "competitive" && roundNumber === constants.roundsNumber) {
       setGameEnded(true);
     }
 
@@ -506,7 +501,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
 
     /* Check competitive achievements */
     if (gameMode === "competitive") {
-      if (playerCorrectCurrent && roundTime > constants.roundTimeInitial - 2000) {
+      if (playerCorrectCurrent && roundTime > constants.roundDuration - 2000) {
         unlockAchievementHandler(
           "fastAnswer",
           "Achievement! You answered correctly in less than 2 seconds!"
@@ -543,7 +538,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
       return;
     }
 
-    if (playerCorrectAnswers === constants.rounds) {
+    if (playerCorrectAnswers === constants.roundsNumber) {
       unlockAchievementHandler("allCorrectCompetitive", "Achievement! You got them all right!");
     }
 
@@ -690,7 +685,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
       setRoundNumber((prevState) => prevState + 1);
 
       /* Reset game state */
-      setRoundTime(constants.roundTimeInitial);
+      setRoundTime(constants.roundDuration);
       setEndTime(0);
       setAnimationPosition(0);
 

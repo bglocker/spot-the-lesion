@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { OptionsObject } from "notistack";
 import constants from "../res/constants";
+import { drawStrokedText } from "./canvasUtils";
 
 /**
  * Returns the path to the annotation file corresponding to the given annotationId
@@ -46,6 +47,20 @@ const getIntersectionOverUnion = (rectA: number[], rectB: number[]): number => {
   const union = areaA + areaB - inter;
 
   return inter / union;
+};
+
+/**
+ * Draw the round end text
+ *
+ * @param ctx   Context to draw the text on
+ * @param text  Text to draw
+ * @param color Text color
+ */
+const drawRoundEndText = (ctx: CanvasRenderingContext2D, text: string, color: string): void => {
+  const x = Math.round(ctx.canvas.width / 2);
+  const y = Math.round(ctx.canvas.height / 10);
+
+  drawStrokedText(ctx, text, x, y, "center", 3, "white", color);
 };
 
 /**
@@ -112,6 +127,7 @@ const unlockAchievement = (
 };
 
 export {
+  drawRoundEndText,
   getAnnotationPath,
   getImagePath,
   getIntersectionOverUnion,
