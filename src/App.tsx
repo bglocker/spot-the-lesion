@@ -11,7 +11,7 @@ import Leaderboard from "./screens/leaderboard/Leaderboard";
 import Statistics from "./screens/statistics/Statistics";
 import OptionsManager from "./screens/game/selectMode/OptionsManager";
 import Achievements from "./screens/achievements/Achievements";
-import AdminAuth from "./screens/admin_console/AdminAuth";
+import FileUpload from "./screens/admin_console/fileUpload/FileUpload";
 
 const theme = createMuiTheme({
   palette: {
@@ -80,7 +80,7 @@ const App: React.FC = () => {
           </Route>
 
           <Route path="/admin">
-            <AdminAuth />
+            <FileUpload />;
           </Route>
 
           <Route path="*">
