@@ -55,6 +55,9 @@ const useStyles = makeStyles((theme) =>
 const FileUpload: React.FC = () => {
   const classes = useStyles();
 
+  const article = { title: "React POST Request Example" };
+  axios.post("https://spot-the-lesion.herokuapp.com/post", article);
+
   return (
     <>
       <AppBar position="absolute">
