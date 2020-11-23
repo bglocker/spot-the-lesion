@@ -131,6 +131,8 @@ const Game: React.FC<GameProps> = ({
 
   const canvasContainer = useRef<HTMLDivElement>(null);
 
+  const [showImageStats, setShowImageStats] = useState(false);
+
   const [heatmapLoading, setHeatmapLoading] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
 
@@ -169,19 +171,12 @@ const Game: React.FC<GameProps> = ({
   const [aiScore, setAiScore] = useState({ total: 0, round: 0 });
   const [aiCorrectAnswers, setAiCorrectAnswers] = useState(0);
 
-  /**
-   * Hooks used for Per-Image Stats
-   */
+  const { enqueueSnackbar } = useSnackbar();
+
+  /* TODO: move to ImageStatsDialog */
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [wrongAnswers, setWrongAnswers] = useState(0);
   const [totalHints, setTotalHints] = useState(0);
-
-  /**
-   * Hook for conditional rendering of the Image Stats Dialog Box
-   */
-  const [showImageStats, setShowImageStats] = useState(false);
-
-  const { enqueueSnackbar } = useSnackbar();
 
   /**
    * Round timer

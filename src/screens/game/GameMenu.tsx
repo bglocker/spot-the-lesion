@@ -148,7 +148,7 @@ const GameMenu: React.FC<GameMenuProps> = ({ setRoute }: GameMenuProps) => {
       <div className={classes.container}>
         <div className={classes.selectorsContainer}>
           <div className={classes.selectorContainer}>
-            <Typography className={classes.selectText}>Difficulty</Typography>
+            <Typography className={classes.selectText}>Game mode</Typography>
 
             <ToggleButtonGroup
               orientation="vertical"
