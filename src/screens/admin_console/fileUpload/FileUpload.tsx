@@ -1,6 +1,7 @@
 import React from "react";
 import { AppBar, Toolbar, Typography } from "@material-ui/core";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
+import axios from "axios";
 import colors from "../../../res/colors";
 
 const useStyles = makeStyles((theme) =>
