@@ -6,6 +6,9 @@ const constants = {
   animationCubesNumber: 10,
   canvasSize: 750,
   roundsNumber: 10,
+  rangeEndEasy: 1252,
+  rangeEndMedium: 3454,
+  rangeEndHard: 4723,
 
   /* Game drawings */
   animationLineWidth: 5,

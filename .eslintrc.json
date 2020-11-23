@@ -54,6 +54,8 @@
     "@typescript-eslint/semi": "error",
     "prettier/prettier": [ "error", { "endOfLine": "auto" } ],
     "react/prefer-stateless-function": "error",
+    "react/prop-types": "off",
+    "react/require-default-props": "off",
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn"
   },

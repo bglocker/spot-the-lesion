@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { OptionsObject } from "notistack";
-import constants from "../res/constants";
 import { drawStrokedText } from "./canvasUtils";
+import constants from "../res/constants";
 
 /**
  * Returns the path to the annotation file corresponding to the given annotationId
@@ -61,6 +61,26 @@ const drawRoundEndText = (ctx: CanvasRenderingContext2D, text: string, color: st
   const y = Math.round(ctx.canvas.height / 10);
 
   drawStrokedText(ctx, text, x, y, "center", 3, "white", color);
+};
+
+/**
+ * Return the minimum and maximum file ids corresponding to the given difficulty ids range
+ *
+ * @param difficulty Difficulty for which to retrieve the range
+ *
+ * @return Tuple of minimum and maximum file id
+ */
+const getFileIdRange = (difficulty: Difficulty): [number, number] => {
+  switch (difficulty) {
+    case "easy":
+      return [0, constants.rangeEndEasy];
+    case "medium":
+      return [constants.rangeEndEasy, constants.rangeEndMedium];
+    case "hard":
+      return [constants.rangeEndMedium, constants.rangeEndHard];
+    default:
+      return [0, constants.rangeEndHard];
+  }
 };
 
 /**
@@ -129,6 +149,7 @@ const unlockAchievement = (
 export {
   drawRoundEndText,
   getAnnotationPath,
+  getFileIdRange,
   getImagePath,
   getIntersectionOverUnion,
   range,

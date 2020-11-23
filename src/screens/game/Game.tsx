@@ -117,7 +117,11 @@ const useStyles = makeStyles((theme) =>
   })
 );
 
-const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }: GameProps) => {
+const Game: React.FC<GameProps> = ({
+  setRoute,
+  gameMode,
+  fileIdRange: [minFileId, maxFileId],
+}: GameProps) => {
   const classes = useStyles();
 
   const [context, canvasRef] = useCanvasContext();
