@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { AppBar, Toolbar, Typography } from "@material-ui/core";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 import axios from "axios";
@@ -56,11 +56,46 @@ const useStyles = makeStyles((theme) =>
 const FileUpload: React.FC = () => {
   const classes = useStyles();
 
-  const article = { title: "React POST Request Example" };
-  axios
-    .post("https://spot-the-lesion.herokuapp.com/post/", article)
+  const [currentImagesForUpload, setCurrentImagesForUpload] = useState([]);
+  const [currentJsonsForUpload, setCurrentJsonsForUpload] = useState([]);
+
+  const axiosConfig = {
+    headers: { "content-type": "multipart/form-data" },
+  };
+
+  const prepareCurrentImagesForUpload = (event) => {
+    setCurrentImagesForUpload(event.currentTarget.files);
+  };
+
+  const prepareCurrentJsonsForUpload = (event) => {
+    setCurrentJsonsForUpload(event.currentTarget.files);
+  };
+
+  const submitClick = () => {
+    if (currentImagesForUpload == null || !currentJsonsForUpload == null) {
+      // eslint-disable-next-line no-console
+      console.log("No files to upload for images or jsons, aborting.");
+    }
+
+    for (let index = 0; index < currentImagesForUpload.length; index++) {
+      // eslint-disable-next-line no-console
+      console.log(currentImagesForUpload[index]);
+    }
+
+    const formData = new FormData();
     // eslint-disable-next-line no-console
-    .then((response) => console.log(response));
+    console.log(formData);
+    formData.append("scan", currentImagesForUpload[0]);
+
+    axios
+      .post("https://spot-the-lesion.herokuapp.com/post/", formData, axiosConfig)
+      // eslint-disable-next-line no-console
+      .then((response) => console.log(response))
+      .catch((error) => {
+        // eslint-disable-next-line no-console
+        console.log(error.response.data);
+      });
+  };
 
   return (
     <>
@@ -72,10 +107,17 @@ const FileUpload: React.FC = () => {
 
       <div className={classes.container}>
         <div className={classes.box}>
-          <Typography className={classes.text}> Password </Typography>
+          <Typography className={classes.text}>
+            Please select the images and jsons to upload (just select all of them at once).
+          </Typography>
           <div className={classes.submit}>
-            <input type="file" multiple />
-            <input className={classes.spacing} type="submit" value="Submit" />
+            <input
+              type="file"
+              multiple
+              onChange={(event) => prepareCurrentImagesForUpload(event)}
+            />
+            <input type="file" multiple onChange={(event) => prepareCurrentJsonsForUpload(event)} />
+            <input className={classes.spacing} type="submit" value="Submit" onClick={submitClick} />
           </div>
         </div>
       </div>
