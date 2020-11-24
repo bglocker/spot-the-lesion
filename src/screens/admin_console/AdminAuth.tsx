@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { AppBar, Toolbar, Typography } from "@material-ui/core";
-import { makeStyles, createStyles } from "@material-ui/core/styles";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
+import Button from "@material-ui/core/Button";
 import { firebaseAuth } from "../../firebase/firebaseApp";
 import colors from "../../res/colors";
 import Settings from "./Settings";
@@ -44,12 +45,28 @@ const useStyles = makeStyles((theme) =>
     },
     submit: {
       display: "flex",
-      flexDirection: "row",
+      flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
     },
     spacing: {
-      margin: 10,
+      margin: 50,
+    },
+    button: {
+      margin: 8,
+      borderRadius: 20,
+      [theme.breakpoints.only("xs")]: {
+        width: 250,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.only("sm")]: {
+        width: 300,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        width: 320,
+        fontSize: "1.25rem",
+      },
     },
   })
 );
@@ -90,13 +107,21 @@ const AdminAuth: React.FC = () => {
       <div className={classes.container}>
         <div className={classes.box}>
           <Typography className={classes.text}> Password </Typography>
-          <div className={classes.submit}>
+          <div className={[classes.submit, classes.spacing].join(" ")}>
             <input
               className={classes.spacing}
-              type="text"
+              type="password"
               onChange={(changeTextbox) => setPassword(changeTextbox.target.value)}
             />
-            <input className={classes.spacing} type="submit" value="Submit" onClick={submitClick} />
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={submitClick}
+            >
+              Log In
+            </Button>
           </div>
         </div>
       </div>
