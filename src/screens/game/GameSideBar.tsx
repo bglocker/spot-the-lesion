@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button, Card, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { TwitterIcon, TwitterShareButton } from "react-share";
@@ -63,6 +63,7 @@ const useStyles = makeStyles((theme) =>
 );
 
 const GameSideBar: React.FC<GameSideBarProps> = ({
+  gameMode,
   gameStarted,
   gameEnded,
   roundEnded,
@@ -70,10 +71,13 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
   showIncrement,
   onStartRound,
   onSubmitClick,
+  onChallenge,
   playerScore,
   aiScore,
 }: GameSideBarProps) => {
   const classes = useStyles();
+
+  const [challengeLoading, setChallengeLoading] = useState(false);
 
   const gameEndText = () => {
     if (!gameEnded) {
@@ -124,7 +128,7 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
   };
 
   const submitShareButtons = () => {
-    if (gameEnded || !roundEnded || roundLoading) {
+    if ((gameMode === "competitive" && !gameEnded) || !roundEnded || roundLoading) {
       return null;
     }
 
@@ -141,6 +145,34 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
           <TwitterIcon size="50px" round />
         </TwitterShareButton>
       </div>
+    );
+  };
+
+  const onChallengeClick = async () => {
+    try {
+      setChallengeLoading(true);
+
+      await onChallenge();
+    } finally {
+      setChallengeLoading(false);
+    }
+  };
+
+  const challengeButton = () => {
+    if (!gameEnded) {
+      return null;
+    }
+
+    return (
+      <LoadingButton
+        variant="contained"
+        color="primary"
+        size="large"
+        loading={challengeLoading}
+        onClick={onChallengeClick}
+      >
+        Challenge friend
+      </LoadingButton>
     );
   };
 
@@ -170,6 +202,8 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
         {startRoundButton()}
 
         {submitShareButtons()}
+
+        {challengeButton()}
       </Card>
     </div>
   );

@@ -119,6 +119,31 @@ const getDifficultyOrDefault = (
 };
 
 /**
+ * Given a string, get the file ids array it encodes, or if that's not valid, use the default
+ *
+ * @param fileIds File ids array encoding
+ * @param def     Default file ids array value
+ *
+ * @return Valid file ids array, or undefined
+ */
+const getFileIdsOrDefault = (fileIds: string | null, def?: number[]): number[] | undefined => {
+  if (
+    fileIds === null ||
+    fileIds.length < 2 ||
+    fileIds[0] !== "[" ||
+    fileIds[fileIds.length - 1] !== "]"
+  ) {
+    return def;
+  }
+
+  try {
+    return JSON.parse(fileIds);
+  } catch (_error) {
+    return def;
+  }
+};
+
+/**
  * Create an array from a given range
  *
  * @param start First value of range (inclusive)
@@ -186,6 +211,7 @@ export {
   getAnnotationPath,
   getDifficultyOrDefault,
   getFileIdRange,
+  getFileIdsOrDefault,
   getGameModeOrDefault,
   getImagePath,
   getIntersectionOverUnion,

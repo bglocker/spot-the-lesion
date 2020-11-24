@@ -1,4 +1,5 @@
 interface GameSideBarProps {
+  gameMode: GameMode;
   gameStarted: boolean;
   gameEnded: boolean;
   roundEnded: boolean;
@@ -6,6 +7,7 @@ interface GameSideBarProps {
   showIncrement: boolean;
   onStartRound: () => void;
   onSubmitClick: () => void;
+  onChallenge: () => void;
   playerScore: { total: number; round: number };
   aiScore: { total: number; round: number };
 }

@@ -33,7 +33,10 @@ const constants = {
   defaultImageSize: 512,
 
   /* axios */
-  getTimeout: 3000,
+  axiosTimeout: 3000,
+
+  /* Dynamic Links */
+  domainUriPrefix: "https://spotthelesion.page.link",
 
   /* Firestore */
   scoresCasual: "leaderboard_casual",

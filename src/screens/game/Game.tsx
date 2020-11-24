@@ -9,14 +9,10 @@ import { db, firebaseStorage } from "../../firebase/firebaseApp";
 import GameTopBar from "./GameTopBar";
 import GameSideBar from "./GameSideBar";
 import SubmitScoreDialog from "./SubmitScoreDialog";
+import ChallengeDialog from "./ChallengeDialog";
 import ImageStatsDialog from "./ImageStatsDialog";
-import {
-  LoadingButton,
-  useCanvasContext,
-  useHeatmap,
-  useInterval,
-  useUniqueRandomGenerator,
-} from "../../components";
+import useFileIdGenerator from "./useFileIdGenerator";
+import { LoadingButton, useCanvasContext, useHeatmap, useInterval } from "../../components";
 import {
   drawCircle,
   drawCross,
@@ -30,7 +26,6 @@ import {
 import {
   drawRoundEndText,
   getAnnotationPath,
-  getFileIdRange,
   getImagePath,
   getIntersectionOverUnion,
   unlockAchievement,
@@ -126,7 +121,7 @@ const defaultImageData: FirestoreImageData = {
   wrongClicks: 0,
 };
 
-const Game: React.FC<GameProps> = ({ gameMode, difficulty }: GameProps) => {
+const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: GameProps) => {
   const classes = useStyles();
 
   const history = useHistory();
@@ -134,11 +129,14 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty }: GameProps) => {
   const [context, canvasRef] = useCanvasContext();
   const [animationContext, animationCanvasRef] = useCanvasContext();
 
-  const getNewFileId = useUniqueRandomGenerator(getFileIdRange(difficulty));
+  const getNewFileId = useFileIdGenerator(difficulty, challengeFileIds);
 
   const canvasContainer = useRef<HTMLDivElement>(null);
 
   const [showImageStats, setShowImageStats] = useState(false);
+
+  const [showChallenge, setShowChallenge] = useState(false);
+  const [challengeLink, setChallengeLink] = useState("");
 
   const [heatmapLoading, setHeatmapLoading] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
@@ -150,8 +148,6 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty }: GameProps) => {
   const [hinted, setHinted] = useState(false);
 
   const [fileId, setFileId] = useState(-1);
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
   const [fileIds, setFileIds] = useState<number[]>([]);
 
   const [truth, setTruth] = useState<number[]>([]);
@@ -598,7 +594,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty }: GameProps) => {
   const loadAnnotation = async (annotationId: number): Promise<void> => {
     const url = await firebaseStorage.ref(getAnnotationPath(annotationId)).getDownloadURL();
 
-    const response = await axios.get<AnnotationData>(url, { timeout: constants.getTimeout });
+    const response = await axios.get<AnnotationData>(url, { timeout: constants.axiosTimeout });
 
     const annotation = response.data;
 
@@ -798,6 +794,51 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty }: GameProps) => {
     }
   };
 
+  const createChallenge = async () => {
+    const shortLinksUrl = `https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=${process.env.REACT_APP_FIREBASE_API_KEY}`;
+
+    /* TODO: set conditionally for production and development */
+    const link = `http://localhost:3000/spot-the-lesion/game?gameMode=${gameMode}&difficulty=${difficulty}&fileIds=${JSON.stringify(
+      fileIds
+    )}`;
+
+    const title = "Spot the Lesion";
+
+    const description = `I just scored ${
+      playerScore.total + playerScore.round
+    }! Think you can beat that?`;
+
+    try {
+      const response = await axios.post(
+        shortLinksUrl,
+        {
+          dynamicLinkInfo: {
+            domainUriPrefix: constants.domainUriPrefix,
+            link,
+            socialMetaTagInfo: {
+              socialTitle: title,
+              socialDescription: description,
+            },
+          },
+          suffix: {
+            option: "SHORT",
+          },
+        },
+        { timeout: constants.axiosTimeout }
+      );
+
+      setChallengeLink(response.data.shortLink);
+
+      setShowChallenge(true);
+    } catch (error) {
+      if (isAxiosError(error)) {
+        handleAxiosError(error, enqueueSnackbar);
+      } else {
+        handleUncaughtError(error, "createInvite", enqueueSnackbar);
+      }
+    }
+  };
+
   const onToggleHeatmap = () => {
     setHeatmapLoading(!showHeatmap);
     setShowHeatmap((prevState) => !prevState);
@@ -806,6 +847,8 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty }: GameProps) => {
   const onShowSubmit = () => setShowSubmit(true);
 
   const onCloseSubmit = () => setShowSubmit(false);
+
+  const onCloseChallenge = () => setShowChallenge(false);
 
   const onShowImageStats = () => setShowImageStats(true);
 
@@ -880,6 +923,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty }: GameProps) => {
         </div>
 
         <GameSideBar
+          gameMode={gameMode}
           gameStarted={roundNumber > 0}
           gameEnded={gameEnded}
           roundEnded={roundEnded}
@@ -887,12 +931,15 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty }: GameProps) => {
           showIncrement={showIncrement}
           onStartRound={startRound}
           onSubmitClick={onShowSubmit}
+          onChallenge={createChallenge}
           playerScore={playerScore}
           aiScore={aiScore}
         />
       </div>
 
       <SubmitScoreDialog open={showSubmit} onClose={onCloseSubmit} onSubmit={submitScore} />
+
+      <ChallengeDialog open={showChallenge} onClose={onCloseChallenge} link={challengeLink} />
 
       <ImageStatsDialog
         open={showImageStats}
