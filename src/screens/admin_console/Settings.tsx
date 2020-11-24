@@ -1,10 +1,11 @@
 import React, { useCallback, useState } from "react";
-import { createStyles, makeStyles } from "@material-ui/core/styles";
+import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import { AppBar, Toolbar, Typography } from "@material-ui/core";
+import Button from "@material-ui/core/Button";
 import colors from "../../res/colors";
 import { db } from "../../firebase/firebaseApp";
 
-const useStyles = makeStyles(() =>
+const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     backButton: {
       marginRight: 8,
@@ -33,6 +34,22 @@ const useStyles = makeStyles(() =>
       flexDirection: "row",
       justifyContent: "center",
       alignItems: "center",
+    },
+    button: {
+      margin: 8,
+      borderRadius: 20,
+      [theme.breakpoints.only("xs")]: {
+        width: 250,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.only("sm")]: {
+        width: 300,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        width: 320,
+        fontSize: "1.25rem",
+      },
     },
   })
 );
@@ -119,7 +136,8 @@ const Settings: React.FC = () => {
       .doc("default_options")
       .get();
 
-    db.collection("game_options")
+    await db
+      .collection("game_options")
       .doc("current_options")
       .set(defaultSettingsSnapshot.data() as SettingsData);
 
@@ -152,8 +170,24 @@ const Settings: React.FC = () => {
           })}
 
           <div className={classes.inline}>
-            <input type="submit" value="Update" onClick={pushChanges} />
-            <input type="submit" value="Reset Default" onClick={resetChanges} />
+            <Button
+              onClick={pushChanges}
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              size="large"
+            >
+              Update
+            </Button>
+            <Button
+              onClick={resetChanges}
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              size="large"
+            >
+              Reset Default
+            </Button>
           </div>
         </div>
       </div>
