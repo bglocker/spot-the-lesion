@@ -117,6 +117,13 @@ const useStyles = makeStyles((theme) =>
   })
 );
 
+const defaultImageData: FirestoreImageData = {
+  clicks: [],
+  correctClicks: 0,
+  hintCount: 0,
+  wrongClicks: 0,
+};
+
 const Game: React.FC<GameProps> = ({
   setRoute,
   gameMode,
@@ -142,10 +149,12 @@ const Game: React.FC<GameProps> = ({
   const [gameEnded, setGameEnded] = useState(false);
   const [hinted, setHinted] = useState(false);
 
-  const [fileId, setFileId] = useState(0);
+  const [fileId, setFileId] = useState(-1);
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
   const [click, setClick] = useState<{ x: number; y: number } | null>(null);
+
+  const [imageData, setImageData] = useState<FirestoreImageData>(defaultImageData);
 
   const [roundLoading, setRoundLoading] = useState(false);
   const [roundEnded, setRoundEnded] = useState(false);
@@ -172,11 +181,6 @@ const Game: React.FC<GameProps> = ({
   const [aiCorrectAnswers, setAiCorrectAnswers] = useState(0);
 
   const { enqueueSnackbar } = useSnackbar();
-
-  /* TODO: move to ImageStatsDialog */
-  const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [wrongAnswers, setWrongAnswers] = useState(0);
-  const [totalHints, setTotalHints] = useState(0);
 
   /**
    * Round timer
@@ -260,34 +264,29 @@ const Game: React.FC<GameProps> = ({
         clickCount: 1,
       };
 
+      const { clicks, correctClicks, hintCount, wrongClicks } = imageData;
+
+      /* Locate (if present) existing click with same coordinates */
+      const existingClick = clicks.find((clk) => clk.x === newClick.x && clk.y === newClick.y);
+
+      /* If not found, append to array, otherwise increment clickCount */
+      if (existingClick === undefined) {
+        clicks.push(newClick);
+      } else {
+        existingClick.clickCount += 1;
+      }
+
       const docName = `image_${fileId}`;
 
+      const newImageData = {
+        clicks,
+        correctClicks: correctClicks + (correct ? 1 : 0),
+        wrongClicks: wrongClicks + (correct ? 0 : 1),
+        hintCount: hintCount + (hintedCurrent ? 1 : 0),
+      };
+
       try {
-        const imageDoc = await db.collection(constants.images).doc(docName).get();
-
-        /* Use image data if available, or use default values  */
-        const { clicks = [], correctClicks = 0, hintCount = 0, wrongClicks = 0 } = (imageDoc.exists
-          ? imageDoc.data()
-          : {}) as FirestoreImageData;
-
-        /* Locate (if present) existing click with same coordinates */
-        const existingClick = clicks.find((clk) => clk.x === newClick.x && clk.y === newClick.y);
-
-        /* If not found, append to array, otherwise increment clickCount */
-        if (existingClick === undefined) {
-          clicks.push(newClick);
-        } else {
-          existingClick.clickCount += 1;
-        }
-
-        const imageData = {
-          clicks,
-          correctClicks: correctClicks + (correct ? 1 : 0),
-          wrongClicks: wrongClicks + (correct ? 0 : 1),
-          hintCount: hintCount + (hintedCurrent ? 1 : 0),
-        };
-
-        await db.collection(constants.images).doc(docName).set(imageData);
+        await db.collection(constants.images).doc(docName).set(newImageData);
       } catch (error) {
         if (isFirestoreError(error)) {
           handleFirestoreError(error);
@@ -296,7 +295,7 @@ const Game: React.FC<GameProps> = ({
         }
       }
     },
-    [context, fileId, hintedCurrent]
+    [context, fileId, hintedCurrent, imageData]
   );
 
   /**
@@ -395,8 +394,6 @@ const Game: React.FC<GameProps> = ({
         setAiScore(({ total }) => ({ total, round: roundScore }));
         setAiCorrectAnswers((prevState) => prevState + 1);
       }
-
-      retrieveImageStats(fileId).then(() => {});
 
       setRoundEnded(true);
       setEndRunning(false);
@@ -546,6 +543,33 @@ const Game: React.FC<GameProps> = ({
   }, [aiScore, enqueueSnackbar, gameEnded, playerCorrectAnswers, playerScore]);
 
   /**
+   * Firestore image document listener
+   */
+  useEffect(() => {
+    if (fileId === -1) {
+      return () => {};
+    }
+
+    const docName = `image_${fileId}`;
+
+    const unsubscribe = db
+      .collection(constants.images)
+      .doc(docName)
+      .onSnapshot(
+        (snapshot) => {
+          if (snapshot.exists) {
+            setImageData(snapshot.data() as FirestoreImageData);
+          }
+        },
+        (error) => {
+          handleFirestoreError(error);
+        }
+      );
+
+    return () => unsubscribe();
+  }, [fileId]);
+
+  /**
    * Called when the canvas is clicked
    *
    * @param event Mouse event, used to get click position
@@ -609,51 +633,26 @@ const Game: React.FC<GameProps> = ({
     });
 
   /**
-   * Function for retrieving image statistics from Firebase
-   *
-   * @param fileNumber - index of the image for which we retrieve stats
-   */
-  const retrieveImageStats = async (fileNumber: number) => {
-    /** Testing code: for images 1 and 2
-     let index;
-     if (fileNumber !== 1) {
-      index = 1;
-    } else {
-      index = 2;
-    } */
-
-    const docName = `image_${fileNumber}`;
-
-    const imageDoc = await db.collection(constants.images).doc(docName).get();
-
-    if (imageDoc.exists) {
-      setCorrectAnswers(imageDoc.data()!.correctClicks);
-      setWrongAnswers(imageDoc.data()!.wrongClicks);
-      setTotalHints(imageDoc.data()!.hintCount);
-    }
-  };
-
-  /**
-   * Function for wrapping up the data that needs to be parsed in the Image Stats Pie Chart
+   * Create the data to be shown in the Image Stats Pie Chart
    */
   const createPieChartData = () => {
     return [
       {
         id: "Correct Answers",
         label: "Correct Answers",
-        value: correctAnswers,
+        value: imageData.correctClicks,
         color: "hsl(150, 100%, 35%)",
       },
       {
         id: "Wrong Answers",
         label: "Wrong Answers",
-        value: wrongAnswers,
+        value: imageData.wrongClicks,
         color: "hsl(0, 100%, 50%)",
       },
       {
         id: "Hints",
         label: "Total Hints",
-        value: totalHints,
+        value: imageData.hintCount,
         color: "hsl(48, 100%, 45%)",
       },
     ];
@@ -722,41 +721,25 @@ const Game: React.FC<GameProps> = ({
     async (instance: any): Promise<void> => {
       setHeatmapLoading(true);
 
-      const docName = `image_${fileId}`;
+      /* TODO: check bug with set width and height for heatmap canvas */
+      // eslint-disable-next-line no-underscore-dangle
+      const { ctx } = instance._renderer;
 
-      try {
-        const imageDoc = await db.collection(constants.images).doc(docName).get();
+      const heatmapData = {
+        min: 0,
+        max: 1,
+        data: imageData.clicks.map(({ x, y, clickCount }) => ({
+          x: toCanvasScale(ctx, x),
+          y: toCanvasScale(ctx, y),
+          clickCount,
+        })),
+      };
 
-        const { clicks = [] } = (imageDoc.data() || {}) as FirestoreImageData;
+      instance.setData(heatmapData);
 
-        /* TODO: check bug with set width and height for heatmap canvas */
-        // eslint-disable-next-line no-underscore-dangle
-        const { ctx } = instance._renderer;
-
-        const heatmapData = {
-          min: 0,
-          max: 1,
-          data: clicks.map(({ x, y, clickCount }) => ({
-            x: toCanvasScale(ctx, x),
-            y: toCanvasScale(ctx, y),
-            clickCount,
-          })),
-        };
-
-        instance.setData(heatmapData);
-      } catch (error) {
-        if (isFirestoreError(error)) {
-          handleFirestoreError(error, enqueueSnackbar);
-        } else {
-          handleUncaughtError(error, "loadHeatmapData", enqueueSnackbar);
-        }
-
-        setShowHeatmap(false);
-      } finally {
-        setHeatmapLoading(false);
-      }
+      setHeatmapLoading(false);
     },
-    [enqueueSnackbar, fileId]
+    [imageData.clicks]
   );
 
   /**
