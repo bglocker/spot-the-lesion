@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { AppBar, Toolbar, Typography } from "@material-ui/core";
-import { makeStyles, createStyles } from "@material-ui/core/styles";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
 import axios from "axios";
+import Button from "@material-ui/core/Button";
+import CloudUploadIcon from "@material-ui/icons/CloudUpload";
+import TextField from "@material-ui/core/TextField";
 import colors from "../../../res/colors";
 
 const useStyles = makeStyles((theme) =>
@@ -20,7 +23,7 @@ const useStyles = makeStyles((theme) =>
     box: {
       backgroundColor: "white",
       width: "60%",
-      height: "60%",
+      height: "80%",
       display: "flex",
       flexDirection: "column",
       justifyContent: "center",
@@ -43,12 +46,41 @@ const useStyles = makeStyles((theme) =>
     },
     submit: {
       display: "flex",
-      flexDirection: "row",
+      flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
+      margin: 24,
     },
-    spacing: {
-      margin: 10,
+    uploadButton: {
+      margin: theme.spacing(5),
+    },
+    uploadSection: {
+      display: "flex",
+      flexDirection: "row",
+    },
+    submitButton: {
+      margin: theme.spacing(10),
+      borderRadius: 20,
+      [theme.breakpoints.only("xs")]: {
+        width: 250,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.only("sm")]: {
+        width: 300,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        width: 320,
+        fontSize: "1.25rem",
+      },
+    },
+    successMessage: {
+      margin: theme.spacing(5),
+      color: "green",
+    },
+    displayColumn: {
+      display: "flex",
+      flexDirection: "column",
     },
   })
 );
@@ -59,16 +91,24 @@ const FileUpload: React.FC = () => {
   const [currentImagesForUpload, setCurrentImagesForUpload] = useState([]);
   const [currentJsonsForUpload, setCurrentJsonsForUpload] = useState([]);
 
+  const [selectedImageFileName, setSelectedImageFileName] = useState("No file selected");
+  const [selectedJSONFileName, setSelectedJSONFileName] = useState("No file selected");
+
+  const [imageUploadSuccessful, setImageUploadSuccessful] = useState(false);
+  const [JSONUploadSuccessful, setJSONUploadSuccessful] = useState(false);
+
   const axiosConfig = {
     headers: { "content-type": "multipart/form-data" },
   };
 
   const prepareCurrentImagesForUpload = (event) => {
     setCurrentImagesForUpload(event.currentTarget.files);
+    setSelectedImageFileName(event.currentTarget.files[0].name);
   };
 
   const prepareCurrentJsonsForUpload = (event) => {
     setCurrentJsonsForUpload(event.currentTarget.files);
+    setSelectedJSONFileName(event.currentTarget.files[0].name);
   };
 
   const submitClick = () => {
@@ -89,8 +129,14 @@ const FileUpload: React.FC = () => {
 
     axios
       .post("https://spot-the-lesion.herokuapp.com/post/", formData, axiosConfig)
-      // eslint-disable-next-line no-console
-      .then((response) => console.log(response))
+      .then((response) => {
+        // eslint-disable-next-line no-console
+        console.log(response);
+        if (response.status === 200) {
+          setImageUploadSuccessful(true);
+          setJSONUploadSuccessful(true);
+        }
+      })
       .catch((error) => {
         // eslint-disable-next-line no-console
         console.log(error.response.data);
@@ -107,17 +153,65 @@ const FileUpload: React.FC = () => {
 
       <div className={classes.container}>
         <div className={classes.box}>
-          <Typography className={classes.text}>
-            Please select the images and jsons to upload (just select all of them at once).
-          </Typography>
+          <Typography className={classes.text}>Image upload panel</Typography>
           <div className={classes.submit}>
-            <input
-              type="file"
-              multiple
-              onChange={(event) => prepareCurrentImagesForUpload(event)}
-            />
-            <input type="file" multiple onChange={(event) => prepareCurrentJsonsForUpload(event)} />
-            <input className={classes.spacing} type="submit" value="Submit" onClick={submitClick} />
+            <div className={classes.uploadSection}>
+              <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                className={classes.uploadButton}
+                startIcon={<CloudUploadIcon />}
+                component="label"
+              >
+                Upload Image
+                <input
+                  accept="image/*"
+                  type="file"
+                  hidden
+                  multiple
+                  onChange={(event) => prepareCurrentImagesForUpload(event)}
+                />
+              </Button>
+              <TextField
+                className={classes.uploadButton}
+                value={selectedImageFileName}
+                helperText={imageUploadSuccessful ? "Upload Successful!" : ""}
+              />
+            </div>
+            <div className={classes.uploadSection}>
+              <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                className={classes.uploadButton}
+                startIcon={<CloudUploadIcon />}
+                component="label"
+              >
+                Upload JSON
+                <input
+                  type="file"
+                  hidden
+                  multiple
+                  onChange={(event) => prepareCurrentJsonsForUpload(event)}
+                />
+              </Button>
+              <TextField
+                className={classes.uploadButton}
+                value={selectedJSONFileName}
+                helperText={JSONUploadSuccessful ? "Upload Successful!" : ""}
+              />
+            </div>
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              className={classes.submitButton}
+              component="span"
+              onClick={submitClick}
+            >
+              Submit
+            </Button>
           </div>
         </div>
       </div>
