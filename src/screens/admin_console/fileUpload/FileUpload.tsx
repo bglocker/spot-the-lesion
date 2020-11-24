@@ -57,7 +57,10 @@ const FileUpload: React.FC = () => {
   const classes = useStyles();
 
   const article = { title: "React POST Request Example" };
-  axios.post("https://spot-the-lesion.herokuapp.com/post", article);
+  axios
+    .post("https://spot-the-lesion.herokuapp.com/post/", article)
+    // eslint-disable-next-line no-console
+    .then((response) => console.log(response));
 
   return (
     <>
