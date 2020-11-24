@@ -11,7 +11,8 @@ import {
   Typography,
 } from "@material-ui/core";
 import { ArrowBack, ArrowForward, KeyboardBackspace } from "@material-ui/icons";
-import { makeStyles, createStyles } from "@material-ui/core/styles";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
+import { useHistory } from "react-router-dom";
 import TutorialCard from "./card/TutorialCard";
 import doctor from "../../res/images/tutorial/doctor.png";
 import start_screen from "../../res/images/tutorial/start screen.png";
@@ -98,12 +99,14 @@ const useStyles = makeStyles(() =>
   })
 );
 
-const Tutorial: React.FC<TutorialProps> = ({ setRoute }: TutorialProps) => {
+const Tutorial: React.FC = () => {
   const [index, setIndex] = useState(0);
   const [slideIn, setSlideIn] = useState(true);
   const [slideDirection, setSlideDirection] = useState<SlideProps["direction"]>("down");
 
   const classes = useStyles({ index });
+
+  const history = useHistory();
 
   const textContent = slideTexts[index];
   const imageContent = slideImages[index];
@@ -149,7 +152,7 @@ const Tutorial: React.FC<TutorialProps> = ({ setRoute }: TutorialProps) => {
             edge="start"
             color="inherit"
             aria-label="Back"
-            onClick={() => setRoute("home")}
+            onClick={() => history.goBack()}
           >
             <KeyboardBackspace />
           </IconButton>
@@ -168,7 +171,7 @@ const Tutorial: React.FC<TutorialProps> = ({ setRoute }: TutorialProps) => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => setRoute("game")}
+              onClick={() => history.replace("/game-menu")}
             >
               Play
             </Button>

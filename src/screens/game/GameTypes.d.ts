@@ -1,7 +1,6 @@
 interface GameProps {
-  setRoute: (Route) => void;
   gameMode: GameMode;
-  fileIdRange: [number, number];
+  difficulty: Difficulty;
 }
 
 type GameMode = "casual" | "competitive";

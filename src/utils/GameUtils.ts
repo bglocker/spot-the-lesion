@@ -84,6 +84,41 @@ const getFileIdRange = (difficulty: Difficulty): [number, number] => {
 };
 
 /**
+ * Given a string, get its corresponding game mode value, or if that's not valid, use the default
+ *
+ * @param gameMode Game mode string
+ * @param def      Default game mode value
+ *
+ * @return Valid game mode value
+ */
+const getGameModeOrDefault = (gameMode: string | null, def: GameMode = "casual"): GameMode => {
+  if (gameMode === "casual" || gameMode === "competitive") {
+    return gameMode;
+  }
+
+  return def;
+};
+
+/**
+ * Given a string, get its corresponding difficulty value, or if that's not valid, use the default
+ *
+ * @param difficulty Difficulty string
+ * @param def        Default difficulty value
+ *
+ * @return Valid difficulty value
+ */
+const getDifficultyOrDefault = (
+  difficulty: string | null,
+  def: Difficulty = "easy"
+): Difficulty => {
+  if (difficulty === "easy" || difficulty === "medium" || difficulty === "hard") {
+    return difficulty;
+  }
+
+  return def;
+};
+
+/**
  * Create an array from a given range
  *
  * @param start First value of range (inclusive)
@@ -149,7 +184,9 @@ const unlockAchievement = (
 export {
   drawRoundEndText,
   getAnnotationPath,
+  getDifficultyOrDefault,
   getFileIdRange,
+  getGameModeOrDefault,
   getImagePath,
   getIntersectionOverUnion,
   range,

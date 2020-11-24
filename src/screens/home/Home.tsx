@@ -14,6 +14,7 @@ import {
   Typography,
 } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
+import { useHistory } from "react-router-dom";
 import logo from "../../res/images/home/logo.gif";
 import scan from "../../res/images/home/ct-scan.png";
 import brain from "../../res/images/home/brain.png";
@@ -71,14 +72,16 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
+const Home: React.FC = () => {
   const classes = useStyles();
+
+  const history = useHistory();
 
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const suggestTutorialIfFirstTimePlaying = () => {
     if (localStorage.getItem("firstSession")) {
-      setRoute("game");
+      history.push("/game-menu");
     } else {
       setDialogOpen(true);
       localStorage.setItem("firstSession", "true");
@@ -115,7 +118,7 @@ const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => setRoute("tutorial")}
+              onClick={() => history.push("/tutorial")}
             >
               How to Play
             </Button>
@@ -125,7 +128,7 @@ const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => setRoute("leaderboard")}
+              onClick={() => history.push("/leaderboard")}
             >
               Leaderboard
             </Button>
@@ -135,7 +138,7 @@ const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => setRoute("achievements")}
+              onClick={() => history.push("/achievements")}
             >
               Achievements
             </Button>
@@ -145,7 +148,7 @@ const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => setRoute("statistics")}
+              onClick={() => history.push("/statistics")}
             >
               Statistics
             </Button>
@@ -155,7 +158,7 @@ const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => setRoute("about")}
+              onClick={() => history.push("/about")}
             >
               About CT Scans
             </Button>
@@ -165,7 +168,7 @@ const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => setRoute("credits")}
+              onClick={() => history.push("/credits")}
             >
               Credits
             </Button>
@@ -184,10 +187,10 @@ const Home: React.FC<HomeProps> = ({ setRoute }: HomeProps) => {
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setRoute("tutorial")} color="primary">
+            <Button onClick={() => history.push("/tutorial")} color="primary">
               Show me the tutorial
             </Button>
-            <Button onClick={() => setRoute("game")} color="primary">
+            <Button onClick={() => history.push("/game-menu")} color="primary">
               I just want to play
             </Button>
           </DialogActions>

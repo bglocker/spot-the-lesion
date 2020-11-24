@@ -2,10 +2,9 @@ import React, { useState } from "react";
 import { AppBar, Button, IconButton, Theme, Toolbar, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
-import Game from "./Game";
+import { useHistory } from "react-router-dom";
 import ToggleButton from "../../components/ToggleButton";
 import ToggleButtonGroup from "../../components/ToggleButtonGroup";
-import { getFileIdRange } from "../../utils/GameUtils";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -93,16 +92,13 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-const GameMenu: React.FC<GameMenuProps> = ({ setRoute }: GameMenuProps) => {
+const GameMenu: React.FC = () => {
   const classes = useStyles();
 
-  const [start, setStart] = useState(false);
+  const history = useHistory();
 
   const [gameModes, setGameModes] = useState<GameMode[]>([]);
   const [difficulties, setDifficulties] = useState<Difficulty[]>([]);
-
-  const [gameMode, setGameMode] = useState<GameMode>("casual");
-  const [difficulty, setDifficulty] = useState<Difficulty>("easy");
 
   const onToggleGameMode = (
     _unusedEvent: React.MouseEvent<HTMLButtonElement>,
@@ -115,17 +111,8 @@ const GameMenu: React.FC<GameMenuProps> = ({ setRoute }: GameMenuProps) => {
   ) => setDifficulties(newDifficulties);
 
   const onStartClick = () => {
-    setGameMode(gameModes[0]);
-    setDifficulty(difficulties[0]);
-
-    setStart(true);
+    history.push(`/game?gameMode=${gameModes[0]}&difficulty=${difficulties[0]}`);
   };
-
-  if (start) {
-    return (
-      <Game setRoute={setRoute} gameMode={gameMode} fileIdRange={getFileIdRange(difficulty)} />
-    );
-  }
 
   return (
     <>
@@ -136,7 +123,7 @@ const GameMenu: React.FC<GameMenuProps> = ({ setRoute }: GameMenuProps) => {
             edge="start"
             color="inherit"
             aria-label="Back"
-            onClick={() => setRoute("home")}
+            onClick={() => history.goBack()}
           >
             <KeyboardBackspace />
           </IconButton>

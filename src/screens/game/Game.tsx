@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { AppBar, Button, Card, IconButton, Toolbar, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
+import { useHistory } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import axios from "axios";
 import { db, firebaseStorage } from "../../firebase/firebaseApp";
@@ -29,6 +30,7 @@ import {
 import {
   drawRoundEndText,
   getAnnotationPath,
+  getFileIdRange,
   getImagePath,
   getIntersectionOverUnion,
   unlockAchievement,
@@ -124,17 +126,15 @@ const defaultImageData: FirestoreImageData = {
   wrongClicks: 0,
 };
 
-const Game: React.FC<GameProps> = ({
-  setRoute,
-  gameMode,
-  fileIdRange: [minFileId, maxFileId],
-}: GameProps) => {
+const Game: React.FC<GameProps> = ({ gameMode, difficulty }: GameProps) => {
   const classes = useStyles();
+
+  const history = useHistory();
 
   const [context, canvasRef] = useCanvasContext();
   const [animationContext, animationCanvasRef] = useCanvasContext();
 
-  const getNewFileId = useUniqueRandomGenerator(minFileId, maxFileId);
+  const getNewFileId = useUniqueRandomGenerator(getFileIdRange(difficulty));
 
   const canvasContainer = useRef<HTMLDivElement>(null);
 
@@ -150,6 +150,10 @@ const Game: React.FC<GameProps> = ({
   const [hinted, setHinted] = useState(false);
 
   const [fileId, setFileId] = useState(-1);
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const [fileIds, setFileIds] = useState<number[]>([]);
+
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
   const [click, setClick] = useState<{ x: number; y: number } | null>(null);
@@ -678,6 +682,10 @@ const Game: React.FC<GameProps> = ({
 
       setFileId(newFileId);
 
+      if (gameMode === "competitive") {
+        setFileIds((prevState) => [...prevState, newFileId]);
+      }
+
       setRoundNumber((prevState) => prevState + 1);
 
       /* Reset game state */
@@ -777,7 +785,7 @@ const Game: React.FC<GameProps> = ({
 
       enqueueSnackbar("Score successfully submitted!", constants.successSnackbarOptions);
 
-      setRoute("home");
+      history.go(-2);
     } catch (error) {
       if (isFirestoreError(error)) {
         handleFirestoreError(error, enqueueSnackbar);
@@ -819,7 +827,7 @@ const Game: React.FC<GameProps> = ({
             edge="start"
             color="inherit"
             aria-label="Back"
-            onClick={() => setRoute("home")}
+            onClick={() => history.goBack()}
           >
             <KeyboardBackspace />
           </IconButton>
