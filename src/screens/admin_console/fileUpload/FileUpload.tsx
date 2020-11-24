@@ -75,7 +75,6 @@ const useStyles = makeStyles((theme) =>
       },
     },
     successMessage: {
-      margin: theme.spacing(5),
       color: "green",
     },
     displayColumn: {
@@ -177,6 +176,9 @@ const FileUpload: React.FC = () => {
                 className={classes.uploadButton}
                 value={selectedImageFileName}
                 helperText={imageUploadSuccessful ? "Upload Successful!" : ""}
+                FormHelperTextProps={{
+                  className: classes.successMessage,
+                }}
               />
             </div>
             <div className={classes.uploadSection}>
@@ -200,6 +202,9 @@ const FileUpload: React.FC = () => {
                 className={classes.uploadButton}
                 value={selectedJSONFileName}
                 helperText={JSONUploadSuccessful ? "Upload Successful!" : ""}
+                FormHelperTextProps={{
+                  className: classes.successMessage,
+                }}
               />
             </div>
             <Button
