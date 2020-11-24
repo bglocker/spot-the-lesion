@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AppBar, Toolbar, Typography } from "@material-ui/core";
+import { AppBar, FormHelperText, Toolbar, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import Button from "@material-ui/core/Button";
 import FormControl from "@material-ui/core/FormControl";
@@ -80,6 +80,9 @@ const useStyles = makeStyles((theme) =>
     textField: {
       width: "25ch",
     },
+    passwordError: {
+      color: "red",
+    },
   })
 );
 
@@ -91,6 +94,7 @@ const AdminAuth: React.FC = () => {
   const [password, setPassword] = React.useState<PasswordType>({
     value: "",
     showPassword: false,
+    displayError: false,
   });
 
   const handleChange = (prop: keyof PasswordType) => (
@@ -103,26 +107,21 @@ const AdminAuth: React.FC = () => {
     setPassword({ ...password, showPassword: !password.showPassword });
   };
 
-  if (wasLogged) {
-    return <Settings />;
-  }
-
   const submitClick = () => {
     firebaseAuth
       .signInWithEmailAndPassword("spot-the-lesion@gmail.com", password.value)
       .then(() => {
-        // eslint-disable-next-line no-console
-        console.log("Managed to log in");
-
+        setPassword({ ...password, displayError: false });
         setWasLogged(true);
       })
-      .catch((error) => {
-        // eslint-disable-next-line no-console
-        console.log(error);
+      .catch((_) => {
+        setPassword({ ...password, value: "", displayError: true });
       });
   };
 
-  return (
+  return wasLogged ? (
+    <Settings />
+  ) : (
     <>
       <AppBar position="absolute">
         <Toolbar variant="dense">
@@ -147,7 +146,9 @@ const AdminAuth: React.FC = () => {
                 id="standard-adornment-password"
                 type={password.showPassword ? "text" : "password"}
                 value={password.value}
+                error={password.displayError}
                 onChange={handleChange("value")}
+                aria-describedby="incorrect-password"
                 endAdornment={
                   <InputAdornment position="end">
                     <IconButton
@@ -159,6 +160,9 @@ const AdminAuth: React.FC = () => {
                   </InputAdornment>
                 }
               />
+              <FormHelperText id="incorrect-password" className={classes.passwordError}>
+                {password.displayError ? "Incorrect Password" : ""}
+              </FormHelperText>
             </FormControl>
             <Button
               className={classes.button}

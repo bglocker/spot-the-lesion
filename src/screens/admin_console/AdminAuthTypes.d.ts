@@ -7,4 +7,5 @@ interface SettingType {
 interface PasswordType {
   value: string;
   showPassword: boolean;
+  displayError: boolean;
 }

@@ -98,8 +98,10 @@ const Settings: React.FC = () => {
   const [hintLineWidth, setHintLineWidth] = useState<number>(0);
   const [roundTimeInitial, setRoundTimeInitial] = useState<number>(0);
   const [rounds, setRounds] = useState<number>(0);
+  const [aiScoreMultiplier, setAiScoreMultiplier] = useState<number>(0);
 
   const optionsList: SettingType[] = [
+    { name: "AI Score Multiplier", state: aiScoreMultiplier, changer: setAiScoreMultiplier },
     { name: "Animation Time", state: animationTime, changer: setAnimationTime },
     { name: "Hint Line Width", state: hintLineWidth, changer: setHintLineWidth },
     { name: "Hint Radius", state: hintRadius, changer: setHintRadius },
