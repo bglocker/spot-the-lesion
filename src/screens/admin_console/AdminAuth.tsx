@@ -2,9 +2,15 @@ import React, { useState } from "react";
 import { AppBar, Toolbar, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import Button from "@material-ui/core/Button";
-import { firebaseAuth } from "../../firebase/firebaseApp";
-import colors from "../../res/colors";
+import FormControl from "@material-ui/core/FormControl";
+import InputLabel from "@material-ui/core/InputLabel";
+import Input from "@material-ui/core/Input";
+import InputAdornment from "@material-ui/core/InputAdornment";
+import IconButton from "@material-ui/core/IconButton";
+import { Visibility, VisibilityOff } from "@material-ui/icons";
 import Settings from "./Settings";
+import colors from "../../res/colors";
+import { firebaseAuth } from "../../firebase/firebaseApp";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -53,7 +59,7 @@ const useStyles = makeStyles((theme) =>
       margin: 50,
     },
     button: {
-      margin: 8,
+      margin: 24,
       borderRadius: 20,
       [theme.breakpoints.only("xs")]: {
         width: 250,
@@ -68,14 +74,34 @@ const useStyles = makeStyles((theme) =>
         fontSize: "1.25rem",
       },
     },
+    password: {
+      margin: theme.spacing(1),
+    },
+    textField: {
+      width: "25ch",
+    },
   })
 );
 
 const AdminAuth: React.FC = () => {
   const classes = useStyles();
 
-  const [password, setPassword] = useState<string>("");
   const [wasLogged, setWasLogged] = useState<boolean>(false);
+
+  const [password, setPassword] = React.useState<PasswordType>({
+    value: "",
+    showPassword: false,
+  });
+
+  const handleChange = (prop: keyof PasswordType) => (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setPassword({ ...password, [prop]: event.target.value });
+  };
+
+  const handleClickShowPassword = () => {
+    setPassword({ ...password, showPassword: !password.showPassword });
+  };
 
   if (wasLogged) {
     return <Settings />;
@@ -83,7 +109,7 @@ const AdminAuth: React.FC = () => {
 
   const submitClick = () => {
     firebaseAuth
-      .signInWithEmailAndPassword("spot-the-lesion@gmail.com", password)
+      .signInWithEmailAndPassword("spot-the-lesion@gmail.com", password.value)
       .then(() => {
         // eslint-disable-next-line no-console
         console.log("Managed to log in");
@@ -106,13 +132,34 @@ const AdminAuth: React.FC = () => {
 
       <div className={classes.container}>
         <div className={classes.box}>
-          <Typography className={classes.text}> Password </Typography>
+          <Typography className={classes.text}> Enter Password </Typography>
           <div className={[classes.submit, classes.spacing].join(" ")}>
-            <input
-              className={classes.spacing}
-              type="password"
-              onChange={(changeTextbox) => setPassword(changeTextbox.target.value)}
-            />
+            <FormControl
+              className={[
+                classes.submit,
+                classes.spacing,
+                classes.password,
+                classes.textField,
+              ].join(" ")}
+            >
+              <InputLabel htmlFor="standard-adornment-password">Password</InputLabel>
+              <Input
+                id="standard-adornment-password"
+                type={password.showPassword ? "text" : "password"}
+                value={password.value}
+                onChange={handleChange("value")}
+                endAdornment={
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={handleClickShowPassword}
+                    >
+                      {password.showPassword ? <Visibility /> : <VisibilityOff />}
+                    </IconButton>
+                  </InputAdornment>
+                }
+              />
+            </FormControl>
             <Button
               className={classes.button}
               variant="contained"

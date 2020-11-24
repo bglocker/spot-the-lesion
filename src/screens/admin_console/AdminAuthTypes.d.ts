@@ -3,3 +3,8 @@ interface SettingType {
   state: number;
   changer: (number) => void;
 }
+
+interface PasswordType {
+  value: string;
+  showPassword: boolean;
+}

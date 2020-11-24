@@ -2,6 +2,8 @@ import React, { useCallback, useState } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import { AppBar, Toolbar, Typography } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
+import ButtonGroup from "@material-ui/core/ButtonGroup";
+import TextField from "@material-ui/core/TextField";
 import colors from "../../res/colors";
 import { db } from "../../firebase/firebaseApp";
 
@@ -21,7 +23,7 @@ const useStyles = makeStyles((theme: Theme) =>
     box: {
       backgroundColor: "white",
       width: "60%",
-      height: "60%",
+      height: "80%",
       display: "flex",
       flexDirection: "column",
       justifyContent: "center",
@@ -34,6 +36,10 @@ const useStyles = makeStyles((theme: Theme) =>
       flexDirection: "row",
       justifyContent: "center",
       alignItems: "center",
+      margin: 10,
+    },
+    buttonGroup: {
+      margin: 20,
     },
     button: {
       margin: 8,
@@ -50,6 +56,24 @@ const useStyles = makeStyles((theme: Theme) =>
         width: 320,
         fontSize: "1.25rem",
       },
+    },
+    gameOptionsTitle: {
+      [theme.breakpoints.only("xs")]: {
+        fontSize: "1.25rem",
+      },
+      [theme.breakpoints.only("sm")]: {
+        fontSize: "1.5rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        fontSize: "2rem",
+      },
+      textAlign: "center",
+      marginBottom: 24,
+    },
+    textField: {
+      marginLeft: theme.spacing(1),
+      marginRight: theme.spacing(1),
+      width: "25ch",
     },
   })
 );
@@ -154,40 +178,53 @@ const Settings: React.FC = () => {
 
       <div className={classes.container}>
         <div className={classes.box}>
+          <Typography className={classes.gameOptionsTitle}>Game options</Typography>
           {optionsList.map((option) => {
             return (
               <div key={option.name} className={classes.inline}>
-                <Typography>{option.name}</Typography>
-                <input
+                <TextField
+                  label={option.name}
                   type="number"
+                  id="margin-none"
                   value={option.state}
+                  defaultValue="Input a number"
+                  className={classes.textField}
                   onChange={(change) => {
                     option.changer(Number(change.target.value));
                   }}
                 />
+                {/* <input */}
+                {/*  type="number" */}
+                {/*  value={option.state} */}
+                {/*  onChange={(change) => { */}
+                {/*    option.changer(Number(change.target.value)); */}
+                {/*  }} */}
+                {/* /> */}
               </div>
             );
           })}
 
           <div className={classes.inline}>
-            <Button
-              onClick={pushChanges}
-              className={classes.button}
-              variant="contained"
-              color="primary"
-              size="large"
-            >
-              Update
-            </Button>
-            <Button
-              onClick={resetChanges}
-              className={classes.button}
-              variant="contained"
-              color="primary"
-              size="large"
-            >
-              Reset Default
-            </Button>
+            <ButtonGroup orientation="horizontal" className={classes.buttonGroup}>
+              <Button
+                onClick={pushChanges}
+                className={classes.button}
+                variant="contained"
+                color="primary"
+                size="large"
+              >
+                Update
+              </Button>
+              <Button
+                onClick={resetChanges}
+                className={classes.button}
+                variant="contained"
+                color="primary"
+                size="large"
+              >
+                Reset Default
+              </Button>
+            </ButtonGroup>
           </div>
         </div>
       </div>
