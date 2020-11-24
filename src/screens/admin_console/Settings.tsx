@@ -133,7 +133,7 @@ const Settings: React.FC = () => {
   };
 
   if (loadData) {
-    getData();
+    getData().then(() => {});
   }
 
   const pushChanges = () => {
@@ -153,7 +153,10 @@ const Settings: React.FC = () => {
       }
     }
 
-    db.collection("game_options").doc("current_options").set(newData);
+    db.collection("game_options")
+      .doc("current_options")
+      .set(newData)
+      .then(() => {});
   };
 
   const resetChanges = useCallback(async () => {
@@ -195,13 +198,6 @@ const Settings: React.FC = () => {
                     option.changer(Number(change.target.value));
                   }}
                 />
-                {/* <input */}
-                {/*  type="number" */}
-                {/*  value={option.state} */}
-                {/*  onChange={(change) => { */}
-                {/*    option.changer(Number(change.target.value)); */}
-                {/*  }} */}
-                {/* /> */}
               </div>
             );
           })}
