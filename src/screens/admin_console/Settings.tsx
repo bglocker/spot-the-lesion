@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
-import { AppBar, Toolbar, Typography } from "@material-ui/core";
+import { Typography } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import TextField from "@material-ui/core/TextField";
@@ -175,55 +175,47 @@ const Settings: React.FC = () => {
 
   return (
     <>
-      <AppBar position="absolute">
-        <Toolbar variant="dense">
-          <Typography>Spot the Lesion</Typography>
-        </Toolbar>
-      </AppBar>
+      <div className={classes.box}>
+        <Typography className={classes.gameOptionsTitle}>Game options</Typography>
+        {optionsList.map((option) => {
+          return (
+            <div key={option.name} className={classes.inline}>
+              <TextField
+                label={option.name}
+                type="number"
+                id="margin-none"
+                value={option.state}
+                defaultValue="Input a number"
+                className={classes.textField}
+                onChange={(change) => {
+                  option.changer(Number(change.target.value));
+                }}
+              />
+            </div>
+          );
+        })}
 
-      <div className={classes.container}>
-        <div className={classes.box}>
-          <Typography className={classes.gameOptionsTitle}>Game options</Typography>
-          {optionsList.map((option) => {
-            return (
-              <div key={option.name} className={classes.inline}>
-                <TextField
-                  label={option.name}
-                  type="number"
-                  id="margin-none"
-                  value={option.state}
-                  defaultValue="Input a number"
-                  className={classes.textField}
-                  onChange={(change) => {
-                    option.changer(Number(change.target.value));
-                  }}
-                />
-              </div>
-            );
-          })}
-
-          <div className={classes.inline}>
-            <ButtonGroup orientation="horizontal" className={classes.buttonGroup}>
-              <Button
-                onClick={pushChanges}
-                className={classes.button}
-                variant="contained"
-                color="primary"
-                size="large"
-              >
-                Update
-              </Button>
-              <Button
-                onClick={resetChanges}
-                className={classes.button}
-                variant="contained"
-                color="primary"
-                size="large"
-              >
-                Reset Default
-              </Button>
-            </ButtonGroup>
-          </div>
+        <div className={classes.inline}>
+          <ButtonGroup orientation="horizontal" className={classes.buttonGroup}>
+            <Button
+              onClick={pushChanges}
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              size="large"
+            >
+              Update
+            </Button>
+            <Button
+              onClick={resetChanges}
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              size="large"
+            >
+              Reset Default
+            </Button>
+          </ButtonGroup>
         </div>
       </div>
     </>

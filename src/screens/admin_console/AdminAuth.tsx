@@ -8,9 +8,9 @@ import Input from "@material-ui/core/Input";
 import InputAdornment from "@material-ui/core/InputAdornment";
 import IconButton from "@material-ui/core/IconButton";
 import { Visibility, VisibilityOff } from "@material-ui/icons";
-import Settings from "./Settings";
 import colors from "../../res/colors";
 import { firebaseAuth } from "../../firebase/firebaseApp";
+import AdminPanel from "./AdminPanel";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -120,7 +120,17 @@ const AdminAuth: React.FC = () => {
   };
 
   return wasLogged ? (
-    <Settings />
+    <>
+      <AppBar position="absolute">
+        <Toolbar variant="dense">
+          <Typography>Spot the Lesion</Typography>
+        </Toolbar>
+      </AppBar>
+      <div className={classes.container}>
+        <AdminPanel />
+      </div>
+      ;
+    </>
   ) : (
     <>
       <AppBar position="absolute">
