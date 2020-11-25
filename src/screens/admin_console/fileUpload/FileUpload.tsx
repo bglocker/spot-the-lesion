@@ -78,6 +78,9 @@ const useStyles = makeStyles((theme) =>
     successMessage: {
       color: "green",
     },
+    errorMessage: {
+      color: "red",
+    },
     displayColumn: {
       display: "flex",
       flexDirection: "column",
@@ -94,8 +97,10 @@ const FileUpload: React.FC = () => {
   const [selectedImageFileNames, setSelectedImageFileNames] = useState("No file selected");
   const [selectedJSONFileNames, setSelectedJSONFileNames] = useState("No file selected");
 
-  const [imageUploadSuccessful, setImageUploadSuccessful] = useState(false);
-  const [JSONUploadSuccessful, setJSONUploadSuccessful] = useState(false);
+  const [imageResponse, setImageResponse] = useState(0);
+  const [jsonResponse, setJsonResponse] = useState(0);
+
+  const [submitClicked, setSubmitClicked] = useState(false);
 
   const axiosConfig = {
     headers: { "content-type": "multipart/form-data" },
@@ -119,7 +124,18 @@ const FileUpload: React.FC = () => {
     return sb.toString();
   };
 
+  const getUploadStatus = (response: number, emptyUpload: boolean): string => {
+    if (emptyUpload && submitClicked) {
+      return "Please Select a file.";
+    }
+    if (response === 0) {
+      return "";
+    }
+    return response === 200 ? "Upload Successful!" : "Error occurred. Upload Failed.";
+  };
+
   const submitClick = () => {
+    setSubmitClicked(true);
     if (currentImagesForUpload == null || !currentJsonsForUpload == null) {
       // eslint-disable-next-line no-console
       console.log("No files to upload for images or jsons, aborting.");
@@ -138,12 +154,10 @@ const FileUpload: React.FC = () => {
     axios
       .post("https://spot-the-lesion.herokuapp.com/post/", formData, axiosConfig)
       .then((response) => {
+        setImageResponse(response.status);
+        setJsonResponse(response.status);
         // eslint-disable-next-line no-console
         console.log(response);
-        if (response.status === 200) {
-          setImageUploadSuccessful(true);
-          setJSONUploadSuccessful(true);
-        }
       })
       .catch((error) => {
         // eslint-disable-next-line no-console
@@ -184,9 +198,9 @@ const FileUpload: React.FC = () => {
               <TextField
                 className={classes.uploadButton}
                 value={selectedImageFileNames}
-                helperText={imageUploadSuccessful ? "Upload Successful!" : ""}
+                helperText={getUploadStatus(imageResponse, currentImagesForUpload.length === 0)}
                 FormHelperTextProps={{
-                  className: classes.successMessage,
+                  className: imageResponse === 200 ? classes.successMessage : classes.errorMessage,
                 }}
               />
             </div>
@@ -210,9 +224,9 @@ const FileUpload: React.FC = () => {
               <TextField
                 className={classes.uploadButton}
                 value={selectedJSONFileNames}
-                helperText={JSONUploadSuccessful ? "Upload Successful!" : ""}
+                helperText={getUploadStatus(jsonResponse, currentJsonsForUpload.length === 0)}
                 FormHelperTextProps={{
-                  className: classes.successMessage,
+                  className: jsonResponse === 200 ? classes.successMessage : classes.errorMessage,
                 }}
               />
             </div>
