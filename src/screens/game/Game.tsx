@@ -276,7 +276,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
         existingClick.clickCount += 1;
       }
 
-      const docName = `image_${fileId}`;
+      const docName = fileId.toString();
 
       const newImageData = {
         clicks,
@@ -286,7 +286,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       };
 
       try {
-        await db.collection(constants.images).doc(docName).set(newImageData);
+        await db.collection(constants.images(difficulty)).doc(docName).set(newImageData);
       } catch (error) {
         if (isFirestoreError(error)) {
           handleFirestoreError(error);
@@ -295,7 +295,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
         }
       }
     },
-    [context, fileId, hintedCurrent, imageData]
+    [context, difficulty, fileId, hintedCurrent, imageData]
   );
 
   /**
@@ -550,10 +550,10 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       return () => {};
     }
 
-    const docName = `image_${fileId}`;
+    const docName = fileId.toString();
 
     const unsubscribe = db
-      .collection(constants.images)
+      .collection(constants.images(difficulty))
       .doc(docName)
       .onSnapshot(
         (snapshot) => {
@@ -567,7 +567,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       );
 
     return () => unsubscribe();
-  }, [fileId]);
+  }, [difficulty, fileId]);
 
   /**
    * Called when the canvas is clicked
@@ -592,7 +592,9 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
    * @return Void promise
    */
   const loadAnnotation = async (annotationId: number): Promise<void> => {
-    const url = await firebaseStorage.ref(getAnnotationPath(annotationId)).getDownloadURL();
+    const url = await firebaseStorage
+      .ref(getAnnotationPath(annotationId, difficulty))
+      .getDownloadURL();
 
     const response = await axios.get<AnnotationData>(url, { timeout: constants.axiosTimeout });
 
@@ -624,7 +626,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
       /* Set source after onload to ensure onload gets called (in case the image is cached) */
       firebaseStorage
-        .ref(getImagePath(imageId))
+        .ref(getImagePath(imageId, difficulty))
         .getDownloadURL()
         .then((url) => {
           image.src = url;
