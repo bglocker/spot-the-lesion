@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { OptionsObject } from "notistack";
+import { drawStrokedText } from "./canvasUtils";
 import constants from "../res/constants";
 
 /**
@@ -46,6 +47,100 @@ const getIntersectionOverUnion = (rectA: number[], rectB: number[]): number => {
   const union = areaA + areaB - inter;
 
   return inter / union;
+};
+
+/**
+ * Draw the round end text
+ *
+ * @param ctx   Context to draw the text on
+ * @param text  Text to draw
+ * @param color Text color
+ */
+const drawRoundEndText = (ctx: CanvasRenderingContext2D, text: string, color: string): void => {
+  const x = Math.round(ctx.canvas.width / 2);
+  const y = Math.round(ctx.canvas.height / 10);
+
+  drawStrokedText(ctx, text, x, y, "center", 3, "white", color);
+};
+
+/**
+ * Return the minimum and maximum file ids corresponding to the given difficulty ids range
+ *
+ * @param difficulty Difficulty for which to retrieve the range
+ *
+ * @return Tuple of minimum and maximum file id
+ */
+const getFileIdRange = (difficulty: Difficulty): [number, number] => {
+  switch (difficulty) {
+    case "easy":
+      return [0, constants.rangeEndEasy];
+    case "medium":
+      return [constants.rangeEndEasy, constants.rangeEndMedium];
+    case "hard":
+      return [constants.rangeEndMedium, constants.rangeEndHard];
+    default:
+      return [0, constants.rangeEndHard];
+  }
+};
+
+/**
+ * Given a string, get its corresponding game mode value, or if that's not valid, use the default
+ *
+ * @param gameMode Game mode string
+ * @param def      Default game mode value
+ *
+ * @return Valid game mode value
+ */
+const getGameModeOrDefault = (gameMode: string | null, def: GameMode = "casual"): GameMode => {
+  if (gameMode === "casual" || gameMode === "competitive") {
+    return gameMode;
+  }
+
+  return def;
+};
+
+/**
+ * Given a string, get its corresponding difficulty value, or if that's not valid, use the default
+ *
+ * @param difficulty Difficulty string
+ * @param def        Default difficulty value
+ *
+ * @return Valid difficulty value
+ */
+const getDifficultyOrDefault = (
+  difficulty: string | null,
+  def: Difficulty = "easy"
+): Difficulty => {
+  if (difficulty === "easy" || difficulty === "medium" || difficulty === "hard") {
+    return difficulty;
+  }
+
+  return def;
+};
+
+/**
+ * Given a string, get the file ids array it encodes, or if that's not valid, use the default
+ *
+ * @param fileIds File ids array encoding
+ * @param def     Default file ids array value
+ *
+ * @return Valid file ids array, or undefined
+ */
+const getFileIdsOrDefault = (fileIds: string | null, def?: number[]): number[] | undefined => {
+  if (
+    fileIds === null ||
+    fileIds.length < 2 ||
+    fileIds[0] !== "[" ||
+    fileIds[fileIds.length - 1] !== "]"
+  ) {
+    return def;
+  }
+
+  try {
+    return JSON.parse(fileIds);
+  } catch (_error) {
+    return def;
+  }
 };
 
 /**
@@ -112,7 +207,12 @@ const unlockAchievement = (
 };
 
 export {
+  drawRoundEndText,
   getAnnotationPath,
+  getDifficultyOrDefault,
+  getFileIdRange,
+  getFileIdsOrDefault,
+  getGameModeOrDefault,
   getImagePath,
   getIntersectionOverUnion,
   range,

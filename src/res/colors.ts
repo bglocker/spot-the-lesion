@@ -19,7 +19,7 @@ const colors = {
   playerLost: "red",
   playerWon: "green",
 
-  /* ScoreWIthIncrement */
+  /* ScoreWithIncrement */
   positiveIncrement: "green",
   zeroIncrement: "red",
 };

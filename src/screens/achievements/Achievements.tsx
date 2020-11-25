@@ -9,8 +9,9 @@ import {
   Typography,
   withStyles,
 } from "@material-ui/core";
-import { makeStyles, createStyles } from "@material-ui/core/styles";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
+import { useHistory } from "react-router-dom";
 import question from "../../res/images/achievements/block.png";
 import firstCorrect from "../../res/images/achievements/tick.png";
 import firstCorrectWithoutHint from "../../res/images/achievements/investigation.png";
@@ -60,6 +61,7 @@ const useStyles = makeStyles((theme) =>
 
 const FirstFormRow = () => {
   const classes = useStyles();
+
   return (
     <Grid container spacing={2}>
       <Grid item xs={4}>
@@ -107,6 +109,7 @@ const FirstFormRow = () => {
 
 const SecondFormRow = () => {
   const classes = useStyles();
+
   return (
     <Grid container spacing={2}>
       <Grid item xs={4}>
@@ -211,8 +214,10 @@ const ThirdFormRow = () => {
   );
 };
 
-const Achievements: React.FC<AchievementsProps> = ({ setRoute }: AchievementsProps) => {
+const Achievements: React.FC = () => {
   const classes = useStyles();
+
+  const history = useHistory();
 
   return (
     <div className={classes.root}>
@@ -223,7 +228,7 @@ const Achievements: React.FC<AchievementsProps> = ({ setRoute }: AchievementsPro
             edge="start"
             color="inherit"
             aria-label="Back"
-            onClick={() => setRoute("home")}
+            onClick={() => history.goBack()}
           >
             <KeyboardBackspace />
           </IconButton>

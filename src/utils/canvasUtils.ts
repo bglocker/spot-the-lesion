@@ -151,10 +151,46 @@ const drawCircle = (
   ctx.stroke();
 };
 
+/**
+ * Draws a stroked text
+ *
+ * @param ctx         Context to draw the text on
+ * @param text        Text to draw
+ * @param x           Width coordinate
+ * @param y           Height coordinate
+ * @param textAlign   Text alignment
+ * @param strokeWidth Text stroke width
+ * @param strokeStyle Text stroke style
+ * @param fillStyle   Text fill style
+ */
+const drawStrokedText = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  textAlign: CanvasTextAlign,
+  strokeWidth: number,
+  strokeStyle: string,
+  fillStyle: string
+): void => {
+  ctx.font = "4rem Roboto";
+  ctx.lineJoin = "miter";
+  ctx.miterLimit = 2;
+
+  ctx.textAlign = textAlign;
+  ctx.lineWidth = strokeWidth;
+  ctx.strokeStyle = strokeStyle;
+  ctx.fillStyle = fillStyle;
+
+  ctx.strokeText(text, x, y);
+  ctx.fillText(text, x, y);
+};
+
 export {
   drawCircle,
   drawCross,
   drawRectangle,
+  drawStrokedText,
   mapClickToCanvas,
   mapCoordinatesToCanvasScale,
   randomAround,

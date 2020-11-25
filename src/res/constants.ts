@@ -3,26 +3,40 @@ import { OptionsObject } from "notistack";
 const constants = {
   /* Game */
   aiScoreMultiplier: 75,
-  animationCubes: 10,
+  animationCubesNumber: 10,
+  canvasSize: 750,
+  roundsNumber: 10,
+  rangeEndEasy: 1252,
+  rangeEndMedium: 3454,
+  rangeEndHard: 4723,
+
+  /* Game drawings */
   animationLineWidth: 5,
-  animationTime: 3000,
   clickLineWidth: 5,
   clickSize: 10,
   hintLineWidth: 2,
   hintRadius: 100,
   hintRange: 50,
-  hintTime: 5000,
   predictedLineWidth: 5,
-  redTime: 2000,
-  rounds: 10,
-  roundTimeInitial: 10000,
   truthLineWidth: 5,
+
+  /* Game timings */
+  animationDuration: 3000,
+  drawPredictedTime: 100,
+  drawTruthTime: 500,
+  evaluationTime: 1000,
+  hintTime: 5000,
+  redTime: 2000,
+  roundDuration: 10000,
 
   /* canvasUtils */
   defaultImageSize: 512,
 
   /* axios */
-  getTimeout: 3000,
+  axiosTimeout: 3000,
+
+  /* Dynamic Links */
+  domainUriPrefix: "https://spotthelesion.page.link",
 
   /* Firestore */
   scoresCasual: "leaderboard_casual",

@@ -17,6 +17,7 @@ import {
 } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { ArrowBack, ArrowForward, KeyboardBackspace } from "@material-ui/icons";
+import { useHistory } from "react-router-dom";
 import { Pie } from "@nivo/pie";
 import { db } from "../../firebase/firebaseApp";
 import DbUtils from "../../utils/DbUtils";
@@ -125,8 +126,10 @@ const useStyles = makeStyles((theme: Theme) =>
  */
 type Direction = "row" | "column";
 
-const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) => {
+const Statistics: React.FC = () => {
   const classes = useStyles();
+
+  const history = useHistory();
 
   /**
    * Retrieves the data from the database to display into the pie-chart and graph
@@ -479,7 +482,7 @@ const Statistics: React.FC<StatisticsProps> = ({ setRoute }: StatisticsProps) =>
             edge="start"
             color="inherit"
             aria-label="Back"
-            onClick={() => setRoute("home")}
+            onClick={() => history.goBack()}
           >
             <KeyboardBackspace />
           </IconButton>

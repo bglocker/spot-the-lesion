@@ -2,19 +2,17 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { AppBar, Button, Card, IconButton, Toolbar, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
+import { useHistory } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import axios from "axios";
 import { db, firebaseStorage } from "../../firebase/firebaseApp";
 import GameTopBar from "./GameTopBar";
 import GameSideBar from "./GameSideBar";
 import SubmitScoreDialog from "./SubmitScoreDialog";
-import {
-  LoadingButton,
-  useCanvasContext,
-  useHeatmap,
-  useInterval,
-  useUniqueRandomGenerator,
-} from "../../components";
+import ChallengeDialog from "./ChallengeDialog";
+import ImageStatsDialog from "./ImageStatsDialog";
+import useFileIdGenerator from "./useFileIdGenerator";
+import { LoadingButton, useCanvasContext, useHeatmap, useInterval } from "../../components";
 import {
   drawCircle,
   drawCross,
@@ -26,6 +24,7 @@ import {
   toDefaultScale,
 } from "../../utils/canvasUtils";
 import {
+  drawRoundEndText,
   getAnnotationPath,
   getImagePath,
   getIntersectionOverUnion,
@@ -42,8 +41,6 @@ import {
 } from "../../utils/firebaseUtils";
 import colors from "../../res/colors";
 import constants from "../../res/constants";
-import DbUtils from "../../utils/DbUtils";
-import ImageStatsDialog from "./ImageStatsDialog";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -114,85 +111,74 @@ const useStyles = makeStyles((theme) =>
     heatmapCanvas: {
       zIndex: 2,
     },
-    playerValidationText: {
-      zIndex: 3,
-      userSelect: "none",
-      marginTop: 16,
-      textShadow: "-1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white",
-      [theme.breakpoints.only("xs")]: {
-        fontSize: "2rem",
-      },
-      [theme.breakpoints.only("sm")]: {
-        fontSize: "3rem",
-      },
-      [theme.breakpoints.up("md")]: {
-        fontSize: "4rem",
-      },
-    },
   })
 );
 
-/* TODO: extract this */
-const MAX_CANVAS_SIZE = 750;
+const defaultImageData: FirestoreImageData = {
+  clicks: [],
+  correctClicks: 0,
+  hintCount: 0,
+  wrongClicks: 0,
+};
 
-const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }: GameProps) => {
+const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: GameProps) => {
   const classes = useStyles();
+
+  const history = useHistory();
 
   const [context, canvasRef] = useCanvasContext();
   const [animationContext, animationCanvasRef] = useCanvasContext();
 
+  const getNewFileId = useFileIdGenerator(difficulty, challengeFileIds);
+
   const canvasContainer = useRef<HTMLDivElement>(null);
 
+  const [showImageStats, setShowImageStats] = useState(false);
+
+  const [showChallenge, setShowChallenge] = useState(false);
+  const [challengeLink, setChallengeLink] = useState("");
+
+  const [heatmapLoading, setHeatmapLoading] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
+
   const [showSubmit, setShowSubmit] = useState(false);
 
-  const getNewFileId = useUniqueRandomGenerator(minFileId, maxFileId);
-  const [fileId, setFileId] = useState(0);
+  const [roundNumber, setRoundNumber] = useState(0);
+  const [gameEnded, setGameEnded] = useState(false);
+  const [hinted, setHinted] = useState(false);
+
+  const [fileId, setFileId] = useState(-1);
+  const [fileIds, setFileIds] = useState<number[]>([]);
 
   const [truth, setTruth] = useState<number[]>([]);
   const [predicted, setPredicted] = useState<number[]>([]);
   const [click, setClick] = useState<{ x: number; y: number } | null>(null);
 
-  const [inRound, setInRound] = useState(false);
+  const [imageData, setImageData] = useState<FirestoreImageData>(defaultImageData);
 
   const [roundLoading, setRoundLoading] = useState(false);
-  const [heatmapLoading, setHeatmapLoading] = useState(false);
+  const [roundEnded, setRoundEnded] = useState(false);
+  const [showIncrement, setShowIncrement] = useState(false);
 
   const [roundRunning, setRoundRunning] = useState(false);
-  const [endRunning, setEndRunning] = useState(false);
-  const [animationRunning, setAnimationRunning] = useState(false);
+  const [roundTime, setRoundTime] = useState(constants.roundDuration);
 
-  const [roundTime, setRoundTime] = useState(constants.roundTimeInitial);
+  const [endRunning, setEndRunning] = useState(false);
   const [endTime, setEndTime] = useState(0);
+
+  const [animationRunning, setAnimationRunning] = useState(false);
   const [animationPosition, setAnimationPosition] = useState(0);
 
   const [timerColor, setTimerColor] = useState(colors.timerInitial);
 
-  const [round, setRound] = useState(0);
-
-  const [hinted, setHinted] = useState(false);
   const [hintedCurrent, setHintedCurrent] = useState(false);
 
-  const [playerScore, setPlayerScore] = useState(0);
-  const [playerRoundScore, setPlayerRoundScore] = useState(0);
-  const [playerCorrect, setPlayerCorrect] = useState(0);
+  const [playerScore, setPlayerScore] = useState({ total: 0, round: 0 });
+  const [playerCorrectAnswers, setPlayerCorrectAnswers] = useState(0);
   const [playerCorrectCurrent, setPlayerCorrectCurrent] = useState(false);
 
-  const [aiScore, setAiScore] = useState(0);
-  const [aiRoundScore, setAiRoundScore] = useState(0);
-  const [aiCorrect, setAiCorrect] = useState(0);
-
-  /**
-   * Hooks used for Per-Image Stats
-   */
-  const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [wrongAnswers, setWrongAnswers] = useState(0);
-  const [totalHints, setTotalHints] = useState(0);
-
-  /**
-   * Hook for conditional rendering of the Image Stats Dialog Box
-   */
-  const [showImageStats, setShowImageStats] = useState(false);
+  const [aiScore, setAiScore] = useState({ total: 0, round: 0 });
+  const [aiCorrectAnswers, setAiCorrectAnswers] = useState(0);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -234,28 +220,25 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
 
     if (roundTime === constants.hintTime) {
       /*
-       * (if not already hinted this round)
-       * set Timer color to timer orange
+       * set timer color to timer orange
        * show hint
        */
-      if (!hintedCurrent) {
-        setTimerColor(colors.timerOrange);
+      setTimerColor(colors.timerOrange);
 
-        showHint();
-      }
+      showHint();
     } else if (roundTime === constants.redTime) {
       /*
-       * set Timer color to timer red
+       * set timer color to timer red
        */
       setTimerColor(colors.timerRed);
     } else if (roundTime === 0) {
       /*
-       * start end timer and stop round timer
+       * start end timer and stop roundNumber timer
        */
       setEndRunning(true);
       setRoundRunning(false);
     }
-  }, [hintedCurrent, roundRunning, roundTime, showHint]);
+  }, [roundRunning, roundTime, showHint]);
 
   /**
    * End timer
@@ -267,7 +250,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
   useInterval(() => setEndTime((prevState) => prevState + 100), endRunning ? 100 : null);
 
   /**
-   * Upload the player click, in order to gather statistics and generate heatmaps
+   * Upload the player click (if available), in order to gather statistics and generate heatmaps
    *
    * @param x       Width coordinate
    * @param y       Height coordinate
@@ -281,34 +264,29 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
         clickCount: 1,
       };
 
+      const { clicks, correctClicks, hintCount, wrongClicks } = imageData;
+
+      /* Locate (if present) existing click with same coordinates */
+      const existingClick = clicks.find((clk) => clk.x === newClick.x && clk.y === newClick.y);
+
+      /* If not found, append to array, otherwise increment clickCount */
+      if (existingClick === undefined) {
+        clicks.push(newClick);
+      } else {
+        existingClick.clickCount += 1;
+      }
+
       const docName = `image_${fileId}`;
 
+      const newImageData = {
+        clicks,
+        correctClicks: correctClicks + (correct ? 1 : 0),
+        wrongClicks: wrongClicks + (correct ? 0 : 1),
+        hintCount: hintCount + (hintedCurrent ? 1 : 0),
+      };
+
       try {
-        const imageDoc = await db.collection(constants.images).doc(docName).get();
-
-        /* Use image data if available, or use default values  */
-        const { clicks = [], correctClicks = 0, hintCount = 0, wrongClicks = 0 } = (imageDoc.exists
-          ? imageDoc.data()
-          : {}) as FirestoreImageData;
-
-        /* Locate (if present) existing click with same coordinates */
-        const existingClick = clicks.find((clk) => clk.x === newClick.x && clk.y === newClick.y);
-
-        /* If not found, append to array, otherwise increment clickCount */
-        if (existingClick === undefined) {
-          clicks.push(newClick);
-        } else {
-          existingClick.clickCount += 1;
-        }
-
-        const imageData = {
-          clicks,
-          correctClicks: correctClicks + (correct ? 1 : 0),
-          wrongClicks: wrongClicks + (correct ? 0 : 1),
-          hintCount: hintCount + (hintedCurrent ? 1 : 0),
-        };
-
-        await db.collection(constants.images).doc(docName).set(imageData);
+        await db.collection(constants.images).doc(docName).set(newImageData);
       } catch (error) {
         if (isFirestoreError(error)) {
           handleFirestoreError(error);
@@ -317,7 +295,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
         }
       }
     },
-    [context, fileId, hintedCurrent]
+    [context, fileId, hintedCurrent, imageData]
   );
 
   /**
@@ -341,73 +319,68 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
         drawCross(context, x, y, constants.clickSize, constants.clickLineWidth, colors.click);
       }
 
-      /* TODO: maybe remove this snackbar */
       enqueueSnackbar("The system is thinking...", constants.informationSnackbarOptions);
 
       setAnimationRunning(true);
       setEndRunning(false);
-    } else if (endTime === 100) {
+    } else if (endTime === constants.drawPredictedTime) {
       /*
-       * 0.1 seconds passed
-       *
-       * draw predicted rectangle in initial color
+       * draw predicted rectangle
        */
       drawRectangle(context, predicted, constants.predictedLineWidth, colors.predicted);
-    } else if (endTime === 500) {
+    } else if (endTime === constants.drawTruthTime) {
       /*
-       * 0.5 seconds passed
-       *
        * draw truth rectangle
        */
       drawRectangle(context, truth, constants.truthLineWidth, colors.truth);
-    } else if (endTime === 1000) {
+    } else if (endTime === constants.evaluationTime) {
       /*
-       * 1 second passed
-       *
-       * (if click available)
-       * evaluate click
-       * draw click in valid or invalid color
+       * evaluate player
        * upload player click
+       * draw round end text
+       * evaluate AI
+       * retrieve image statistics
+       * stop end timer
+       * end round
        */
+      enqueueSnackbar("Checking results...", constants.informationSnackbarOptions);
+
       if (click) {
         const { x, y } = click;
 
-        /* TODO: maybe remove this snackbar */
-        enqueueSnackbar("Checking results...", constants.informationSnackbarOptions);
-
         /* Player was successful if the click coordinates are inside the truth rectangle */
-        const correct = truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
+        const playerCorrect = truth[0] <= x && x <= truth[2] && truth[1] <= y && y <= truth[3];
 
-        if (correct) {
+        uploadClick(x, y, playerCorrect).then(() => {});
+
+        if (playerCorrect) {
           /* Casual Mode: half a point, doubled if no hint received */
           const casualScore = 0.5 * (hintedCurrent ? 1 : 2);
 
           /* Competitive Mode: function of round time left, doubled if no hint received */
           const competitiveScore = Math.round(roundTime / 100) * (hintedCurrent ? 1 : 2);
 
-          setPlayerRoundScore(gameMode === "casual" ? casualScore : competitiveScore);
-          setPlayerCorrect((prevState) => prevState + 1);
+          const roundScore = gameMode === "casual" ? casualScore : competitiveScore;
+
+          setPlayerScore(({ total }) => ({ total, round: roundScore }));
+          setPlayerCorrectAnswers((prevState) => prevState + 1);
           setPlayerCorrectCurrent(true);
         }
 
-        uploadClick(x, y, correct).then(() => {});
+        const text = playerCorrect ? "Well spotted!" : "Missed!";
+        const textColor = playerCorrect ? colors.playerCorrect : colors.playerIncorrect;
+
+        drawRoundEndText(context, text, textColor);
+      } else {
+        drawRoundEndText(context, "Too slow!", colors.playerIncorrect);
       }
-    } else if (endTime === 1500) {
-      /*
-       * 1.5 seconds passed
-       *
-       * evaluate AI prediction
-       * draw predicted rectangle in valid or invalid color
-       * stop end timer and current round
-       */
-      retrieveImageStats(fileId).then(() => {});
 
       const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
 
       /* AI was successful if the ratio of the intersection over the union is greater than 0.5 */
-      const correct = intersectionOverUnion > 0.5;
+      const aiCorrect = intersectionOverUnion > 0.5;
 
-      if (correct) {
+      if (aiCorrect) {
         /* Casual mode: one point */
         const casualScore = 1;
 
@@ -416,11 +389,13 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
           intersectionOverUnion * constants.aiScoreMultiplier
         );
 
-        setAiRoundScore(gameMode === "casual" ? casualScore : competitiveRoundScore);
-        setAiCorrect((prevState) => prevState + 1);
+        const roundScore = gameMode === "casual" ? casualScore : competitiveRoundScore;
+
+        setAiScore(({ total }) => ({ total, round: roundScore }));
+        setAiCorrectAnswers((prevState) => prevState + 1);
       }
 
-      setInRound(false);
+      setRoundEnded(true);
       setEndRunning(false);
     }
   }, [
@@ -447,7 +422,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
    */
   useInterval(
     () => setAnimationPosition((prevState) => prevState + 1),
-    animationRunning ? Math.round(constants.animationTime / constants.animationCubes ** 2) : null
+    animationRunning
+      ? Math.round(constants.animationDuration / constants.animationCubesNumber ** 2)
+      : null
   );
 
   /**
@@ -462,16 +439,16 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
     animationContext.clearRect(0, 0, animationContext.canvas.width, animationContext.canvas.height);
 
     /* Stop when all cube positions were reached, and resume end timer with one tick passed */
-    if (animationPosition === constants.animationCubes ** 2) {
+    if (animationPosition === constants.animationCubesNumber ** 2) {
       setAnimationRunning(false);
       setEndTime((prevState) => prevState + 100);
       setEndRunning(true);
       return;
     }
 
-    const cubeSide = animationContext.canvas.width / constants.animationCubes;
-    const baseX = (animationPosition % constants.animationCubes) * cubeSide;
-    const baseY = Math.floor(animationPosition / constants.animationCubes) * cubeSide;
+    const cubeSide = animationContext.canvas.width / constants.animationCubesNumber;
+    const baseX = (animationPosition % constants.animationCubesNumber) * cubeSide;
+    const baseY = Math.floor(animationPosition / constants.animationCubesNumber) * cubeSide;
     const cube = [
       Math.round(baseX),
       Math.round(baseY),
@@ -483,16 +460,22 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
   }, [animationContext, animationPosition, animationRunning]);
 
   /**
-   * After round end based events
+   * Round end based events
    */
   useEffect(() => {
-    const unlockAchievementHandler = (key, message) =>
-      unlockAchievement(key, message, enqueueSnackbar);
+    const unlockAchievementHandler = (key, msg) => unlockAchievement(key, msg, enqueueSnackbar);
 
-    if (round === 0 || roundLoading || inRound) {
+    if (!roundEnded || roundLoading) {
       return;
     }
 
+    setShowIncrement(true);
+
+    if (gameMode === "competitive" && roundNumber === constants.roundsNumber) {
+      setGameEnded(true);
+    }
+
+    /* Check general achievements */
     if (playerCorrectCurrent) {
       unlockAchievementHandler("firstCorrect", "Achievement! First correct answer!");
 
@@ -501,8 +484,9 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
       }
     }
 
+    /* Check casual achievements */
     if (gameMode === "casual") {
-      if (playerCorrect === 5) {
+      if (playerCorrectAnswers === 5) {
         unlockAchievementHandler(
           "fiveCorrectSameRunCasual",
           "Achievement! Five correct in same casual run!"
@@ -510,44 +494,80 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
       }
     }
 
+    /* Check competitive achievements */
     if (gameMode === "competitive") {
-      if (playerCorrectCurrent && roundTime > constants.roundTimeInitial - 2000) {
+      if (playerCorrectCurrent && roundTime > constants.roundDuration - 2000) {
         unlockAchievementHandler(
           "fastAnswer",
           "Achievement! You answered correctly in less than 2 seconds!"
         );
       }
 
-      if (playerScore + playerRoundScore >= 1000) {
+      if (playerScore.total + playerScore.round >= 1000) {
         unlockAchievementHandler(
           "competitivePoints",
           "Achievement! 1000 points in a competitive run!"
         );
       }
-
-      if (playerCorrect === constants.rounds) {
-        unlockAchievementHandler("allCorrectCompetitive", "Achievement! You got them all right!");
-      }
-
-      if (round === constants.rounds && playerScore + playerRoundScore > aiScore + aiRoundScore) {
-        unlockAchievementHandler("firstCompetitiveWin", "Achievement! First competitive win!");
-      }
     }
   }, [
-    aiRoundScore,
-    aiScore,
     enqueueSnackbar,
     gameMode,
     hintedCurrent,
-    inRound,
-    playerCorrect,
+    playerCorrectAnswers,
     playerCorrectCurrent,
-    playerRoundScore,
     playerScore,
-    round,
+    roundEnded,
     roundLoading,
+    roundNumber,
     roundTime,
   ]);
+
+  /**
+   * Game end based events
+   */
+  useEffect(() => {
+    const unlockAchievementHandler = (key, msg) => unlockAchievement(key, msg, enqueueSnackbar);
+
+    if (!gameEnded) {
+      return;
+    }
+
+    if (playerCorrectAnswers === constants.roundsNumber) {
+      unlockAchievementHandler("allCorrectCompetitive", "Achievement! You got them all right!");
+    }
+
+    if (playerScore.total + playerScore.round > aiScore.total + aiScore.round) {
+      unlockAchievementHandler("firstCompetitiveWin", "Achievement! First competitive win!");
+    }
+  }, [aiScore, enqueueSnackbar, gameEnded, playerCorrectAnswers, playerScore]);
+
+  /**
+   * Firestore image document listener
+   */
+  useEffect(() => {
+    if (fileId === -1) {
+      return () => {};
+    }
+
+    const docName = `image_${fileId}`;
+
+    const unsubscribe = db
+      .collection(constants.images)
+      .doc(docName)
+      .onSnapshot(
+        (snapshot) => {
+          if (snapshot.exists) {
+            setImageData(snapshot.data() as FirestoreImageData);
+          }
+        },
+        (error) => {
+          handleFirestoreError(error);
+        }
+      );
+
+    return () => unsubscribe();
+  }, [fileId]);
 
   /**
    * Called when the canvas is clicked
@@ -574,7 +594,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
   const loadAnnotation = async (annotationId: number): Promise<void> => {
     const url = await firebaseStorage.ref(getAnnotationPath(annotationId)).getDownloadURL();
 
-    const response = await axios.get<AnnotationData>(url, { timeout: constants.getTimeout });
+    const response = await axios.get<AnnotationData>(url, { timeout: constants.axiosTimeout });
 
     const annotation = response.data;
 
@@ -613,52 +633,26 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
     });
 
   /**
-   * Function for retrieving image statistics from Firebase
-   *
-   * @param fileNumber - index of the image for which we retrieve stats
-   */
-  const retrieveImageStats = async (fileNumber: number) => {
-    const table = DbUtils.IMAGES;
-
-    /** Testing code: for images 1 and 2
-     let index;
-     if (fileNumber !== 1) {
-      index = 1;
-    } else {
-      index = 2;
-    } */
-
-    const docName = `image_${fileNumber}`;
-
-    const imageDoc = await db.collection(table).doc(docName).get();
-    if (imageDoc.exists) {
-      setCorrectAnswers(imageDoc.data()!.correctClicks);
-      setWrongAnswers(imageDoc.data()!.wrongClicks);
-      setTotalHints(imageDoc.data()!.hintCount);
-    }
-  };
-
-  /**
-   * Function for wrapping up the data that needs to be parsed in the Image Stats Pie Chart
+   * Create the data to be shown in the Image Stats Pie Chart
    */
   const createPieChartData = () => {
     return [
       {
         id: "Correct Answers",
         label: "Correct Answers",
-        value: correctAnswers,
+        value: imageData.correctClicks,
         color: "hsl(150, 100%, 35%)",
       },
       {
         id: "Wrong Answers",
         label: "Wrong Answers",
-        value: wrongAnswers,
+        value: imageData.wrongClicks,
         color: "hsl(0, 100%, 50%)",
       },
       {
         id: "Hints",
         label: "Total Hints",
-        value: totalHints,
+        value: imageData.hintCount,
         color: "hsl(48, 100%, 45%)",
       },
     ];
@@ -670,12 +664,10 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
   const startRound = async () => {
     setRoundLoading(true);
 
-    /* Update scores with last round scores */
-    setPlayerScore((prevState) => prevState + playerRoundScore);
-    setPlayerRoundScore(0);
+    setShowIncrement(false);
 
-    setAiScore((prevState) => prevState + aiRoundScore);
-    setAiRoundScore(0);
+    setPlayerScore(({ total, round }) => ({ total: total + round, round: 0 }));
+    setAiScore(({ total, round }) => ({ total: total + round, round: 0 }));
 
     /* Get a new file id and load the corresponding annotation and image */
     const newFileId = getNewFileId();
@@ -686,10 +678,14 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
 
       setFileId(newFileId);
 
-      setRound((prevState) => prevState + 1);
+      if (gameMode === "competitive") {
+        setFileIds((prevState) => [...prevState, newFileId]);
+      }
+
+      setRoundNumber((prevState) => prevState + 1);
 
       /* Reset game state */
-      setRoundTime(constants.roundTimeInitial);
+      setRoundTime(constants.roundDuration);
       setEndTime(0);
       setAnimationPosition(0);
 
@@ -702,7 +698,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
 
       setShowHeatmap(false);
 
-      setInRound(true);
+      setRoundEnded(false);
       setRoundRunning(true);
     } catch (error) {
       console.error(`Annotation/Image load error\n fileId: ${newFileId}`);
@@ -729,40 +725,25 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
     async (instance: any): Promise<void> => {
       setHeatmapLoading(true);
 
-      const docName = `image_${fileId}`;
+      /* TODO: check bug with set width and height for heatmap canvas */
+      // eslint-disable-next-line no-underscore-dangle
+      const { ctx } = instance._renderer;
 
-      try {
-        const imageDoc = await db.collection(constants.images).doc(docName).get();
+      const heatmapData = {
+        min: 0,
+        max: 1,
+        data: imageData.clicks.map(({ x, y, clickCount }) => ({
+          x: toCanvasScale(ctx, x),
+          y: toCanvasScale(ctx, y),
+          clickCount,
+        })),
+      };
 
-        const { clicks = [] } = (imageDoc.data() || {}) as FirestoreImageData;
+      instance.setData(heatmapData);
 
-        // eslint-disable-next-line no-underscore-dangle
-        const { ctx } = instance._renderer;
-
-        const heatmapData = {
-          min: 0,
-          max: 1,
-          data: clicks.map(({ x, y, clickCount }) => ({
-            x: toCanvasScale(ctx, x),
-            y: toCanvasScale(ctx, y),
-            clickCount,
-          })),
-        };
-
-        instance.setData(heatmapData);
-      } catch (error) {
-        if (isFirestoreError(error)) {
-          handleFirestoreError(error, enqueueSnackbar);
-        } else {
-          handleUncaughtError(error, "loadHeatmapData", enqueueSnackbar);
-        }
-
-        setShowHeatmap(false);
-      } finally {
-        setHeatmapLoading(false);
-      }
+      setHeatmapLoading(false);
     },
-    [enqueueSnackbar, fileId]
+    [imageData.clicks]
   );
 
   /**
@@ -776,11 +757,11 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
 
     const scoreData: FirestoreScoreData = {
       user: username,
-      score: playerScore + playerRoundScore,
-      ai_score: aiScore + aiRoundScore,
-      correct_player_answers: playerCorrect,
+      score: playerScore.total + playerScore.round,
+      ai_score: aiScore.total + aiScore.round,
+      correct_player_answers: playerCorrectAnswers,
       usedHints: hinted,
-      correct_ai_answers: aiCorrect,
+      correct_ai_answers: aiCorrectAnswers,
       day: date.getDate(),
       month: getMonthName(date.getMonth()),
       year: date.getFullYear(),
@@ -800,7 +781,7 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
 
       enqueueSnackbar("Score successfully submitted!", constants.successSnackbarOptions);
 
-      setRoute("home");
+      history.go(-2);
     } catch (error) {
       if (isFirestoreError(error)) {
         handleFirestoreError(error, enqueueSnackbar);
@@ -813,6 +794,49 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
     }
   };
 
+  const createChallenge = async () => {
+    const shortLinksUrl = `https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=${process.env.REACT_APP_FIREBASE_API_KEY}`;
+    const fileIdsString = JSON.stringify(fileIds);
+
+    const link = `http://${window.location.host}/spot-the-lesion/challenge?gameMode=${gameMode}&difficulty=${difficulty}&fileIds=${fileIdsString}`;
+
+    const title = "Spot the Lesion";
+
+    const description = `I just scored ${
+      playerScore.total + playerScore.round
+    }! Think you can beat that?`;
+
+    try {
+      const response = await axios.post(
+        shortLinksUrl,
+        {
+          dynamicLinkInfo: {
+            domainUriPrefix: constants.domainUriPrefix,
+            link,
+            socialMetaTagInfo: {
+              socialTitle: title,
+              socialDescription: description,
+            },
+          },
+          suffix: {
+            option: "SHORT",
+          },
+        },
+        { timeout: constants.axiosTimeout }
+      );
+
+      setChallengeLink(response.data.shortLink);
+
+      setShowChallenge(true);
+    } catch (error) {
+      if (isAxiosError(error)) {
+        handleAxiosError(error, enqueueSnackbar);
+      } else {
+        handleUncaughtError(error, "createInvite", enqueueSnackbar);
+      }
+    }
+  };
+
   const onToggleHeatmap = () => {
     setHeatmapLoading(!showHeatmap);
     setShowHeatmap((prevState) => !prevState);
@@ -821,6 +845,8 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
   const onShowSubmit = () => setShowSubmit(true);
 
   const onCloseSubmit = () => setShowSubmit(false);
+
+  const onCloseChallenge = () => setShowChallenge(false);
 
   const onShowImageStats = () => setShowImageStats(true);
 
@@ -842,20 +868,20 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
             edge="start"
             color="inherit"
             aria-label="Back"
-            onClick={() => setRoute("home")}
+            onClick={() => history.goBack()}
           >
             <KeyboardBackspace />
           </IconButton>
 
           <Typography className={classes.title}>Spot the Lesion</Typography>
 
-          <Button color="inherit" disabled={round === 0 || inRound} onClick={onShowImageStats}>
+          <Button color="inherit" disabled={!roundEnded || roundLoading} onClick={onShowImageStats}>
             Show Image Stats
           </Button>
 
           <LoadingButton
             color="inherit"
-            disabled={round === 0 || roundLoading || inRound}
+            disabled={!roundEnded || roundLoading}
             loading={heatmapLoading}
             onClick={onToggleHeatmap}
           >
@@ -880,50 +906,43 @@ const Game: React.FC<GameProps> = ({ setRoute, gameMode, minFileId, maxFileId }:
             <canvas
               className={`${classes.canvas} ${classes.imageCanvas}`}
               ref={canvasRef}
-              width={MAX_CANVAS_SIZE}
-              height={MAX_CANVAS_SIZE}
+              height={constants.canvasSize}
+              width={constants.canvasSize}
             />
 
             <canvas
               className={`${classes.canvas} ${classes.animationCanvas}`}
               ref={animationCanvasRef}
-              width={MAX_CANVAS_SIZE}
-              height={MAX_CANVAS_SIZE}
+              height={constants.canvasSize}
+              width={constants.canvasSize}
               onClick={onCanvasClick}
             />
-
-            <Typography
-              className={classes.playerValidationText}
-              style={{
-                display: round === 0 || roundLoading || inRound ? "none" : "block",
-                color: playerCorrectCurrent ? colors.playerCorrect : colors.playerIncorrect,
-              }}
-            >
-              {playerCorrectCurrent ? "Well spotted!" : "Missed!"}
-            </Typography>
           </Card>
         </div>
 
         <GameSideBar
           gameMode={gameMode}
-          round={round}
-          inRound={inRound}
+          gameStarted={roundNumber > 0}
+          gameEnded={gameEnded}
+          roundEnded={roundEnded}
           roundLoading={roundLoading}
-          playerScore={playerScore}
-          playerRoundScore={playerRoundScore}
-          aiScore={aiScore}
-          aiRoundScore={aiRoundScore}
+          showIncrement={showIncrement}
           onStartRound={startRound}
           onSubmitClick={onShowSubmit}
+          onChallenge={createChallenge}
+          playerScore={playerScore}
+          aiScore={aiScore}
         />
       </div>
 
       <SubmitScoreDialog open={showSubmit} onClose={onCloseSubmit} onSubmit={submitScore} />
 
+      <ChallengeDialog open={showChallenge} onClose={onCloseChallenge} link={challengeLink} />
+
       <ImageStatsDialog
         open={showImageStats}
-        data={createPieChartData()}
         onClose={onCloseImageStats}
+        data={createPieChartData()}
       />
     </>
   );

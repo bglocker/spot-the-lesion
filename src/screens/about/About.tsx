@@ -1,7 +1,8 @@
 import React from "react";
 import { AppBar, IconButton, Toolbar, Typography } from "@material-ui/core";
-import { makeStyles, createStyles } from "@material-ui/core/styles";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
+import { useHistory } from "react-router-dom";
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -14,8 +15,10 @@ const useStyles = makeStyles(() =>
   })
 );
 
-const About: React.FC<AboutProps> = ({ setRoute }: AboutProps) => {
+const About: React.FC = () => {
   const classes = useStyles();
+
+  const history = useHistory();
 
   return (
     <>
@@ -26,7 +29,7 @@ const About: React.FC<AboutProps> = ({ setRoute }: AboutProps) => {
             edge="start"
             color="inherit"
             aria-label="Back"
-            onClick={() => setRoute("home")}
+            onClick={() => history.goBack()}
           >
             <KeyboardBackspace />
           </IconButton>

@@ -1,11 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button, Card, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import ScoreWithIncrement from "../../components/ScoreWithIncrement";
 import LoadingButton from "../../components/LoadingButton";
 import colors from "../../res/colors";
-import constants from "../../res/constants";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -65,49 +64,52 @@ const useStyles = makeStyles((theme) =>
 
 const GameSideBar: React.FC<GameSideBarProps> = ({
   gameMode,
-  round,
-  inRound,
+  gameStarted,
+  gameEnded,
+  roundEnded,
   roundLoading,
-  playerScore,
-  playerRoundScore,
-  aiScore,
-  aiRoundScore,
+  showIncrement,
   onStartRound,
   onSubmitClick,
+  onChallenge,
+  playerScore,
+  aiScore,
 }: GameSideBarProps) => {
   const classes = useStyles();
 
-  const endingText = () => {
-    if (gameMode === "casual" || round < constants.rounds || roundLoading || inRound) {
+  const [challengeLoading, setChallengeLoading] = useState(false);
+
+  const gameEndText = () => {
+    if (!gameEnded) {
       return null;
     }
 
-    const endPlayerScore = playerScore + playerRoundScore;
-    const endAiScore = aiScore + aiRoundScore;
+    const playerScoreEnd = playerScore.total + playerScore.round;
+    const aiScoreEnd = aiScore.total + aiScore.round;
 
-    let text: string;
+    let endText: string;
     let color: string;
 
-    if (endPlayerScore > endAiScore) {
-      text = "You won!";
+    if (playerScoreEnd > aiScoreEnd) {
+      endText = "You won!";
       color = colors.playerWon;
-    } else if (endPlayerScore < endAiScore) {
-      text = "AI won!";
+    } else if (playerScoreEnd < aiScoreEnd) {
+      endText = "AI won!";
       color = colors.playerLost;
     } else {
-      text = "It was a draw!";
+      endText = "It was a draw!";
       color = colors.draw;
     }
 
     return (
       <Typography className={classes.cardText} style={{ color }}>
-        {text}
+        {endText}
       </Typography>
     );
   };
 
   const startRoundButton = () => {
-    if (gameMode === "competitive" && round === constants.rounds) {
+    if (gameEnded) {
       return null;
     }
 
@@ -117,21 +119,16 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
         color="primary"
         size="large"
         loading={roundLoading}
-        disabled={inRound}
+        disabled={gameStarted && !roundEnded}
         onClick={onStartRound}
       >
-        {round === 0 ? "Start" : "Next"}
+        {gameStarted ? "Next" : "Start"}
       </LoadingButton>
     );
   };
 
   const submitShareButtons = () => {
-    if (
-      (gameMode === "casual" && round === 0) ||
-      (gameMode === "competitive" && round < constants.rounds) ||
-      roundLoading ||
-      inRound
-    ) {
+    if ((gameMode === "competitive" && !gameEnded) || !roundEnded || roundLoading) {
       return null;
     }
 
@@ -151,32 +148,62 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
     );
   };
 
+  const onChallengeClick = async () => {
+    try {
+      setChallengeLoading(true);
+
+      await onChallenge();
+    } finally {
+      setChallengeLoading(false);
+    }
+  };
+
+  const challengeButton = () => {
+    if (!gameEnded) {
+      return null;
+    }
+
+    return (
+      <LoadingButton
+        variant="contained"
+        color="primary"
+        size="large"
+        loading={challengeLoading}
+        onClick={onChallengeClick}
+      >
+        Challenge friend
+      </LoadingButton>
+    );
+  };
+
   return (
     <div className={classes.container}>
       <Card className={classes.card}>
         <div className={classes.scoresContainer}>
           <ScoreWithIncrement
             player="You"
-            score={playerScore}
-            increment={playerRoundScore}
-            showIncrement={round > 0 && !roundLoading && !inRound}
+            score={playerScore.total}
+            increment={playerScore.round}
+            showIncrement={showIncrement}
           />
 
           <Typography className={classes.cardText}>vs</Typography>
 
           <ScoreWithIncrement
             player="AI"
-            score={aiScore}
-            increment={aiRoundScore}
-            showIncrement={round > 0 && !roundLoading && !inRound}
+            score={aiScore.total}
+            increment={aiScore.round}
+            showIncrement={showIncrement}
           />
         </div>
 
-        {endingText()}
+        {gameEndText()}
 
         {startRoundButton()}
 
         {submitShareButtons()}
+
+        {challengeButton()}
       </Card>
     </div>
   );
