@@ -3,6 +3,7 @@ import { createMuiTheme, createStyles, makeStyles, ThemeProvider } from "@materi
 import { SnackbarProvider } from "notistack";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import Home from "./screens/home/Home";
+import AdminAuth from "./screens/admin_console/AdminAuth";
 import GameMenu from "./screens/game/GameMenu";
 import GameRoute from "./screens/game/GameRoute";
 import Tutorial from "./screens/tutorial/Tutorial";
@@ -49,7 +50,7 @@ const App: React.FC = () => {
               </Route>
 
               <Route path="/admin">
-                <h3>Admin Page</h3>
+                <AdminAuth />
               </Route>
 
               <Route path="/game-menu">
