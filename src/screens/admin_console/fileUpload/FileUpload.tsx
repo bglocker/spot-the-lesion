@@ -5,6 +5,7 @@ import axios from "axios";
 import Button from "@material-ui/core/Button";
 import CloudUploadIcon from "@material-ui/icons/CloudUpload";
 import TextField from "@material-ui/core/TextField";
+import StringBuilder from "string-builder";
 import colors from "../../../res/colors";
 
 const useStyles = makeStyles((theme) =>
@@ -90,8 +91,8 @@ const FileUpload: React.FC = () => {
   const [currentImagesForUpload, setCurrentImagesForUpload] = useState([]);
   const [currentJsonsForUpload, setCurrentJsonsForUpload] = useState([]);
 
-  const [selectedImageFileName, setSelectedImageFileName] = useState("No file selected");
-  const [selectedJSONFileName, setSelectedJSONFileName] = useState("No file selected");
+  const [selectedImageFileNames, setSelectedImageFileNames] = useState("No file selected");
+  const [selectedJSONFileNames, setSelectedJSONFileNames] = useState("No file selected");
 
   const [imageUploadSuccessful, setImageUploadSuccessful] = useState(false);
   const [JSONUploadSuccessful, setJSONUploadSuccessful] = useState(false);
@@ -102,12 +103,20 @@ const FileUpload: React.FC = () => {
 
   const prepareCurrentImagesForUpload = (event) => {
     setCurrentImagesForUpload(event.currentTarget.files);
-    setSelectedImageFileName(event.currentTarget.files[0].name);
+    setSelectedImageFileNames(getFileNames(event.currentTarget.files));
   };
 
   const prepareCurrentJsonsForUpload = (event) => {
     setCurrentJsonsForUpload(event.currentTarget.files);
-    setSelectedJSONFileName(event.currentTarget.files[0].name);
+    setSelectedJSONFileNames(getFileNames(event.currentTarget.files));
+  };
+
+  const getFileNames = (files): string => {
+    const sb = new StringBuilder();
+    for (const file of files) {
+      sb.append(file.name).append("; ");
+    }
+    return sb.toString();
   };
 
   const submitClick = () => {
@@ -174,7 +183,7 @@ const FileUpload: React.FC = () => {
               </Button>
               <TextField
                 className={classes.uploadButton}
-                value={selectedImageFileName}
+                value={selectedImageFileNames}
                 helperText={imageUploadSuccessful ? "Upload Successful!" : ""}
                 FormHelperTextProps={{
                   className: classes.successMessage,
@@ -200,7 +209,7 @@ const FileUpload: React.FC = () => {
               </Button>
               <TextField
                 className={classes.uploadButton}
-                value={selectedJSONFileName}
+                value={selectedJSONFileNames}
                 helperText={JSONUploadSuccessful ? "Upload Successful!" : ""}
                 FormHelperTextProps={{
                   className: classes.successMessage,
