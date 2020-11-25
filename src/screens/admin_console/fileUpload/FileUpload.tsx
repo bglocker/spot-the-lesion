@@ -146,15 +146,35 @@ const FileUpload: React.FC = () => {
       console.log(currentImagesForUpload[index]);
     }
 
-    const formData = new FormData();
+    /**
+     * Send POST Request with images to server
+     */
+    const imagesFormData = new FormData();
     // eslint-disable-next-line no-console
-    console.log(formData);
-    formData.append("scan", currentImagesForUpload[0]);
-
+    console.log(imagesFormData);
+    imagesFormData.append("scan", currentImagesForUpload[0]);
     axios
-      .post("https://spot-the-lesion.herokuapp.com/post/", formData, axiosConfig)
+      .post("https://spot-the-lesion.herokuapp.com/post/", imagesFormData, axiosConfig)
       .then((response) => {
         setImageResponse(response.status);
+        // eslint-disable-next-line no-console
+        console.log(response);
+      })
+      .catch((error) => {
+        // eslint-disable-next-line no-console
+        console.log(error.response.data);
+      });
+
+    /**
+     * Send POST Requests with JSONs to server
+     */
+    const jsonsFormData = new FormData();
+    // eslint-disable-next-line no-console
+    console.log(jsonsFormData);
+    jsonsFormData.append("scan", currentJsonsForUpload[0]);
+    axios
+      .post("https://spot-the-lesion.herokuapp.com/post/", jsonsFormData, axiosConfig)
+      .then((response) => {
         setJsonResponse(response.status);
         // eslint-disable-next-line no-console
         console.log(response);
