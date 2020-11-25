@@ -57,9 +57,12 @@ const App: React.FC = () => {
                 <GameMenu />
               </Route>
 
-              <Route path="/game">
-                <GameRoute />
-              </Route>
+              <Route
+                path="/game"
+                render={({ history, location }) => (
+                  <GameRoute history={history} location={location} />
+                )}
+              />
 
               <Route
                 path="/challenge"
