@@ -11,7 +11,7 @@ import { range } from "../utils/GameUtils";
  *
  * @return Unique random generator function
  */
-const useUniqueRandomGenerator = ([min, max]: [number, number]): (() => number) => {
+const useUniqueRandomGenerator = (min = 0, max: number): (() => number) => {
   const [nums] = useState(() => range(min, max));
   const [ix, setIx] = useState(max - min - 1);
 

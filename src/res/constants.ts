@@ -6,9 +6,6 @@ const constants = {
   animationCubesNumber: 10,
   canvasSize: 750,
   roundsNumber: 10,
-  rangeEndEasy: 1252,
-  rangeEndMedium: 3454,
-  rangeEndHard: 4723,
 
   /* Game drawings */
   animationLineWidth: 5,
@@ -35,13 +32,18 @@ const constants = {
   /* axios */
   axiosTimeout: 3000,
 
+  /* Firebase */
+  easyFilesNumber: 1252,
+  mediumFilesNumber: 2202,
+  hardFilesNumber: 1269,
+
   /* Dynamic Links */
   domainUriPrefix: "https://spotthelesion.page.link",
 
   /* Firestore */
   scoresCasual: "leaderboard_casual",
   scoresCompetitive: "leaderboard_competitive",
-  images: "images",
+  images: (difficulty: Difficulty): string => `images_${difficulty}`,
 
   /* Storage */
   maxOperationRetryTime: 3000,

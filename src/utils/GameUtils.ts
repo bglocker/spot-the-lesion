@@ -7,20 +7,24 @@ import constants from "../res/constants";
  * Returns the path to the annotation file corresponding to the given annotationId
  *
  * @param annotationId Id of the annotation file to retrieve
+ * @param difficulty   Game difficulty, specifying the sub folder name
  *
  * @return Path to annotation file
  */
 
-const getAnnotationPath = (annotationId: number): string => `annotations/${annotationId}.json`;
+const getAnnotationPath = (annotationId: number, difficulty: Difficulty): string =>
+  `annotation/${difficulty}/${annotationId}.json`;
 
 /**
  * Returns the path to the image file corresponding to the given imageId
  *
  * @param imageId Id of the image file to retrieve
+ * @param difficulty   Game difficulty, specifying the sub folder name
  *
  * @return Path to image file
  */
-const getImagePath = (imageId: number): string => `images/${imageId}.png`;
+const getImagePath = (imageId: number, difficulty: Difficulty): string =>
+  `images/${difficulty}/${imageId}.png`;
 
 /**
  * Given the coordinates of two rectangles, returns the ratio of their intersection
@@ -64,22 +68,22 @@ const drawRoundEndText = (ctx: CanvasRenderingContext2D, text: string, color: st
 };
 
 /**
- * Return the minimum and maximum file ids corresponding to the given difficulty ids range
+ * Return the number of files corresponding to the given difficulty
  *
- * @param difficulty Difficulty for which to retrieve the range
+ * @param difficulty Difficulty for which to retrieve the files number
  *
- * @return Tuple of minimum and maximum file id
+ * @return Number of files
  */
-const getFileIdRange = (difficulty: Difficulty): [number, number] => {
+const getFilesNumber = (difficulty: Difficulty): number => {
   switch (difficulty) {
     case "easy":
-      return [0, constants.rangeEndEasy];
+      return constants.easyFilesNumber;
     case "medium":
-      return [constants.rangeEndEasy, constants.rangeEndMedium];
+      return constants.mediumFilesNumber;
     case "hard":
-      return [constants.rangeEndMedium, constants.rangeEndHard];
+      return constants.hardFilesNumber;
     default:
-      return [0, constants.rangeEndHard];
+      return 1;
   }
 };
 
@@ -210,8 +214,8 @@ export {
   drawRoundEndText,
   getAnnotationPath,
   getDifficultyOrDefault,
-  getFileIdRange,
   getFileIdsOrDefault,
+  getFilesNumber,
   getGameModeOrDefault,
   getImagePath,
   getIntersectionOverUnion,

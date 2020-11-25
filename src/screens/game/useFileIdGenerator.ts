@@ -1,5 +1,5 @@
 import { useUniqueRandomGenerator } from "../../components";
-import { getFileIdRange } from "../../utils/GameUtils";
+import { getFilesNumber } from "../../utils/GameUtils";
 import useArrayGenerator from "../../components/useArrayGenerator";
 
 /**
@@ -15,7 +15,7 @@ const useFileIdGenerator = (
   difficulty: Difficulty,
   challengeFileIds: number[] | undefined
 ): (() => number) => {
-  const getNewRandomFileId = useUniqueRandomGenerator(getFileIdRange(difficulty));
+  const getNewRandomFileId = useUniqueRandomGenerator(0, getFilesNumber(difficulty));
   const getNewChallengeFileId = useArrayGenerator(challengeFileIds || []);
 
   return () => {
