@@ -60,6 +60,17 @@ const App: React.FC = () => {
                 <GameRoute />
               </Route>
 
+              <Route
+                path="/challenge"
+                render={({ history, location }) => {
+                  history.replace("/");
+                  history.push("/game-menu");
+                  history.push(`/game${location.search}`);
+
+                  return null;
+                }}
+              />
+
               <Route path="/tutorial">
                 <Tutorial />
               </Route>

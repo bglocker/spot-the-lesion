@@ -796,12 +796,9 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
   const createChallenge = async () => {
     const shortLinksUrl = `https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=${process.env.REACT_APP_FIREBASE_API_KEY}`;
+    const fileIdsString = JSON.stringify(fileIds);
 
-    const link = `http://${
-      window.location.host
-    }/spot-the-lesion/game?gameMode=${gameMode}&difficulty=${difficulty}&fileIds=${JSON.stringify(
-      fileIds
-    )}`;
+    const link = `http://${window.location.host}/spot-the-lesion/challenge?gameMode=${gameMode}&difficulty=${difficulty}&fileIds=${fileIdsString}`;
 
     const title = "Spot the Lesion";
 
