@@ -110,6 +110,9 @@ const Settings: React.FC = () => {
     { name: "Number of Rounds", state: rounds, changer: setRounds },
   ];
 
+  /**
+   * Function for retrieving the current game options from Firebase
+   */
   const getData = async () => {
     setLoadData(false);
     const settingsDoc = await db.collection("game_options").doc("current_options").get();
@@ -136,6 +139,9 @@ const Settings: React.FC = () => {
     getData().then(() => {});
   }
 
+  /**
+   * Function for updating the current game options in Firebase
+   */
   const pushChanges = () => {
     let i = 0;
 
@@ -159,6 +165,9 @@ const Settings: React.FC = () => {
       .then(() => {});
   };
 
+  /**
+   * Function for resetting the game options to default
+   */
   const resetChanges = useCallback(async () => {
     const defaultSettingsSnapshot = await db
       .collection("game_options")
