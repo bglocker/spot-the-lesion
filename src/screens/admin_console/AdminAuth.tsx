@@ -97,16 +97,26 @@ const AdminAuth: React.FC = () => {
     displayError: false,
   });
 
+  /**
+   * Function for updating the password typed by the user in the provided text field
+   * @param prop - specific value of the password to be updated
+   */
   const handleChange = (prop: keyof PasswordType) => (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setPassword({ ...password, [prop]: event.target.value });
   };
 
+  /**
+   * Function for showing the password in text mode upon user click
+   */
   const handleClickShowPassword = () => {
     setPassword({ ...password, showPassword: !password.showPassword });
   };
 
+  /**
+   * Function for authenticating the user upon password submission
+   */
   const submitClick = () => {
     firebaseAuth
       .signInWithEmailAndPassword("spot-the-lesion@gmail.com", password.value)

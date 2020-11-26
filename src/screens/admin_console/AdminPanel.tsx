@@ -62,6 +62,9 @@ const AdminPanel: React.FC = () => {
   const [displayGameOptions, setDisplayGameOptions] = useState(false);
   const [displayImageUpload, setDisplayImageUpload] = useState(false);
 
+  /**
+   * Function for conditional rendering of the Admin Panel
+   */
   const adminPanel = () => {
     if (displayGameOptions) {
       return <Settings />;
