@@ -5,29 +5,24 @@ import {
   ButtonGroup,
   Card,
   Grid,
-  IconButton,
   Slide,
   SlideProps,
   Tab,
   Tabs,
   Theme,
-  Toolbar,
   Typography,
   useMediaQuery,
 } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { ArrowBack, ArrowForward, KeyboardBackspace } from "@material-ui/icons";
-import { useHistory } from "react-router-dom";
+import { ArrowBack, ArrowForward } from "@material-ui/icons";
 import { Pie } from "@nivo/pie";
+import { NavigationAppBar } from "../../components";
 import { db } from "../../firebase/firebaseApp";
 import DbUtils from "../../utils/DbUtils";
 import useWindowDimensions from "../../components/useWindowDimensions";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
-    backButton: {
-      marginRight: 8,
-    },
     basicCard: {
       display: "flex",
       flexDirection: "column",
@@ -128,8 +123,6 @@ type Direction = "row" | "column";
 
 const Statistics: React.FC = () => {
   const classes = useStyles();
-
-  const history = useHistory();
 
   /**
    * Retrieves the data from the database to display into the pie-chart and graph
@@ -475,21 +468,7 @@ const Statistics: React.FC = () => {
    */
   return (
     <>
-      <AppBar position="sticky">
-        <Toolbar variant="dense">
-          <IconButton
-            className={classes.backButton}
-            edge="start"
-            color="inherit"
-            aria-label="Back"
-            onClick={() => history.goBack()}
-          >
-            <KeyboardBackspace />
-          </IconButton>
-
-          <Typography>Spot the Lesion</Typography>
-        </Toolbar>
-      </AppBar>
+      <NavigationAppBar showBack />
 
       <AppBar className={classes.gameTypeAppBar} position="sticky">
         <Tabs
@@ -513,9 +492,11 @@ const Statistics: React.FC = () => {
           />
         </Tabs>
       </AppBar>
+
       <Slide in={slideIn} direction={slideDirection}>
         {displayStats(currentSlideIndex)}
       </Slide>
+
       {displaySlideShowButtons()}
     </>
   );

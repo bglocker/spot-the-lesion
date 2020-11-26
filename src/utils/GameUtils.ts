@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { OptionsObject } from "notistack";
 import { drawStrokedText } from "./canvasUtils";
 import constants from "../res/constants";
+import variables from "../res/variables";
 
 /**
  * Returns the path to the annotation file corresponding to the given annotationId
@@ -77,12 +78,13 @@ const drawRoundEndText = (ctx: CanvasRenderingContext2D, text: string, color: st
 const getFilesNumber = (difficulty: Difficulty): number => {
   switch (difficulty) {
     case "easy":
-      return constants.easyFilesNumber;
+      return variables.easyFilesNumber;
     case "medium":
-      return constants.mediumFilesNumber;
+      return variables.mediumFilesNumber;
     case "hard":
-      return constants.hardFilesNumber;
+      return variables.hardFilesNumber;
     default:
+      /* TODO: handle unreachable code */
       return 1;
   }
 };

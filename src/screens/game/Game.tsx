@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { AppBar, Button, Card, IconButton, Toolbar, Typography } from "@material-ui/core";
+import { Button, Card } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { KeyboardBackspace } from "@material-ui/icons";
 import { useHistory } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import axios from "axios";
@@ -12,7 +11,13 @@ import SubmitScoreDialog from "./SubmitScoreDialog";
 import ChallengeDialog from "./ChallengeDialog";
 import ImageStatsDialog from "./ImageStatsDialog";
 import useFileIdGenerator from "./useFileIdGenerator";
-import { LoadingButton, useCanvasContext, useHeatmap, useInterval } from "../../components";
+import {
+  LoadingButton,
+  NavigationAppBar,
+  useCanvasContext,
+  useHeatmap,
+  useInterval,
+} from "../../components";
 import {
   drawCircle,
   drawCross,
@@ -41,15 +46,10 @@ import {
 } from "../../utils/firebaseUtils";
 import colors from "../../res/colors";
 import constants from "../../res/constants";
+import variables from "../../res/variables";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
-    backButton: {
-      marginRight: 8,
-    },
-    title: {
-      flexGrow: 1,
-    },
     container: {
       height: "100%",
       display: "flex",
@@ -161,7 +161,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
   const [showIncrement, setShowIncrement] = useState(false);
 
   const [roundRunning, setRoundRunning] = useState(false);
-  const [roundTime, setRoundTime] = useState(constants.roundDuration);
+  const [roundTime, setRoundTime] = useState(variables.roundDuration);
 
   const [endRunning, setEndRunning] = useState(false);
   const [endTime, setEndTime] = useState(0);
@@ -201,13 +201,13 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
     setHintedCurrent(true);
     setHinted(true);
 
-    const radius = toCanvasScale(context, constants.hintRadius);
+    const radius = toCanvasScale(context, variables.hintRadius);
     const hintRange = toCanvasScale(context, constants.hintRange);
 
     const x = randomAround(Math.round(truth[0] + (truth[2] - truth[0]) / 2), hintRange);
     const y = randomAround(Math.round(truth[1] + (truth[3] - truth[1]) / 2), hintRange);
 
-    drawCircle(context, x, y, radius, constants.hintLineWidth, colors.hint);
+    drawCircle(context, x, y, radius, variables.hintLineWidth, colors.hint);
   }, [context, truth]);
 
   /**
@@ -218,7 +218,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       return;
     }
 
-    if (roundTime === constants.hintTime) {
+    if (roundTime === variables.hintTime) {
       /*
        * set timer color to timer orange
        * show hint
@@ -386,7 +386,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
         /* Competitive mode: function of prediction accuracy and constant increase rate */
         const competitiveRoundScore = Math.round(
-          intersectionOverUnion * constants.aiScoreMultiplier
+          intersectionOverUnion * variables.aiScoreMultiplier
         );
 
         const roundScore = gameMode === "casual" ? casualScore : competitiveRoundScore;
@@ -423,7 +423,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
   useInterval(
     () => setAnimationPosition((prevState) => prevState + 1),
     animationRunning
-      ? Math.round(constants.animationDuration / constants.animationCubesNumber ** 2)
+      ? Math.round(variables.animationDuration / constants.animationCubesNumber ** 2)
       : null
   );
 
@@ -471,16 +471,16 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
     setShowIncrement(true);
 
-    if (gameMode === "competitive" && roundNumber === constants.roundsNumber) {
+    if (gameMode === "competitive" && roundNumber === variables.roundsNumber) {
       setGameEnded(true);
     }
 
     /* Check general achievements */
     if (playerCorrectCurrent) {
-      unlockAchievementHandler("firstCorrect", "Achievement! First correct answer!");
+      unlockAchievementHandler("firstCorrect", "Achievement! First Step!");
 
       if (!hintedCurrent) {
-        unlockAchievementHandler("firstCorrectWithoutHint", "Achievement! No hint needed!");
+        unlockAchievementHandler("firstCorrectWithoutHint", "Achievement! Independent Spotter!");
       }
     }
 
@@ -489,25 +489,31 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       if (playerCorrectAnswers === 5) {
         unlockAchievementHandler(
           "fiveCorrectSameRunCasual",
-          "Achievement! Five correct in same casual run!"
+          "Achievement! Practice makes perfect!"
         );
+      }
+
+      if (playerCorrectAnswers === 20) {
+        unlockAchievementHandler("twentyCorrectSameRunCasual", "Achievement! Going the distance!");
+      }
+
+      if (playerCorrectAnswers === 50) {
+        unlockAchievementHandler("fiftyCorrectSameRunCasual", "Achievement! Still going?!");
       }
     }
 
     /* Check competitive achievements */
     if (gameMode === "competitive") {
-      if (playerCorrectCurrent && roundTime > constants.roundDuration - 2000) {
-        unlockAchievementHandler(
-          "fastAnswer",
-          "Achievement! You answered correctly in less than 2 seconds!"
-        );
+      if (playerCorrectCurrent && roundTime > variables.roundDuration - 2000) {
+        unlockAchievementHandler("fastAnswer", "Achievement! The flash!");
+      }
+
+      if (playerCorrectCurrent && roundTime > variables.roundDuration - 9500) {
+        unlockAchievementHandler("slowAnswer", "Achievement! Nerves of steel!");
       }
 
       if (playerScore.total + playerScore.round >= 1000) {
-        unlockAchievementHandler(
-          "competitivePoints",
-          "Achievement! 1000 points in a competitive run!"
-        );
+        unlockAchievementHandler("competitivePoints", "Achievement! IT'S OVER 1000!!!");
       }
     }
   }, [
@@ -533,12 +539,16 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       return;
     }
 
-    if (playerCorrectAnswers === constants.roundsNumber) {
-      unlockAchievementHandler("allCorrectCompetitive", "Achievement! You got them all right!");
+    if (playerCorrectAnswers === 5) {
+      unlockAchievementHandler("fiveCorrectSameRunCompetitive", "Achievement! Master Spotter!");
+    }
+
+    if (playerCorrectAnswers === variables.roundsNumber) {
+      unlockAchievementHandler("allCorrectCompetitive", "Achievement! Perfectionist!");
     }
 
     if (playerScore.total + playerScore.round > aiScore.total + aiScore.round) {
-      unlockAchievementHandler("firstCompetitiveWin", "Achievement! First competitive win!");
+      unlockAchievementHandler("firstCompetitiveWin", "Achievement! Competitive Winner!");
     }
   }, [aiScore, enqueueSnackbar, gameEnded, playerCorrectAnswers, playerScore]);
 
@@ -687,7 +697,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       setRoundNumber((prevState) => prevState + 1);
 
       /* Reset game state */
-      setRoundTime(constants.roundDuration);
+      setRoundTime(variables.roundDuration);
       setEndTime(0);
       setAnimationPosition(0);
 
@@ -783,6 +793,10 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
       enqueueSnackbar("Score successfully submitted!", constants.successSnackbarOptions);
 
+      if (playerScore.total + playerScore.round > aiScore.total + aiScore.round) {
+        unlockAchievement("firstCasualWin", "Achievement! Casually Winning!", enqueueSnackbar);
+      }
+
       history.go(-2);
     } catch (error) {
       if (isFirestoreError(error)) {
@@ -863,34 +877,20 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
   return (
     <>
-      <AppBar position="sticky">
-        <Toolbar variant="dense">
-          <IconButton
-            className={classes.backButton}
-            edge="start"
-            color="inherit"
-            aria-label="Back"
-            onClick={() => history.goBack()}
-          >
-            <KeyboardBackspace />
-          </IconButton>
+      <NavigationAppBar showBack>
+        <Button color="inherit" disabled={!roundEnded || roundLoading} onClick={onShowImageStats}>
+          Show Image Stats
+        </Button>
 
-          <Typography className={classes.title}>Spot the Lesion</Typography>
-
-          <Button color="inherit" disabled={!roundEnded || roundLoading} onClick={onShowImageStats}>
-            Show Image Stats
-          </Button>
-
-          <LoadingButton
-            color="inherit"
-            disabled={!roundEnded || roundLoading}
-            loading={heatmapLoading}
-            onClick={onToggleHeatmap}
-          >
-            {showHeatmap ? "Hide Heatmap" : "Show Heatmap"}
-          </LoadingButton>
-        </Toolbar>
-      </AppBar>
+        <LoadingButton
+          color="inherit"
+          disabled={!roundEnded || roundLoading}
+          loading={heatmapLoading}
+          onClick={onToggleHeatmap}
+        >
+          {showHeatmap ? "Hide Heatmap" : "Show Heatmap"}
+        </LoadingButton>
+      </NavigationAppBar>
 
       <div className={classes.container}>
         <div className={classes.emptyDiv} />

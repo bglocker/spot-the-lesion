@@ -1,19 +1,11 @@
 import React, { useState } from "react";
-import { AppBar, Button, IconButton, Theme, Toolbar, Typography } from "@material-ui/core";
+import { Button, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { KeyboardBackspace } from "@material-ui/icons";
 import { useHistory } from "react-router-dom";
-import ToggleButton from "../../components/ToggleButton";
-import ToggleButtonGroup from "../../components/ToggleButtonGroup";
+import { NavigationAppBar, ToggleButton, ToggleButtonGroup } from "../../components";
 
-const useStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles((theme) =>
   createStyles({
-    backButton: {
-      marginRight: 8,
-    },
-    title: {
-      flexGrow: 1,
-    },
     container: {
       height: "100%",
       display: "flex",
@@ -116,21 +108,7 @@ const GameMenu: React.FC = () => {
 
   return (
     <>
-      <AppBar position="sticky">
-        <Toolbar variant="dense">
-          <IconButton
-            className={classes.backButton}
-            edge="start"
-            color="inherit"
-            aria-label="Back"
-            onClick={() => history.goBack()}
-          >
-            <KeyboardBackspace />
-          </IconButton>
-
-          <Typography className={classes.title}>Spot the Lesion</Typography>
-        </Toolbar>
-      </AppBar>
+      <NavigationAppBar showBack />
 
       <div className={classes.container}>
         <div className={classes.selectorsContainer}>

@@ -1,20 +1,17 @@
 import React, { useState } from "react";
 import {
-  AppBar,
   Button,
   ButtonGroup,
-  Container,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
   Theme,
-  Toolbar,
-  Typography,
 } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { useHistory } from "react-router-dom";
+import { NavigationAppBar } from "../../components";
 import logo from "../../res/images/home/logo.gif";
 import scan from "../../res/images/home/ct-scan.png";
 import brain from "../../res/images/home/brain.png";
@@ -83,20 +80,17 @@ const Home: React.FC = () => {
     if (localStorage.getItem("firstSession")) {
       history.push("/game-menu");
     } else {
-      setDialogOpen(true);
       localStorage.setItem("firstSession", "true");
+
+      setDialogOpen(true);
     }
   };
 
   return (
     <>
-      <AppBar position="sticky">
-        <Toolbar variant="dense">
-          <Typography>Spot the Lesion</Typography>
-        </Toolbar>
-      </AppBar>
+      <NavigationAppBar />
 
-      <Container className={classes.container}>
+      <div className={classes.container}>
         <img className={classes.logo} src={logo} alt="Spot the Lesion Logo" />
 
         <div className={classes.iconsAndButtonsContainer}>
@@ -108,7 +102,7 @@ const Home: React.FC = () => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => suggestTutorialIfFirstTimePlaying()}
+              onClick={suggestTutorialIfFirstTimePlaying}
             >
               Play
             </Button>
@@ -177,8 +171,9 @@ const Home: React.FC = () => {
           <img className={classes.image} src={brain} alt="Brain" />
         </div>
 
-        <Dialog open={dialogOpen} aria-labelledby="form-dialog-title">
-          <DialogTitle id="form-dialog-title">What about a short tutorial?</DialogTitle>
+        <Dialog open={dialogOpen}>
+          <DialogTitle>What about a short tutorial?</DialogTitle>
+
           <DialogContent>
             <DialogContentText>
               Hey. We have noticed that this is your first time playing on this browser. We want to
@@ -186,16 +181,18 @@ const Home: React.FC = () => {
               suggest you take a look at the tutorial.
             </DialogContentText>
           </DialogContent>
+
           <DialogActions>
-            <Button onClick={() => history.push("/tutorial")} color="primary">
+            <Button color="primary" onClick={() => history.push("/tutorial")}>
               Show me the tutorial
             </Button>
-            <Button onClick={() => history.push("/game-menu")} color="primary">
+
+            <Button color="primary" onClick={() => history.push("/game-menu")}>
               I just want to play
             </Button>
           </DialogActions>
         </Dialog>
-      </Container>
+      </div>
     </>
   );
 };

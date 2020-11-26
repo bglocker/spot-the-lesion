@@ -56,3 +56,6 @@ atlassian-ide-plugin.xml
 
 # Typescript incremental compiliation
 tsconfig.tsbuildinfo
+
+# cache files
+.eslintcache
