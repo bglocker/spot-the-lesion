@@ -97,11 +97,6 @@ const FileUpload: React.FC = () => {
   const [selectedImageFileNames, setSelectedImageFileNames] = useState("No file selected");
   const [selectedJSONFileNames, setSelectedJSONFileNames] = useState("No file selected");
 
-  const [imageResponse, setImageResponse] = useState(0);
-  const [jsonResponse, setJsonResponse] = useState(0);
-
-  const [submitClicked, setSubmitClicked] = useState(false);
-
   const axiosConfig = {
     headers: { "content-type": "multipart/form-data" },
   };
@@ -124,65 +119,32 @@ const FileUpload: React.FC = () => {
     return sb.toString();
   };
 
-  const getUploadStatus = (response: number, emptyUpload: boolean): string => {
-    if (emptyUpload && submitClicked) {
-      return "Please Select a file.";
-    }
-    if (response === 0) {
-      return "";
-    }
-    return response === 200 ? "Upload Successful!" : "Error occurred. Upload Failed.";
-  };
-
   const submitClick = () => {
-    setSubmitClicked(true);
     if (currentImagesForUpload == null || !currentJsonsForUpload == null) {
       // eslint-disable-next-line no-console
       console.log("No files to upload for images or jsons, aborting.");
     }
 
     for (let index = 0; index < currentImagesForUpload.length; index++) {
+      /**
+       * Send POST Request with one image data to server
+       */
+      const imagesFormData = new FormData();
       // eslint-disable-next-line no-console
-      console.log(currentImagesForUpload[index]);
+      console.log(imagesFormData);
+      imagesFormData.append("scan", currentImagesForUpload[index]);
+      imagesFormData.append("json", currentJsonsForUpload[index]);
+      axios
+        .post("https://spot-the-lesion.herokuapp.com/post/", imagesFormData, axiosConfig)
+        .then((response) => {
+          // eslint-disable-next-line no-console
+          console.log(response);
+        })
+        .catch((error) => {
+          // eslint-disable-next-line no-console
+          console.log(error.response.data);
+        });
     }
-
-    /**
-     * Send POST Request with images to server
-     */
-    const imagesFormData = new FormData();
-    // eslint-disable-next-line no-console
-    console.log(imagesFormData);
-    imagesFormData.append("scan", currentImagesForUpload[0]);
-    axios
-      .post("https://spot-the-lesion.herokuapp.com/post/", imagesFormData, axiosConfig)
-      .then((response) => {
-        setImageResponse(response.status);
-        // eslint-disable-next-line no-console
-        console.log(response);
-      })
-      .catch((error) => {
-        // eslint-disable-next-line no-console
-        console.log(error.response.data);
-      });
-
-    /**
-     * Send POST Requests with JSONs to server
-     */
-    const jsonsFormData = new FormData();
-    // eslint-disable-next-line no-console
-    console.log(jsonsFormData);
-    jsonsFormData.append("scan", currentJsonsForUpload[0]);
-    axios
-      .post("https://spot-the-lesion.herokuapp.com/post/", jsonsFormData, axiosConfig)
-      .then((response) => {
-        setJsonResponse(response.status);
-        // eslint-disable-next-line no-console
-        console.log(response);
-      })
-      .catch((error) => {
-        // eslint-disable-next-line no-console
-        console.log(error.response.data);
-      });
   };
 
   return (
@@ -215,14 +177,7 @@ const FileUpload: React.FC = () => {
                   onChange={(event) => prepareCurrentImagesForUpload(event)}
                 />
               </Button>
-              <TextField
-                className={classes.uploadButton}
-                value={selectedImageFileNames}
-                helperText={getUploadStatus(imageResponse, currentImagesForUpload.length === 0)}
-                FormHelperTextProps={{
-                  className: imageResponse === 200 ? classes.successMessage : classes.errorMessage,
-                }}
-              />
+              <TextField className={classes.uploadButton} value={selectedImageFileNames} />
             </div>
             <div className={classes.uploadSection}>
               <Button
@@ -241,14 +196,7 @@ const FileUpload: React.FC = () => {
                   onChange={(event) => prepareCurrentJsonsForUpload(event)}
                 />
               </Button>
-              <TextField
-                className={classes.uploadButton}
-                value={selectedJSONFileNames}
-                helperText={getUploadStatus(jsonResponse, currentJsonsForUpload.length === 0)}
-                FormHelperTextProps={{
-                  className: jsonResponse === 200 ? classes.successMessage : classes.errorMessage,
-                }}
-              />
+              <TextField className={classes.uploadButton} value={selectedJSONFileNames} />
             </div>
             <Button
               variant="contained"
