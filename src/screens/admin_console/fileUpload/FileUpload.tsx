@@ -105,16 +105,28 @@ const FileUpload: React.FC = () => {
     headers: { "content-type": "multipart/form-data" },
   };
 
+  /**
+   * Function for getting the images selected by the user
+   * @param event - file selection event triggered
+   */
   const prepareCurrentImagesForUpload = (event) => {
     setCurrentImagesForUpload(event.currentTarget.files);
     setSelectedImageFileNames(getFileNames(event.currentTarget.files));
   };
 
+  /**
+   * Function for getting the JSONs selected by the user
+   * @param event - JSON selection event triggered
+   */
   const prepareCurrentJsonsForUpload = (event) => {
     setCurrentJsonsForUpload(event.currentTarget.files);
     setSelectedJSONFileNames(getFileNames(event.currentTarget.files));
   };
 
+  /**
+   * Function for obtaining the file names selected by the user
+   * @param files - List of files selected
+   */
   const getFileNames = (files): string => {
     const sb = new StringBuilder();
     for (const file of files) {
@@ -123,14 +135,20 @@ const FileUpload: React.FC = () => {
     return sb.toString();
   };
 
+  /**
+   * Function for sending POST Request to the server,
+   * after at least 1 image and at least 1 JSONs were selected
+   */
   const submitClick = () => {
     setSubmitClicked(true);
     if (currentImagesForUpload == null || !currentJsonsForUpload == null) {
       // eslint-disable-next-line no-console
       console.log("No files to upload for images or jsons, aborting.");
     }
-
-    if (currentJsonsForUpload.length > 0 && currentImagesForUpload.length > 0) {
+    const imagesLength = currentImagesForUpload.length;
+    const jsonsLength = currentJsonsForUpload.length;
+    // Ensure that each Image has its corresponding JSON
+    if (imagesLength > 0 && jsonsLength > 0 && imagesLength === jsonsLength) {
       for (let index = 0; index < currentImagesForUpload.length; index++) {
         /**
          * Send POST Request with one image data to server
@@ -155,8 +173,15 @@ const FileUpload: React.FC = () => {
     }
   };
 
-  const getUploadStatus = (response: number, emptyUpload: boolean): string => {
-    if (emptyUpload && submitClicked) {
+  /**
+   * Function for displaying the upload status, based on the server's response
+   * @param response - the server's response to the upload request
+   * @param invalidUpload - boolean flag for testing whether the upload try is invalid
+   *                      - e.g.: number of Images !== number of JSONs,
+   *                              no Images selected, no JSONs selected
+   */
+  const getUploadStatus = (response: number, invalidUpload: boolean): string => {
+    if (invalidUpload && submitClicked) {
       return "Please Select a file.";
     }
     if (response === 0) {
@@ -197,7 +222,11 @@ const FileUpload: React.FC = () => {
             <TextField
               className={classes.uploadButton}
               value={selectedImageFileNames}
-              helperText={getUploadStatus(serverResponse, currentImagesForUpload.length === 0)}
+              helperText={getUploadStatus(
+                serverResponse,
+                currentImagesForUpload.length === 0 ||
+                  currentImagesForUpload.length < currentJsonsForUpload.length
+              )}
               FormHelperTextProps={{
                 className: serverResponse === 200 ? classes.successMessage : classes.errorMessage,
               }}
@@ -223,7 +252,11 @@ const FileUpload: React.FC = () => {
             <TextField
               className={classes.uploadButton}
               value={selectedJSONFileNames}
-              helperText={getUploadStatus(serverResponse, currentJsonsForUpload.length === 0)}
+              helperText={getUploadStatus(
+                serverResponse,
+                currentJsonsForUpload.length === 0 ||
+                  currentJsonsForUpload.length < currentImagesForUpload.length
+              )}
               FormHelperTextProps={{
                 className: serverResponse === 200 ? classes.successMessage : classes.errorMessage,
               }}
