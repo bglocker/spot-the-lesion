@@ -3,8 +3,7 @@ import { AppBar, Button, IconButton, Theme, Toolbar, Typography } from "@materia
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { useHistory } from "react-router-dom";
-import ToggleButton from "../../components/ToggleButton";
-import ToggleButtonGroup from "../../components/ToggleButtonGroup";
+import { ToggleButton, ToggleButtonGroup } from "../../components";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
