@@ -477,10 +477,10 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
     /* Check general achievements */
     if (playerCorrectCurrent) {
-      unlockAchievementHandler("firstCorrect", "Achievement! First correct answer!");
+      unlockAchievementHandler("firstCorrect", "Achievement! First Step!");
 
       if (!hintedCurrent) {
-        unlockAchievementHandler("firstCorrectWithoutHint", "Achievement! No hint needed!");
+        unlockAchievementHandler("firstCorrectWithoutHint", "Achievement! Independent Spotter!");
       }
     }
 
@@ -489,25 +489,31 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       if (playerCorrectAnswers === 5) {
         unlockAchievementHandler(
           "fiveCorrectSameRunCasual",
-          "Achievement! Five correct in same casual run!"
+          "Achievement! Practice makes perfect!"
         );
+      }
+
+      if (playerCorrectAnswers === 20) {
+        unlockAchievementHandler("twentyCorrectSameRunCasual", "Achievement! Going the distance!");
+      }
+
+      if (playerCorrectAnswers === 50) {
+        unlockAchievementHandler("fiftyCorrectSameRunCasual", "Achievement! Still going?!");
       }
     }
 
     /* Check competitive achievements */
     if (gameMode === "competitive") {
       if (playerCorrectCurrent && roundTime > constants.roundDuration - 2000) {
-        unlockAchievementHandler(
-          "fastAnswer",
-          "Achievement! You answered correctly in less than 2 seconds!"
-        );
+        unlockAchievementHandler("fastAnswer", "Achievement! The flash!");
+      }
+
+      if (playerCorrectCurrent && roundTime > constants.roundDuration - 9500) {
+        unlockAchievementHandler("slowAnswer", "Achievement! Nerves of steel!");
       }
 
       if (playerScore.total + playerScore.round >= 1000) {
-        unlockAchievementHandler(
-          "competitivePoints",
-          "Achievement! 1000 points in a competitive run!"
-        );
+        unlockAchievementHandler("competitivePoints", "Achievement! IT'S OVER 1000!!!");
       }
     }
   }, [
@@ -533,12 +539,16 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       return;
     }
 
+    if (playerCorrectAnswers === 5) {
+      unlockAchievementHandler("fiveCorrectSameRunCompetitive", "Achievement! Master Spotter!");
+    }
+
     if (playerCorrectAnswers === constants.roundsNumber) {
-      unlockAchievementHandler("allCorrectCompetitive", "Achievement! You got them all right!");
+      unlockAchievementHandler("allCorrectCompetitive", "Achievement! Perfectionist!");
     }
 
     if (playerScore.total + playerScore.round > aiScore.total + aiScore.round) {
-      unlockAchievementHandler("firstCompetitiveWin", "Achievement! First competitive win!");
+      unlockAchievementHandler("firstCompetitiveWin", "Achievement! Competitive Winner!");
     }
   }, [aiScore, enqueueSnackbar, gameEnded, playerCorrectAnswers, playerScore]);
 
@@ -782,6 +792,10 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       }
 
       enqueueSnackbar("Score successfully submitted!", constants.successSnackbarOptions);
+
+      if (playerScore.total + playerScore.round > aiScore.total + aiScore.round) {
+        unlockAchievement("firstCasualWin", "Achievement! Casually Winning!", enqueueSnackbar);
+      }
 
       history.go(-2);
     } catch (error) {

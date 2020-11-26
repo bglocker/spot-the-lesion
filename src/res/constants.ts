@@ -26,6 +26,9 @@ const constants = {
   redTime: 2000,
   roundDuration: 10000,
 
+  /* Achievements */
+  numberOfAchievements: 12,
+
   /* canvasUtils */
   defaultImageSize: 512,
 
