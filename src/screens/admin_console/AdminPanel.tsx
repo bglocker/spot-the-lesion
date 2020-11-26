@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import Button from "@material-ui/core/Button";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
+// import ButtonGroup from "@material-ui/core/ButtonGroup";
 import colors from "../../res/colors";
 import Settings from "./Settings";
 import FileUpload from "./fileUpload/FileUpload";
@@ -30,8 +30,12 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: 24,
       boxSizing: "border-box",
     },
-    buttonGroup: {
-      margin: 20,
+    buttonContainer: {
+      alignSelf: "center",
+      align: "center",
+      alignItems: "center",
+      display: "flex",
+      flexDirection: "column",
     },
     button: {
       margin: 8,
@@ -66,7 +70,7 @@ const AdminPanel: React.FC = () => {
       return <FileUpload />;
     }
     return (
-      <ButtonGroup orientation="vertical">
+      <div className={classes.buttonContainer}>
         <Button
           className={classes.button}
           variant="contained"
@@ -86,7 +90,7 @@ const AdminPanel: React.FC = () => {
         >
           Image Upload Panel
         </Button>
-      </ButtonGroup>
+      </div>
     );
   };
 
