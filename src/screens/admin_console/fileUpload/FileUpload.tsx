@@ -97,6 +97,10 @@ const FileUpload: React.FC = () => {
   const [selectedImageFileNames, setSelectedImageFileNames] = useState("No file selected");
   const [selectedJSONFileNames, setSelectedJSONFileNames] = useState("No file selected");
 
+  const [submitClicked, setSubmitClicked] = useState(false);
+
+  const [serverResponse, setServerResponse] = useState(0);
+
   const axiosConfig = {
     headers: { "content-type": "multipart/form-data" },
   };
@@ -120,31 +124,45 @@ const FileUpload: React.FC = () => {
   };
 
   const submitClick = () => {
+    setSubmitClicked(true);
     if (currentImagesForUpload == null || !currentJsonsForUpload == null) {
       // eslint-disable-next-line no-console
       console.log("No files to upload for images or jsons, aborting.");
     }
 
-    for (let index = 0; index < currentImagesForUpload.length; index++) {
-      /**
-       * Send POST Request with one image data to server
-       */
-      const imagesFormData = new FormData();
-      // eslint-disable-next-line no-console
-      console.log(imagesFormData);
-      imagesFormData.append("scan", currentImagesForUpload[index]);
-      imagesFormData.append("json", currentJsonsForUpload[index]);
-      axios
-        .post("https://spot-the-lesion.herokuapp.com/post/", imagesFormData, axiosConfig)
-        .then((response) => {
-          // eslint-disable-next-line no-console
-          console.log(response);
-        })
-        .catch((error) => {
-          // eslint-disable-next-line no-console
-          console.log(error.response.data);
-        });
+    if (currentJsonsForUpload.length > 0 && currentImagesForUpload.length > 0) {
+      for (let index = 0; index < currentImagesForUpload.length; index++) {
+        /**
+         * Send POST Request with one image data to server
+         */
+        const imagesFormData = new FormData();
+        // eslint-disable-next-line no-console
+        console.log(imagesFormData);
+        imagesFormData.append("scan", currentImagesForUpload[index]);
+        imagesFormData.append("json", currentJsonsForUpload[index]);
+        axios
+          .post("https://spot-the-lesion.herokuapp.com/post/", imagesFormData, axiosConfig)
+          .then((response) => {
+            // eslint-disable-next-line no-console
+            console.log(response);
+            setServerResponse(response.status);
+          })
+          .catch((error) => {
+            // eslint-disable-next-line no-console
+            console.log(error.response.data);
+          });
+      }
     }
+  };
+
+  const getUploadStatus = (response: number, emptyUpload: boolean): string => {
+    if (emptyUpload && submitClicked) {
+      return "Please Select a file.";
+    }
+    if (response === 0) {
+      return "";
+    }
+    return response === 200 ? "Upload Successful!" : "Error occurred. Upload Failed.";
   };
 
   return (
@@ -155,60 +173,72 @@ const FileUpload: React.FC = () => {
         </Toolbar>
       </AppBar>
 
-      <div className={classes.container}>
-        <div className={classes.box}>
-          <Typography className={classes.text}>Image upload panel</Typography>
-          <div className={classes.submit}>
-            <div className={classes.uploadSection}>
-              <Button
-                variant="contained"
-                color="primary"
-                size="large"
-                className={classes.uploadButton}
-                startIcon={<CloudUploadIcon />}
-                component="label"
-              >
-                Upload Image
-                <input
-                  accept="image/*"
-                  type="file"
-                  hidden
-                  multiple
-                  onChange={(event) => prepareCurrentImagesForUpload(event)}
-                />
-              </Button>
-              <TextField className={classes.uploadButton} value={selectedImageFileNames} />
-            </div>
-            <div className={classes.uploadSection}>
-              <Button
-                variant="contained"
-                color="primary"
-                size="large"
-                className={classes.uploadButton}
-                startIcon={<CloudUploadIcon />}
-                component="label"
-              >
-                Upload JSON
-                <input
-                  type="file"
-                  hidden
-                  multiple
-                  onChange={(event) => prepareCurrentJsonsForUpload(event)}
-                />
-              </Button>
-              <TextField className={classes.uploadButton} value={selectedJSONFileNames} />
-            </div>
+      <div className={classes.box}>
+        <Typography className={classes.text}>Image upload panel</Typography>
+        <div className={classes.submit}>
+          <div className={classes.uploadSection}>
             <Button
               variant="contained"
               color="primary"
               size="large"
-              className={classes.submitButton}
-              component="span"
-              onClick={submitClick}
+              className={classes.uploadButton}
+              startIcon={<CloudUploadIcon />}
+              component="label"
             >
-              Submit
+              Upload Image
+              <input
+                accept="image/*"
+                type="file"
+                hidden
+                multiple
+                onChange={(event) => prepareCurrentImagesForUpload(event)}
+              />
             </Button>
+            <TextField
+              className={classes.uploadButton}
+              value={selectedImageFileNames}
+              helperText={getUploadStatus(serverResponse, currentImagesForUpload.length === 0)}
+              FormHelperTextProps={{
+                className: serverResponse === 200 ? classes.successMessage : classes.errorMessage,
+              }}
+            />
           </div>
+          <div className={classes.uploadSection}>
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              className={classes.uploadButton}
+              startIcon={<CloudUploadIcon />}
+              component="label"
+            >
+              Upload JSON
+              <input
+                type="file"
+                hidden
+                multiple
+                onChange={(event) => prepareCurrentJsonsForUpload(event)}
+              />
+            </Button>
+            <TextField
+              className={classes.uploadButton}
+              value={selectedJSONFileNames}
+              helperText={getUploadStatus(serverResponse, currentJsonsForUpload.length === 0)}
+              FormHelperTextProps={{
+                className: serverResponse === 200 ? classes.successMessage : classes.errorMessage,
+              }}
+            />
+          </div>
+          <Button
+            variant="contained"
+            color="primary"
+            size="large"
+            className={classes.submitButton}
+            component="span"
+            onClick={submitClick}
+          >
+            Submit
+          </Button>
         </div>
       </div>
     </>
