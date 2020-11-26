@@ -1,15 +1,13 @@
 import React, { useState } from "react";
-import { AppBar, Toolbar, Typography } from "@material-ui/core";
-import { makeStyles, createStyles } from "@material-ui/core/styles";
+import { Typography } from "@material-ui/core";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { firebaseAuth } from "../../firebase/firebaseApp";
-import colors from "../../res/colors";
+import { NavigationAppBar } from "../../components";
 import Settings from "./Settings";
+import colors from "../../res/colors";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
-    backButton: {
-      marginRight: 8,
-    },
     container: {
       height: "100%",
       display: "flex",
@@ -81,11 +79,7 @@ const AdminAuth: React.FC = () => {
 
   return (
     <>
-      <AppBar position="absolute">
-        <Toolbar variant="dense">
-          <Typography>Spot the Lesion</Typography>
-        </Toolbar>
-      </AppBar>
+      <NavigationAppBar />
 
       <div className={classes.container}>
         <div className={classes.box}>

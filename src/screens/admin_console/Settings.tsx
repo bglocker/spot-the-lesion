@@ -1,14 +1,12 @@
 import React, { useCallback, useState } from "react";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { AppBar, Toolbar, Typography } from "@material-ui/core";
-import colors from "../../res/colors";
+import { Typography } from "@material-ui/core";
+import { NavigationAppBar } from "../../components";
 import { db } from "../../firebase/firebaseApp";
+import colors from "../../res/colors";
 
 const useStyles = makeStyles(() =>
   createStyles({
-    backButton: {
-      marginRight: 8,
-    },
     container: {
       height: "100%",
       display: "flex",
@@ -128,11 +126,7 @@ const Settings: React.FC = () => {
 
   return (
     <>
-      <AppBar position="absolute">
-        <Toolbar variant="dense">
-          <Typography>Spot the Lesion</Typography>
-        </Toolbar>
-      </AppBar>
+      <NavigationAppBar />
 
       <div className={classes.container}>
         <div className={classes.box}>

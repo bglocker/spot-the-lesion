@@ -1,19 +1,15 @@
 import React, { useState } from "react";
-import { AppBar, IconButton, Tab, Tabs, Typography, Toolbar } from "@material-ui/core";
+import { AppBar, Tab, Tabs } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { KeyboardBackspace } from "@material-ui/icons";
-import { useHistory } from "react-router-dom";
 import { db } from "../../firebase/firebaseApp";
 import BasicTable from "./scoreTabel/BasicTable";
 import DbUtils from "../../utils/DbUtils";
 import ScoreType from "../../utils/ScoreType";
 import BasicGrid from "./scoreTabel/tableGrid/TableGrid";
+import { NavigationAppBar } from "../../components";
 
 const useStyles = makeStyles(() =>
   createStyles({
-    backButton: {
-      marginRight: 8,
-    },
     appBar: {
       alignItems: "center",
       backgroundColor: "#004445",
@@ -36,8 +32,6 @@ const useStyles = makeStyles(() =>
 
 const Leaderboard: React.FC = () => {
   const classes = useStyles();
-
-  const history = useHistory();
 
   const [currentTableIndex, setCurrentTableIndex] = React.useState(0);
   const [currentLeaderboardIndex, setCurrentLeaderboardIndex] = React.useState(0);
@@ -156,21 +150,7 @@ const Leaderboard: React.FC = () => {
 
   return (
     <>
-      <AppBar position="sticky">
-        <Toolbar variant="dense">
-          <IconButton
-            className={classes.backButton}
-            edge="start"
-            color="inherit"
-            aria-label="Back"
-            onClick={() => history.goBack()}
-          >
-            <KeyboardBackspace />
-          </IconButton>
-
-          <Typography>Spot the Lesion</Typography>
-        </Toolbar>
-      </AppBar>
+      <NavigationAppBar showBack />
 
       <AppBar className={classes.appBar} position="sticky">
         <Tabs
@@ -201,6 +181,7 @@ const Leaderboard: React.FC = () => {
           />
         </Tabs>
       </AppBar>
+
       <AppBar className={classes.gameTypeAppBar} position="sticky">
         <Tabs
           value={firstTimeOpened ? false : currentLeaderboardIndex}
@@ -223,7 +204,9 @@ const Leaderboard: React.FC = () => {
           />
         </Tabs>
       </AppBar>
+
       <BasicGrid firstTimeOpened={firstTimeOpened} />
+
       <BasicTable firstTimeOpened={firstTimeOpened} scores={scores} />
     </>
   );

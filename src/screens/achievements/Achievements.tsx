@@ -1,21 +1,16 @@
 import React, { useState } from "react";
 import {
-  AppBar,
   Container,
   Dialog,
   DialogContent,
   DialogTitle,
   Grid,
-  IconButton,
-  Theme,
-  Toolbar,
   Tooltip,
   Typography,
   withStyles,
 } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { KeyboardBackspace } from "@material-ui/icons";
-import { useHistory } from "react-router-dom";
+import { NavigationAppBar } from "../../components";
 import question from "../../res/images/achievements/block.png";
 import firstCorrect from "../../res/images/achievements/tick.png";
 import firstCorrectWithoutHint from "../../res/images/achievements/investigation.png";
@@ -29,7 +24,7 @@ import slowAnswer from "../../res/images/achievements/timer.png";
 import correctAnswers from "../../res/images/achievements/confetti.png";
 import constants from "../../res/constants";
 
-const LightTooltip = withStyles((theme: Theme) => ({
+const LightTooltip = withStyles((theme) => ({
   tooltip: {
     backgroundColor: theme.palette.common.white,
     color: "rgba(0, 0, 0, 0.87)",
@@ -40,12 +35,6 @@ const LightTooltip = withStyles((theme: Theme) => ({
 
 const useStyles = makeStyles((theme) =>
   createStyles({
-    backButton: {
-      marginRight: 8,
-    },
-    root: {
-      flexGrow: 1,
-    },
     grid: {
       marginLeft: "auto",
       marginRight: "auto",
@@ -86,8 +75,6 @@ const useStyles = makeStyles((theme) =>
 
 const Achievements: React.FC = () => {
   const classes = useStyles();
-
-  const history = useHistory();
 
   const [openFirst, setOpenFirst] = useState(false);
   const [openSecond, setOpenSecond] = useState(false);
@@ -601,22 +588,8 @@ const Achievements: React.FC = () => {
   };
 
   return (
-    <div className={classes.root}>
-      <AppBar position="sticky">
-        <Toolbar variant="dense">
-          <IconButton
-            className={classes.backButton}
-            edge="start"
-            color="inherit"
-            aria-label="Back"
-            onClick={() => history.goBack()}
-          >
-            <KeyboardBackspace />
-          </IconButton>
-
-          <Typography>Spot the Lesion</Typography>
-        </Toolbar>
-      </AppBar>
+    <>
+      <NavigationAppBar showBack />
 
       <Typography className={classes.gameModeSelectionText}>
         Number of achievements unlocked: {localStorage.length > 0 ? localStorage.length - 1 : 0} out
@@ -639,7 +612,7 @@ const Achievements: React.FC = () => {
           </Grid>
         </Grid>
       </>
-    </div>
+    </>
   );
 };
 

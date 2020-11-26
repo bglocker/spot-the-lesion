@@ -1,18 +1,9 @@
 import React, { useEffect, useState } from "react";
-import {
-  AppBar,
-  Button,
-  ButtonGroup,
-  Card,
-  IconButton,
-  Slide,
-  SlideProps,
-  Toolbar,
-  Typography,
-} from "@material-ui/core";
-import { ArrowBack, ArrowForward, KeyboardBackspace } from "@material-ui/icons";
+import { Button, ButtonGroup, Card, Slide, SlideProps } from "@material-ui/core";
+import { ArrowBack, ArrowForward } from "@material-ui/icons";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { useHistory } from "react-router-dom";
+import { NavigationAppBar } from "../../components";
 import TutorialCard from "./card/TutorialCard";
 import doctor from "../../res/images/tutorial/doctor.png";
 import start_screen from "../../res/images/tutorial/start screen.png";
@@ -145,21 +136,7 @@ const Tutorial: React.FC = () => {
 
   return (
     <>
-      <AppBar position="sticky">
-        <Toolbar variant="dense">
-          <IconButton
-            className={classes.backButton}
-            edge="start"
-            color="inherit"
-            aria-label="Back"
-            onClick={() => history.goBack()}
-          >
-            <KeyboardBackspace />
-          </IconButton>
-
-          <Typography>Spot the Lesion</Typography>
-        </Toolbar>
-      </AppBar>
+      <NavigationAppBar showBack />
 
       <div className={classes.container}>
         <Slide in={slideIn} direction={slideDirection}>

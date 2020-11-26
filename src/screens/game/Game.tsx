@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { AppBar, Button, Card, IconButton, Toolbar, Typography } from "@material-ui/core";
+import { Button, Card } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { KeyboardBackspace } from "@material-ui/icons";
 import { useHistory } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import axios from "axios";
@@ -12,7 +11,13 @@ import SubmitScoreDialog from "./SubmitScoreDialog";
 import ChallengeDialog from "./ChallengeDialog";
 import ImageStatsDialog from "./ImageStatsDialog";
 import useFileIdGenerator from "./useFileIdGenerator";
-import { LoadingButton, useCanvasContext, useHeatmap, useInterval } from "../../components";
+import {
+  LoadingButton,
+  NavigationAppBar,
+  useCanvasContext,
+  useHeatmap,
+  useInterval,
+} from "../../components";
 import {
   drawCircle,
   drawCross,
@@ -44,12 +49,6 @@ import constants from "../../res/constants";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
-    backButton: {
-      marginRight: 8,
-    },
-    title: {
-      flexGrow: 1,
-    },
     container: {
       height: "100%",
       display: "flex",
@@ -877,34 +876,20 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
   return (
     <>
-      <AppBar position="sticky">
-        <Toolbar variant="dense">
-          <IconButton
-            className={classes.backButton}
-            edge="start"
-            color="inherit"
-            aria-label="Back"
-            onClick={() => history.goBack()}
-          >
-            <KeyboardBackspace />
-          </IconButton>
+      <NavigationAppBar showBack>
+        <Button color="inherit" disabled={!roundEnded || roundLoading} onClick={onShowImageStats}>
+          Show Image Stats
+        </Button>
 
-          <Typography className={classes.title}>Spot the Lesion</Typography>
-
-          <Button color="inherit" disabled={!roundEnded || roundLoading} onClick={onShowImageStats}>
-            Show Image Stats
-          </Button>
-
-          <LoadingButton
-            color="inherit"
-            disabled={!roundEnded || roundLoading}
-            loading={heatmapLoading}
-            onClick={onToggleHeatmap}
-          >
-            {showHeatmap ? "Hide Heatmap" : "Show Heatmap"}
-          </LoadingButton>
-        </Toolbar>
-      </AppBar>
+        <LoadingButton
+          color="inherit"
+          disabled={!roundEnded || roundLoading}
+          loading={heatmapLoading}
+          onClick={onToggleHeatmap}
+        >
+          {showHeatmap ? "Hide Heatmap" : "Show Heatmap"}
+        </LoadingButton>
+      </NavigationAppBar>
 
       <div className={classes.container}>
         <div className={classes.emptyDiv} />
