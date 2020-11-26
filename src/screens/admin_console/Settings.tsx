@@ -1,11 +1,10 @@
 import React, { useCallback, useState } from "react";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { Typography } from "@material-ui/core";
-import { NavigationAppBar } from "../../components";
+import { Button, ButtonGroup, TextField, Typography } from "@material-ui/core";
 import { db } from "../../firebase/firebaseApp";
 import colors from "../../res/colors";
 
-const useStyles = makeStyles(() =>
+const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
       height: "100%",
@@ -18,7 +17,7 @@ const useStyles = makeStyles(() =>
     box: {
       backgroundColor: "white",
       width: "60%",
-      height: "60%",
+      height: "80%",
       display: "flex",
       flexDirection: "column",
       justifyContent: "center",
@@ -31,6 +30,44 @@ const useStyles = makeStyles(() =>
       flexDirection: "row",
       justifyContent: "center",
       alignItems: "center",
+      margin: 10,
+    },
+    buttonGroup: {
+      margin: 20,
+    },
+    button: {
+      margin: 8,
+      borderRadius: 20,
+      [theme.breakpoints.only("xs")]: {
+        width: 250,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.only("sm")]: {
+        width: 300,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        width: 320,
+        fontSize: "1.25rem",
+      },
+    },
+    gameOptionsTitle: {
+      [theme.breakpoints.only("xs")]: {
+        fontSize: "1.25rem",
+      },
+      [theme.breakpoints.only("sm")]: {
+        fontSize: "1.5rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        fontSize: "2rem",
+      },
+      textAlign: "center",
+      marginBottom: 24,
+    },
+    textField: {
+      marginLeft: theme.spacing(1),
+      marginRight: theme.spacing(1),
+      width: "25ch",
     },
   })
 );
@@ -55,8 +92,10 @@ const Settings: React.FC = () => {
   const [hintLineWidth, setHintLineWidth] = useState<number>(0);
   const [roundTimeInitial, setRoundTimeInitial] = useState<number>(0);
   const [rounds, setRounds] = useState<number>(0);
+  const [aiScoreMultiplier, setAiScoreMultiplier] = useState<number>(0);
 
   const optionsList: SettingType[] = [
+    { name: "AI Score Multiplier", state: aiScoreMultiplier, changer: setAiScoreMultiplier },
     { name: "Animation Time", state: animationTime, changer: setAnimationTime },
     { name: "Hint Line Width", state: hintLineWidth, changer: setHintLineWidth },
     { name: "Hint Radius", state: hintRadius, changer: setHintRadius },
@@ -65,6 +104,9 @@ const Settings: React.FC = () => {
     { name: "Number of Rounds", state: rounds, changer: setRounds },
   ];
 
+  /**
+   * Function for retrieving the current game options from Firebase
+   */
   const getData = async () => {
     setLoadData(false);
     const settingsDoc = await db.collection("game_options").doc("current_options").get();
@@ -88,9 +130,12 @@ const Settings: React.FC = () => {
   };
 
   if (loadData) {
-    getData();
+    getData().then(() => {});
   }
 
+  /**
+   * Function for updating the current game options in Firebase
+   */
   const pushChanges = () => {
     let i = 0;
 
@@ -108,16 +153,23 @@ const Settings: React.FC = () => {
       }
     }
 
-    db.collection("game_options").doc("current_options").set(newData);
+    db.collection("game_options")
+      .doc("current_options")
+      .set(newData)
+      .then(() => {});
   };
 
+  /**
+   * Function for resetting the game options to default
+   */
   const resetChanges = useCallback(async () => {
     const defaultSettingsSnapshot = await db
       .collection("game_options")
       .doc("default_options")
       .get();
 
-    db.collection("game_options")
+    await db
+      .collection("game_options")
       .doc("current_options")
       .set(defaultSettingsSnapshot.data() as SettingsData);
 
@@ -126,29 +178,47 @@ const Settings: React.FC = () => {
 
   return (
     <>
-      <NavigationAppBar />
+      <div className={classes.box}>
+        <Typography className={classes.gameOptionsTitle}>Game options</Typography>
+        {optionsList.map((option) => {
+          return (
+            <div key={option.name} className={classes.inline}>
+              <TextField
+                label={option.name}
+                type="number"
+                id="margin-none"
+                value={option.state}
+                defaultValue="Input a number"
+                className={classes.textField}
+                onChange={(change) => {
+                  option.changer(Number(change.target.value));
+                }}
+              />
+            </div>
+          );
+        })}
 
-      <div className={classes.container}>
-        <div className={classes.box}>
-          {optionsList.map((option) => {
-            return (
-              <div key={option.name} className={classes.inline}>
-                <Typography>{option.name}</Typography>
-                <input
-                  type="number"
-                  value={option.state}
-                  onChange={(change) => {
-                    option.changer(Number(change.target.value));
-                  }}
-                />
-              </div>
-            );
-          })}
-
-          <div className={classes.inline}>
-            <input type="submit" value="Update" onClick={pushChanges} />
-            <input type="submit" value="Reset Default" onClick={resetChanges} />
-          </div>
+        <div className={classes.inline}>
+          <ButtonGroup orientation="horizontal" className={classes.buttonGroup}>
+            <Button
+              onClick={pushChanges}
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              size="large"
+            >
+              Update
+            </Button>
+            <Button
+              onClick={resetChanges}
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              size="large"
+            >
+              Reset Default
+            </Button>
+          </ButtonGroup>
         </div>
       </div>
     </>

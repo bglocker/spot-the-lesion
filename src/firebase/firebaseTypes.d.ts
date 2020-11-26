@@ -37,6 +37,7 @@ interface AnnotationData {
 }
 
 interface SettingsData {
+  aiScoreMultiplier: number;
   animationTime: number;
   hintLineWidth: number;
   hintRadius: number;

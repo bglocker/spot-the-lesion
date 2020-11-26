@@ -1,9 +1,19 @@
 import React, { useState } from "react";
-import { Typography } from "@material-ui/core";
+import {
+  Button,
+  FormControl,
+  FormHelperText,
+  IconButton,
+  Input,
+  InputAdornment,
+  InputLabel,
+  Typography,
+} from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { firebaseAuth } from "../../firebase/firebaseApp";
+import { Visibility, VisibilityOff } from "@material-ui/icons";
 import { NavigationAppBar } from "../../components";
-import Settings from "./Settings";
+import AdminPanel from "./AdminPanel";
+import { firebaseAuth } from "../../firebase/firebaseApp";
 import colors from "../../res/colors";
 
 const useStyles = makeStyles((theme) =>
@@ -42,12 +52,37 @@ const useStyles = makeStyles((theme) =>
     },
     submit: {
       display: "flex",
-      flexDirection: "row",
+      flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
     },
     spacing: {
-      margin: 10,
+      margin: 50,
+    },
+    button: {
+      margin: 24,
+      borderRadius: 20,
+      [theme.breakpoints.only("xs")]: {
+        width: 250,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.only("sm")]: {
+        width: 300,
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        width: 320,
+        fontSize: "1.25rem",
+      },
+    },
+    password: {
+      margin: theme.spacing(1),
+    },
+    textField: {
+      width: "25ch",
+    },
+    passwordError: {
+      color: "red",
     },
   })
 );
@@ -55,42 +90,102 @@ const useStyles = makeStyles((theme) =>
 const AdminAuth: React.FC = () => {
   const classes = useStyles();
 
-  const [password, setPassword] = useState<string>("");
   const [wasLogged, setWasLogged] = useState<boolean>(false);
 
-  if (wasLogged) {
-    return <Settings />;
-  }
+  const [password, setPassword] = React.useState<PasswordType>({
+    value: "",
+    showPassword: false,
+    displayError: false,
+  });
 
+  /**
+   * Function for updating the password typed by the user in the provided text field
+   * @param prop - specific value of the password to be updated
+   */
+  const handleChange = (prop: keyof PasswordType) => (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setPassword({ ...password, [prop]: event.target.value });
+  };
+
+  /**
+   * Function for showing the password in text mode upon user click
+   */
+  const handleClickShowPassword = () => {
+    setPassword({ ...password, showPassword: !password.showPassword });
+  };
+
+  /**
+   * Function for authenticating the user upon password submission
+   */
   const submitClick = () => {
     firebaseAuth
-      .signInWithEmailAndPassword("spot-the-lesion@gmail.com", password)
+      .signInWithEmailAndPassword("spot-the-lesion@gmail.com", password.value)
       .then(() => {
-        // eslint-disable-next-line no-console
-        console.log("Managed to log in");
-
+        setPassword({ ...password, displayError: false });
         setWasLogged(true);
       })
-      .catch((error) => {
-        // eslint-disable-next-line no-console
-        console.log(error);
+      .catch((_) => {
+        setPassword({ ...password, value: "", displayError: true });
       });
   };
 
-  return (
+  return wasLogged ? (
+    <>
+      <NavigationAppBar />
+      <div className={classes.container}>
+        <AdminPanel />
+      </div>
+      ;
+    </>
+  ) : (
     <>
       <NavigationAppBar />
 
       <div className={classes.container}>
         <div className={classes.box}>
-          <Typography className={classes.text}> Password </Typography>
-          <div className={classes.submit}>
-            <input
-              className={classes.spacing}
-              type="text"
-              onChange={(changeTextbox) => setPassword(changeTextbox.target.value)}
-            />
-            <input className={classes.spacing} type="submit" value="Submit" onClick={submitClick} />
+          <Typography className={classes.text}> Enter Password </Typography>
+          <div className={[classes.submit, classes.spacing].join(" ")}>
+            <FormControl
+              className={[
+                classes.submit,
+                classes.spacing,
+                classes.password,
+                classes.textField,
+              ].join(" ")}
+            >
+              <InputLabel htmlFor="standard-adornment-password">Password</InputLabel>
+              <Input
+                id="standard-adornment-password"
+                type={password.showPassword ? "text" : "password"}
+                value={password.value}
+                error={password.displayError}
+                onChange={handleChange("value")}
+                aria-describedby="incorrect-password"
+                endAdornment={
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={handleClickShowPassword}
+                    >
+                      {password.showPassword ? <Visibility /> : <VisibilityOff />}
+                    </IconButton>
+                  </InputAdornment>
+                }
+              />
+              <FormHelperText id="incorrect-password" className={classes.passwordError}>
+                {password.displayError ? "Incorrect Password" : ""}
+              </FormHelperText>
+            </FormControl>
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={submitClick}
+            >
+              Log In
+            </Button>
           </div>
         </div>
       </div>
