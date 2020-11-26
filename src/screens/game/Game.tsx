@@ -46,6 +46,7 @@ import {
 } from "../../utils/firebaseUtils";
 import colors from "../../res/colors";
 import constants from "../../res/constants";
+import variables from "../../res/variables";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -160,7 +161,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
   const [showIncrement, setShowIncrement] = useState(false);
 
   const [roundRunning, setRoundRunning] = useState(false);
-  const [roundTime, setRoundTime] = useState(constants.roundDuration);
+  const [roundTime, setRoundTime] = useState(variables.roundDuration);
 
   const [endRunning, setEndRunning] = useState(false);
   const [endTime, setEndTime] = useState(0);
@@ -200,13 +201,13 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
     setHintedCurrent(true);
     setHinted(true);
 
-    const radius = toCanvasScale(context, constants.hintRadius);
+    const radius = toCanvasScale(context, variables.hintRadius);
     const hintRange = toCanvasScale(context, constants.hintRange);
 
     const x = randomAround(Math.round(truth[0] + (truth[2] - truth[0]) / 2), hintRange);
     const y = randomAround(Math.round(truth[1] + (truth[3] - truth[1]) / 2), hintRange);
 
-    drawCircle(context, x, y, radius, constants.hintLineWidth, colors.hint);
+    drawCircle(context, x, y, radius, variables.hintLineWidth, colors.hint);
   }, [context, truth]);
 
   /**
@@ -217,7 +218,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       return;
     }
 
-    if (roundTime === constants.hintTime) {
+    if (roundTime === variables.hintTime) {
       /*
        * set timer color to timer orange
        * show hint
@@ -385,7 +386,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
         /* Competitive mode: function of prediction accuracy and constant increase rate */
         const competitiveRoundScore = Math.round(
-          intersectionOverUnion * constants.aiScoreMultiplier
+          intersectionOverUnion * variables.aiScoreMultiplier
         );
 
         const roundScore = gameMode === "casual" ? casualScore : competitiveRoundScore;
@@ -422,7 +423,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
   useInterval(
     () => setAnimationPosition((prevState) => prevState + 1),
     animationRunning
-      ? Math.round(constants.animationDuration / constants.animationCubesNumber ** 2)
+      ? Math.round(variables.animationDuration / constants.animationCubesNumber ** 2)
       : null
   );
 
@@ -470,7 +471,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
     setShowIncrement(true);
 
-    if (gameMode === "competitive" && roundNumber === constants.roundsNumber) {
+    if (gameMode === "competitive" && roundNumber === variables.roundsNumber) {
       setGameEnded(true);
     }
 
@@ -503,11 +504,11 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
     /* Check competitive achievements */
     if (gameMode === "competitive") {
-      if (playerCorrectCurrent && roundTime > constants.roundDuration - 2000) {
+      if (playerCorrectCurrent && roundTime > variables.roundDuration - 2000) {
         unlockAchievementHandler("fastAnswer", "Achievement! The flash!");
       }
 
-      if (playerCorrectCurrent && roundTime > constants.roundDuration - 9500) {
+      if (playerCorrectCurrent && roundTime > variables.roundDuration - 9500) {
         unlockAchievementHandler("slowAnswer", "Achievement! Nerves of steel!");
       }
 
@@ -542,7 +543,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       unlockAchievementHandler("fiveCorrectSameRunCompetitive", "Achievement! Master Spotter!");
     }
 
-    if (playerCorrectAnswers === constants.roundsNumber) {
+    if (playerCorrectAnswers === variables.roundsNumber) {
       unlockAchievementHandler("allCorrectCompetitive", "Achievement! Perfectionist!");
     }
 
@@ -696,7 +697,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       setRoundNumber((prevState) => prevState + 1);
 
       /* Reset game state */
-      setRoundTime(constants.roundDuration);
+      setRoundTime(variables.roundDuration);
       setEndTime(0);
       setAnimationPosition(0);
 

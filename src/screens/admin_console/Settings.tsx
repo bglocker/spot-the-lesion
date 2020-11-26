@@ -76,7 +76,7 @@ const Settings: React.FC = () => {
   const classes = useStyles();
 
   const [loadData, setLoadData] = useState<boolean>(true);
-  const [currentData, setCurrentData] = useState<SettingsData>(null!);
+  const [currentData, setCurrentData] = useState<FirestoreOptionsData>(null!);
 
   // To add an option to the list:
   //  a) Create Firebase number field: in default_options and current_options
@@ -86,22 +86,22 @@ const Settings: React.FC = () => {
   // WARNING! Make sure that SettingsData and optionsList are sorted lexicographically by the field name.
   // WARNING! Only number values are supported. To change this to string, replace all occurrences of "number" with "string".
 
-  const [animationTime, setAnimationTime] = useState<number>(0);
-  const [hintTime, setHintTime] = useState<number>(0);
-  const [hintRadius, setHintRadius] = useState<number>(0);
-  const [hintLineWidth, setHintLineWidth] = useState<number>(0);
-  const [roundTimeInitial, setRoundTimeInitial] = useState<number>(0);
-  const [rounds, setRounds] = useState<number>(0);
-  const [aiScoreMultiplier, setAiScoreMultiplier] = useState<number>(0);
+  const [animationDuration, setAnimationDuration] = useState(0);
+  const [hintTime, setHintTime] = useState(0);
+  const [hintRadius, setHintRadius] = useState(0);
+  const [hintLineWidth, setHintLineWidth] = useState(0);
+  const [roundDuration, setRoundDuration] = useState(0);
+  const [roundsNumber, setRoundsNumber] = useState(0);
+  const [aiScoreMultiplier, setAiScoreMultiplier] = useState(0);
 
   const optionsList: SettingType[] = [
     { name: "AI Score Multiplier", state: aiScoreMultiplier, changer: setAiScoreMultiplier },
-    { name: "Animation Time", state: animationTime, changer: setAnimationTime },
+    { name: "Animation Duration", state: animationDuration, changer: setAnimationDuration },
     { name: "Hint Line Width", state: hintLineWidth, changer: setHintLineWidth },
     { name: "Hint Radius", state: hintRadius, changer: setHintRadius },
     { name: "Hint Time", state: hintTime, changer: setHintTime },
-    { name: "Initial Round Time", state: roundTimeInitial, changer: setRoundTimeInitial },
-    { name: "Number of Rounds", state: rounds, changer: setRounds },
+    { name: "Round duration", state: roundDuration, changer: setRoundDuration },
+    { name: "Number of Rounds", state: roundsNumber, changer: setRoundsNumber },
   ];
 
   /**
@@ -111,13 +111,13 @@ const Settings: React.FC = () => {
     setLoadData(false);
     const settingsDoc = await db.collection("game_options").doc("current_options").get();
 
-    const data = (settingsDoc.exists ? settingsDoc.data() : {}) as SettingsData;
+    const data = (settingsDoc.exists ? settingsDoc.data() : {}) as FirestoreOptionsData;
 
     setCurrentData(data);
 
     let i = 0;
 
-    const keys = Object.keys(data as SettingsData);
+    const keys = Object.keys(data);
 
     keys.sort();
 
@@ -142,7 +142,7 @@ const Settings: React.FC = () => {
     const keys = Object.keys(currentData);
     const values = optionsList.map((index) => index.state);
 
-    const newData: SettingsData = currentData;
+    const newData: FirestoreOptionsData = currentData;
 
     keys.sort();
 
@@ -171,7 +171,7 @@ const Settings: React.FC = () => {
     await db
       .collection("game_options")
       .doc("current_options")
-      .set(defaultSettingsSnapshot.data() as SettingsData);
+      .set(defaultSettingsSnapshot.data() as FirestoreOptionsData);
 
     setLoadData(true);
   }, []);

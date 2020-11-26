@@ -1,3 +1,13 @@
+interface FirestoreOptionsData {
+  aiScoreMultiplier: number;
+  animationDuration: number;
+  hintLineWidth: number;
+  hintRadius: number;
+  hintTime: number;
+  roundDuration: number;
+  roundsNumber: number;
+}
+
 interface FirestoreImageData {
   clicks: { clickCount: number; x: number; y: number }[];
   correctClicks: number;
@@ -31,17 +41,16 @@ interface FirestoreScoreData {
   year: number;
 }
 
+interface ImageNumbersData {
+  easy: number;
+  easy_area: number;
+  medium: number;
+  medium_area: number;
+  hard: number;
+  hard_area: number;
+}
+
 interface AnnotationData {
   truth: number[];
   predicted: number[];
-}
-
-interface SettingsData {
-  aiScoreMultiplier: number;
-  animationTime: number;
-  hintLineWidth: number;
-  hintRadius: number;
-  hintTime: number;
-  rounds: number;
-  roundTimeInitial: number;
 }
