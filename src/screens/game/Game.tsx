@@ -154,7 +154,10 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
   const [predicted, setPredicted] = useState<number[]>([]);
   const [click, setClick] = useState<{ x: number; y: number } | null>(null);
 
-  const [imageData, setImageData] = useState<FirestoreImageData>(defaultImageData);
+  const [imageData, setImageData] = useState<FirestoreImageData>({
+    ...defaultImageData,
+    clicks: [],
+  });
 
   const [roundLoading, setRoundLoading] = useState(false);
   const [roundEnded, setRoundEnded] = useState(false);
@@ -705,6 +708,8 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       setTimerColor(colors.timerInitial);
 
       setClick(null);
+
+      setImageData({ ...defaultImageData, clicks: [] });
 
       setPlayerCorrectCurrent(false);
 
