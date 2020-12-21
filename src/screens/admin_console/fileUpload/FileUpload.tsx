@@ -154,6 +154,8 @@ const FileUpload: React.FC = () => {
          * Send POST Request with one image data to server
          */
         const imagesFormData = new FormData();
+        const serverKey = process.env.REACT_APP_SERVER_KEY || "N/A";
+        imagesFormData.append("pass", serverKey);
         // eslint-disable-next-line no-console
         console.log(imagesFormData);
         imagesFormData.append("scan", currentImagesForUpload[index]);
@@ -168,6 +170,7 @@ const FileUpload: React.FC = () => {
           .catch((error) => {
             // eslint-disable-next-line no-console
             console.log(error.response.data);
+            setServerResponse(error.response.status);
           });
       }
     }

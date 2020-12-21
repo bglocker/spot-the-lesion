@@ -191,7 +191,10 @@ const Settings: React.FC = () => {
                 defaultValue="Input a number"
                 className={classes.textField}
                 onChange={(change) => {
-                  option.changer(Number(change.target.value));
+                  const newValue = Number(change.target.value);
+                  const minValue = option.name === "Number of Rounds" ? 1 : 0;
+                  const changeValue = newValue >= minValue ? newValue : minValue;
+                  option.changer(changeValue);
                 }}
               />
             </div>
