@@ -5,8 +5,10 @@ import axios from "axios";
 import Button from "@material-ui/core/Button";
 import CloudUploadIcon from "@material-ui/icons/CloudUpload";
 import TextField from "@material-ui/core/TextField";
+import { useSnackbar } from "notistack";
 import StringBuilder from "string-builder";
 import colors from "../../../res/colors";
+import constants from "../../../res/constants";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -104,6 +106,8 @@ const FileUpload: React.FC = () => {
     message: "",
   });
 
+  const { enqueueSnackbar } = useSnackbar();
+
   const axiosConfig = {
     headers: { "content-type": "multipart/form-data" },
   };
@@ -164,25 +168,40 @@ const FileUpload: React.FC = () => {
         console.log(imagesFormData);
         imagesFormData.append("scan", currentImagesForUpload[index]);
         imagesFormData.append("json", currentJsonsForUpload[index]);
+
         axios
           .post("https://spot-the-lesion.herokuapp.com/post/", imagesFormData, axiosConfig)
           // eslint-disable-next-line no-loop-func
           .then((response) => {
             // eslint-disable-next-line no-console
             console.log(response);
+
+            /* Retrieve the server response */
             setServerResponse({
               status: response.status,
               message: response.data,
             } as ServerResponseType);
+
+            /* Enqueue snackbar with the Server Response */
+            const responseSnackbarOptions =
+              response.status === 200 && response.data !== WRONG_PASS
+                ? constants.successSnackbarOptions
+                : constants.errorSnackbarOptions;
+            enqueueSnackbar(response.data, responseSnackbarOptions);
           })
           // eslint-disable-next-line no-loop-func
           .catch((error) => {
             // eslint-disable-next-line no-console
             console.log(error.response.data);
+
+            /* Retrieve Server Error */
             setServerResponse({
               status: error.response.status,
               message: error.response.data,
             } as ServerResponseType);
+
+            /* Enqueue snackbar with the Server Error */
+            enqueueSnackbar(error.response.data, constants.errorSnackbarOptions);
           });
       }
     }
