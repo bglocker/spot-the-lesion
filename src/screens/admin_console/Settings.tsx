@@ -191,7 +191,8 @@ const Settings: React.FC = () => {
                 defaultValue="Input a number"
                 className={classes.textField}
                 onChange={(change) => {
-                  option.changer(Number(change.target.value));
+                  const newValue = Number(change.target.value);
+                  option.changer(newValue >= 0 ? newValue : 0);
                 }}
               />
             </div>
