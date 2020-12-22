@@ -93,13 +93,15 @@ const useStyles = makeStyles((theme) =>
 const FileUpload: React.FC = () => {
   const classes = useStyles();
 
-  const [currentImagesForUpload, setCurrentImagesForUpload] = useState([]);
-  const [currentJsonsForUpload, setCurrentJsonsForUpload] = useState([]);
+  const [currentImagesForUpload, setCurrentImagesForUpload] = useState<File[]>([]);
+  const [currentJsonsForUpload, setCurrentJsonsForUpload] = useState<File[]>([]);
 
   const [selectedImageFileNames, setSelectedImageFileNames] = useState("No file selected");
   const [selectedJSONFileNames, setSelectedJSONFileNames] = useState("No file selected");
 
   const [submitClicked, setSubmitClicked] = useState(false);
+
+  const [matchingFileNames, setMatchingFileNames] = useState(false);
 
   const [serverResponse, setServerResponse] = useState<ServerResponseType>({
     status: 0,
@@ -116,12 +118,22 @@ const FileUpload: React.FC = () => {
   const WRONG_PASS = "Upload has not been completed, the server password was not correct!";
 
   /**
+   * Function for re-initialising all sanity-checks hooks involved in Files submission
+   */
+  const prepareSanityChecks = () => {
+    setSubmitClicked(false);
+    setMatchingFileNames(false);
+    setServerResponse({ status: 0, message: "" });
+  };
+
+  /**
    * Function for getting the images selected by the user
    * @param event - file selection event triggered
    */
   const prepareCurrentImagesForUpload = (event) => {
     setCurrentImagesForUpload(event.currentTarget.files);
     setSelectedImageFileNames(getFileNames(event.currentTarget.files));
+    prepareSanityChecks();
   };
 
   /**
@@ -131,6 +143,7 @@ const FileUpload: React.FC = () => {
   const prepareCurrentJsonsForUpload = (event) => {
     setCurrentJsonsForUpload(event.currentTarget.files);
     setSelectedJSONFileNames(getFileNames(event.currentTarget.files));
+    prepareSanityChecks();
   };
 
   /**
@@ -146,6 +159,21 @@ const FileUpload: React.FC = () => {
   };
 
   /**
+   * Function for checking the validity of the files selected by the user
+   */
+  const validInputFiles = (images: File[], jsons: File[]) => {
+    if (images.length <= 0 || jsons.length <= 0 || images.length !== jsons.length) {
+      return false;
+    }
+    for (let index = 0; index < images.length; index++) {
+      if (images[index].name.split(".")[0] !== jsons[index].name.split(".")[0]) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  /**
    * Function for sending POST Request to the server,
    * after at least 1 image and at least 1 JSONs were selected
    */
@@ -155,18 +183,22 @@ const FileUpload: React.FC = () => {
       // eslint-disable-next-line no-console
       console.log("No files to upload for images or jsons, aborting.");
     }
-    const imagesLength = currentImagesForUpload.length;
-    const jsonsLength = currentJsonsForUpload.length;
     /* Ensure that each Image has its corresponding JSON */
-    if (imagesLength > 0 && jsonsLength > 0 && imagesLength === jsonsLength) {
+    const images = Array.from(currentImagesForUpload);
+    const jsons = Array.from(currentJsonsForUpload);
+    images.sort((img1, img2) => img1.name.localeCompare(img2.name));
+    jsons.sort((json1, json2) => json1.name.localeCompare(json2.name));
+
+    if (validInputFiles(images, jsons)) {
+      setMatchingFileNames(true);
       enqueueSnackbar("Uploading files to the server...", constants.uploadFilesSnackbarOptions);
       for (let index = 0; index < currentImagesForUpload.length; index++) {
         /* Send POST Request with one image data to server */
         const imagesFormData = new FormData();
         const serverKey = process.env.REACT_APP_SERVER_KEY || "N/A";
         imagesFormData.append("pass", serverKey);
-        imagesFormData.append("scan", currentImagesForUpload[index]);
-        imagesFormData.append("json", currentJsonsForUpload[index]);
+        imagesFormData.append("scan", images[index]);
+        imagesFormData.append("json", jsons[index]);
 
         axios
           .post("https://spot-the-lesion.herokuapp.com/post/", imagesFormData, axiosConfig)
@@ -204,15 +236,23 @@ const FileUpload: React.FC = () => {
    * @param invalidUpload - boolean flag for testing whether the upload try is invalid
    *                      - e.g.: number of Images !== number of JSONs,
    *                              no Images selected, no JSONs selected
+   * @param invalidFileNames - boolean flag for checking whether each image has its corresponding JSON
    */
-  const getUploadStatus = (response: ServerResponseType, invalidUpload: boolean): string => {
+  const getUploadStatus = (
+    response: ServerResponseType,
+    invalidUpload: boolean,
+    invalidFileNames: boolean
+  ): string => {
     if (invalidUpload && submitClicked) {
       return "Please Select a file.";
     }
-    if (response.status === 0) {
-      return "";
+    if (invalidFileNames && submitClicked) {
+      return "Selected Images and JSONs don't match.";
     }
-    return response.message;
+    if (submitClicked) {
+      return response.message;
+    }
+    return "";
   };
 
   const serverResponseOK = serverResponse.status === 200 && serverResponse.message !== WRONG_PASS;
@@ -252,7 +292,8 @@ const FileUpload: React.FC = () => {
               helperText={getUploadStatus(
                 serverResponse,
                 currentImagesForUpload.length === 0 ||
-                  currentImagesForUpload.length < currentJsonsForUpload.length
+                  currentImagesForUpload.length < currentJsonsForUpload.length,
+                !matchingFileNames && currentImagesForUpload.length === currentJsonsForUpload.length
               )}
               FormHelperTextProps={{
                 className: serverResponseOK ? classes.successMessage : classes.errorMessage,
@@ -271,6 +312,7 @@ const FileUpload: React.FC = () => {
               Upload JSON
               <input
                 type="file"
+                accept=".json"
                 hidden
                 multiple
                 onChange={(event) => prepareCurrentJsonsForUpload(event)}
@@ -282,7 +324,8 @@ const FileUpload: React.FC = () => {
               helperText={getUploadStatus(
                 serverResponse,
                 currentJsonsForUpload.length === 0 ||
-                  currentJsonsForUpload.length < currentImagesForUpload.length
+                  currentJsonsForUpload.length < currentImagesForUpload.length,
+                !matchingFileNames && currentImagesForUpload.length === currentJsonsForUpload.length
               )}
               FormHelperTextProps={{
                 className: serverResponseOK ? classes.successMessage : classes.errorMessage,
