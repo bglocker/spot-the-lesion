@@ -4,7 +4,7 @@ import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { useHistory } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import axios from "axios";
-import { db, firebaseStorage } from "../../firebase/firebaseApp";
+import { db, firebaseAuth, firebaseStorage } from "../../firebase/firebaseApp";
 import GameTopBar from "./GameTopBar";
 import GameSideBar from "./GameSideBar";
 import SubmitScoreDialog from "./SubmitScoreDialog";
@@ -605,9 +605,20 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
    * @return Void promise
    */
   const loadAnnotation = async (annotationId: number): Promise<void> => {
-    const url = await firebaseStorage
-      .ref(getAnnotationPath(annotationId, difficulty))
-      .getDownloadURL();
+    let url = "";
+    await firebaseAuth
+      .signInAnonymously()
+      .then(async () => {
+        url = await firebaseStorage
+          .ref(getAnnotationPath(annotationId, difficulty))
+          .getDownloadURL();
+      })
+      .catch((error) => {
+        enqueueSnackbar(
+          `Failed to retrieve annotation url: ${error}`,
+          constants.errorSnackbarOptions
+        );
+      });
 
     const response = await axios.get<AnnotationData>(url, { timeout: constants.axiosTimeout });
 
@@ -638,13 +649,20 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       image.onerror = (_ev, _src, _line, _col, error) => reject(error);
 
       /* Set source after onload to ensure onload gets called (in case the image is cached) */
-      firebaseStorage
-        .ref(getImagePath(imageId, difficulty))
-        .getDownloadURL()
-        .then((url) => {
-          image.src = url;
+      firebaseAuth
+        .signInAnonymously()
+        .then(() => {
+          firebaseStorage
+            .ref(getImagePath(imageId, difficulty))
+            .getDownloadURL()
+            .then((url) => {
+              image.src = url;
+            })
+            .catch((error) => reject(error));
         })
-        .catch((error) => reject(error));
+        .catch((error) => {
+          enqueueSnackbar(`Failed to retrieve image: ${error}`, constants.errorSnackbarOptions);
+        });
     });
 
   /**
