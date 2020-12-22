@@ -113,7 +113,7 @@ const FileUpload: React.FC = () => {
   };
 
   /* Server Response messages */
-  const WRONG_PASS = "Upload has not been completed, the put password was not correct!";
+  const WRONG_PASS = "Upload has not been completed, the server password was not correct!";
 
   /**
    * Function for getting the images selected by the user
@@ -164,23 +164,17 @@ const FileUpload: React.FC = () => {
         const imagesFormData = new FormData();
         const serverKey = process.env.REACT_APP_SERVER_KEY || "N/A";
         imagesFormData.append("pass", serverKey);
-        // eslint-disable-next-line no-console
-        console.log(imagesFormData);
         imagesFormData.append("scan", currentImagesForUpload[index]);
         imagesFormData.append("json", currentJsonsForUpload[index]);
 
         axios
           .post("https://spot-the-lesion.herokuapp.com/post/", imagesFormData, axiosConfig)
-          // eslint-disable-next-line no-loop-func
           .then((response) => {
-            // eslint-disable-next-line no-console
-            console.log(response);
-
             /* Retrieve the server response */
             setServerResponse({
               status: response.status,
               message: response.data,
-            } as ServerResponseType);
+            });
 
             /* Enqueue snackbar with the Server Response */
             const responseSnackbarOptions =
@@ -189,16 +183,12 @@ const FileUpload: React.FC = () => {
                 : constants.errorSnackbarOptions;
             enqueueSnackbar(response.data, responseSnackbarOptions);
           })
-          // eslint-disable-next-line no-loop-func
           .catch((error) => {
-            // eslint-disable-next-line no-console
-            console.log(error.response.data);
-
             /* Retrieve Server Error */
             setServerResponse({
               status: error.response.status,
               message: error.response.data,
-            } as ServerResponseType);
+            });
 
             /* Enqueue snackbar with the Server Error */
             enqueueSnackbar(error.response.data, constants.errorSnackbarOptions);
