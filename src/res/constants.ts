@@ -72,6 +72,14 @@ const constants = {
     autoHideDuration: 3000,
     variant: "success",
   } as OptionsObject,
+  uploadFilesSnackbarOptions: {
+    anchorOrigin: {
+      vertical: "bottom",
+      horizontal: "left",
+    },
+    autoHideDuration: 3000,
+    variant: "warning",
+  } as OptionsObject,
 };
 
 export default constants;
