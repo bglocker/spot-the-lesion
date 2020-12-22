@@ -34,6 +34,7 @@ const useStyles = makeStyles((theme) =>
       flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
+      alignSelf: "center",
       padding: 24,
       boxSizing: "border-box",
     },
@@ -57,21 +58,21 @@ const useStyles = makeStyles((theme) =>
       alignItems: "center",
     },
     spacing: {
-      margin: 50,
+      margin: 15,
     },
     button: {
       margin: 24,
       borderRadius: 20,
       [theme.breakpoints.only("xs")]: {
-        width: 250,
+        width: "100%",
         fontSize: "1rem",
       },
       [theme.breakpoints.only("sm")]: {
-        width: 300,
+        width: "100%",
         fontSize: "1rem",
       },
       [theme.breakpoints.up("md")]: {
-        width: 320,
+        width: "100%",
         fontSize: "1.25rem",
       },
     },
@@ -79,7 +80,7 @@ const useStyles = makeStyles((theme) =>
       margin: theme.spacing(1),
     },
     textField: {
-      width: "25ch",
+      width: "90%",
     },
     passwordError: {
       color: "red",
