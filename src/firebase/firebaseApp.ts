@@ -28,8 +28,9 @@ const setupFirebase = (): void => {
   firebaseStorage.setMaxOperationRetryTime(constants.maxOperationRetryTime);
 
   /* Also sign in the user with an annoymous account to enable secure Firebase rules */
+  const userKey = process.env.REACT_APP_SERVER_KEY || "N/A";
   firebaseAuth
-    .signInAnonymously()
+    .signInWithEmailAndPassword("user@gmail.com", userKey)
     // eslint-disable-next-line no-console
     .then(() => console.log("Succesfully connected to firebase."))
     // eslint-disable-next-line no-console

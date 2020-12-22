@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import Button from "@material-ui/core/Button";
-// import ButtonGroup from "@material-ui/core/ButtonGroup";
 import colors from "../../res/colors";
 import Settings from "./Settings";
 import FileUpload from "./fileUpload/FileUpload";
