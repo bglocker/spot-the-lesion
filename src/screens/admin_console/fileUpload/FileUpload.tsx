@@ -159,6 +159,7 @@ const FileUpload: React.FC = () => {
     const jsonsLength = currentJsonsForUpload.length;
     /* Ensure that each Image has its corresponding JSON */
     if (imagesLength > 0 && jsonsLength > 0 && imagesLength === jsonsLength) {
+      enqueueSnackbar("Uploading files to the server...", constants.uploadFilesSnackbarOptions);
       for (let index = 0; index < currentImagesForUpload.length; index++) {
         /* Send POST Request with one image data to server */
         const imagesFormData = new FormData();
