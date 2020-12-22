@@ -5,8 +5,10 @@ import axios from "axios";
 import Button from "@material-ui/core/Button";
 import CloudUploadIcon from "@material-ui/icons/CloudUpload";
 import TextField from "@material-ui/core/TextField";
+import { useSnackbar } from "notistack";
 import StringBuilder from "string-builder";
 import colors from "../../../res/colors";
+import constants from "../../../res/constants";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -99,11 +101,19 @@ const FileUpload: React.FC = () => {
 
   const [submitClicked, setSubmitClicked] = useState(false);
 
-  const [serverResponse, setServerResponse] = useState(0);
+  const [serverResponse, setServerResponse] = useState<ServerResponseType>({
+    status: 0,
+    message: "",
+  });
+
+  const { enqueueSnackbar } = useSnackbar();
 
   const axiosConfig = {
     headers: { "content-type": "multipart/form-data" },
   };
+
+  /* Server Response messages */
+  const WRONG_PASS = "Upload has not been completed, the server password was not correct!";
 
   /**
    * Function for getting the images selected by the user
@@ -147,30 +157,41 @@ const FileUpload: React.FC = () => {
     }
     const imagesLength = currentImagesForUpload.length;
     const jsonsLength = currentJsonsForUpload.length;
-    // Ensure that each Image has its corresponding JSON
+    /* Ensure that each Image has its corresponding JSON */
     if (imagesLength > 0 && jsonsLength > 0 && imagesLength === jsonsLength) {
       for (let index = 0; index < currentImagesForUpload.length; index++) {
-        /**
-         * Send POST Request with one image data to server
-         */
+        /* Send POST Request with one image data to server */
         const imagesFormData = new FormData();
         const serverKey = process.env.REACT_APP_SERVER_KEY || "N/A";
         imagesFormData.append("pass", serverKey);
-        // eslint-disable-next-line no-console
-        console.log(imagesFormData);
         imagesFormData.append("scan", currentImagesForUpload[index]);
         imagesFormData.append("json", currentJsonsForUpload[index]);
+
         axios
           .post("https://spot-the-lesion.herokuapp.com/post/", imagesFormData, axiosConfig)
           .then((response) => {
-            // eslint-disable-next-line no-console
-            console.log(response);
-            setServerResponse(response.status);
+            /* Retrieve the server response */
+            setServerResponse({
+              status: response.status,
+              message: response.data,
+            });
+
+            /* Enqueue snackbar with the Server Response */
+            const responseSnackbarOptions =
+              response.status === 200 && response.data !== WRONG_PASS
+                ? constants.successSnackbarOptions
+                : constants.errorSnackbarOptions;
+            enqueueSnackbar(response.data, responseSnackbarOptions);
           })
           .catch((error) => {
-            // eslint-disable-next-line no-console
-            console.log(error.response.data);
-            setServerResponse(error.response.status);
+            /* Retrieve Server Error */
+            setServerResponse({
+              status: error.response.status,
+              message: error.response.data,
+            });
+
+            /* Enqueue snackbar with the Server Error */
+            enqueueSnackbar(error.response.data, constants.errorSnackbarOptions);
           });
       }
     }
@@ -183,15 +204,17 @@ const FileUpload: React.FC = () => {
    *                      - e.g.: number of Images !== number of JSONs,
    *                              no Images selected, no JSONs selected
    */
-  const getUploadStatus = (response: number, invalidUpload: boolean): string => {
+  const getUploadStatus = (response: ServerResponseType, invalidUpload: boolean): string => {
     if (invalidUpload && submitClicked) {
       return "Please Select a file.";
     }
-    if (response === 0) {
+    if (response.status === 0) {
       return "";
     }
-    return response === 200 ? "Upload Successful!" : "Error occurred. Upload Failed.";
+    return response.message;
   };
+
+  const serverResponseOK = serverResponse.status === 200 && serverResponse.message !== WRONG_PASS;
 
   return (
     <>
@@ -231,7 +254,7 @@ const FileUpload: React.FC = () => {
                   currentImagesForUpload.length < currentJsonsForUpload.length
               )}
               FormHelperTextProps={{
-                className: serverResponse === 200 ? classes.successMessage : classes.errorMessage,
+                className: serverResponseOK ? classes.successMessage : classes.errorMessage,
               }}
             />
           </div>
@@ -261,7 +284,7 @@ const FileUpload: React.FC = () => {
                   currentJsonsForUpload.length < currentImagesForUpload.length
               )}
               FormHelperTextProps={{
-                className: serverResponse === 200 ? classes.successMessage : classes.errorMessage,
+                className: serverResponseOK ? classes.successMessage : classes.errorMessage,
               }}
             />
           </div>

@@ -7,8 +7,6 @@ import firebaseConfig from "./firebaseConfig";
 import constants from "../res/constants";
 import variables from "../res/variables";
 
-/* TODO: test with firebase.auth() and firebase.firestore() later on */
-/* TODO: fix mutable exports */
 // eslint-disable-next-line import/no-mutable-exports
 let db: firebase.firestore.Firestore;
 // eslint-disable-next-line import/no-mutable-exports
@@ -30,7 +28,6 @@ const setupFirebase = (): void => {
   firebaseStorage.setMaxOperationRetryTime(constants.maxOperationRetryTime);
 };
 
-/* TODO: move inside app, create loading screen, wait for variable retrieval */
 const getGlobalVariables = async (): Promise<void> => {
   /* Get game settings from firestore */
   const optionsSnapshot = await firebase

@@ -9,3 +9,8 @@ interface PasswordType {
   showPassword: boolean;
   displayError: boolean;
 }
+
+interface ServerResponseType {
+  status: number;
+  message: string;
+}
