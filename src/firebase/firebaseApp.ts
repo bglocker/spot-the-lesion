@@ -26,6 +26,14 @@ const setupFirebase = (): void => {
   firebaseAuth = firebaseApp.auth();
 
   firebaseStorage.setMaxOperationRetryTime(constants.maxOperationRetryTime);
+
+  /* Also sign in the user with an annoymous account to enable secure Firebase rules */
+  firebaseAuth
+    .signInAnonymously()
+    // eslint-disable-next-line no-console
+    .then(() => console.log("Succesfully connected to firebase."))
+    // eslint-disable-next-line no-console
+    .catch((error) => console.log(`Failed to connect to firebase: ${error}`));
 };
 
 const getGlobalVariables = async (): Promise<void> => {
