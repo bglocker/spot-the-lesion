@@ -137,7 +137,6 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
         <Button variant="contained" color="primary" size="large" onClick={onSubmitClick}>
           Submit
         </Button>
-
         <ShareMenu playerScore={playerScore} />
       </div>
     );
