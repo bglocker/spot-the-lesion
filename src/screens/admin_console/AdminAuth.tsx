@@ -137,7 +137,6 @@ const AdminAuth: React.FC = () => {
       <div className={classes.container}>
         <AdminPanel />
       </div>
-      ;
     </>
   ) : (
     <>
