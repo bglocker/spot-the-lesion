@@ -54,7 +54,7 @@ const ShareMenu: React.FC<ShareMenuProps> = ({ playerScore }: ShareMenuProps) =>
           <FacebookShareButton
             className={classes.shareButton}
             url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
-            title={`I got ${playerScore} points in Spot-the-Lesion! Can you beat my score?`}
+            title={`I got ${playerScore.total} points in Spot-the-Lesion! Can you beat my score?`}
           >
             <FacebookIcon size="50px" round />
           </FacebookShareButton>
