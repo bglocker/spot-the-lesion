@@ -159,7 +159,7 @@ const Statistics: React.FC = () => {
    * Media Queries for Window width and height
    */
   const screenWidthMatches = useMediaQuery("(min-width:600px)");
-  const screenHeightMatches = useMediaQuery("(min-height:750px");
+  const screenHeightMatches = useMediaQuery("(min-height:750px)");
 
   /**
    * Hook for obtaining the Device Window Dimensions

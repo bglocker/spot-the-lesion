@@ -33,7 +33,7 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
   const classes = useStyles();
 
   const mediumWidth = useMediaQuery("(min-width:600px)");
-  const mediumHeight = useMediaQuery("(min-height:750px");
+  const mediumHeight = useMediaQuery("(min-height:750px)");
 
   /**
    * Function for scaling the pie chart according to device window size

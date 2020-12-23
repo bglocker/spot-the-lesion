@@ -64,39 +64,35 @@ const AdminPanel: React.FC = () => {
   /**
    * Function for conditional rendering of the Admin Panel
    */
-  const adminPanel = () => {
-    if (displayGameOptions) {
-      return <Settings />;
-    }
-    if (displayImageUpload) {
-      return <FileUpload />;
-    }
-    return (
-      <div className={classes.buttonContainer}>
-        <Button
-          className={classes.button}
-          variant="contained"
-          color="primary"
-          size="large"
-          onClick={() => setDisplayGameOptions(true)}
-        >
-          Game Options Panel
-        </Button>
+  if (displayGameOptions) {
+    return <Settings />;
+  }
+  if (displayImageUpload) {
+    return <FileUpload />;
+  }
+  return (
+    <div className={classes.buttonContainer}>
+      <Button
+        className={classes.button}
+        variant="contained"
+        color="primary"
+        size="large"
+        onClick={() => setDisplayGameOptions(true)}
+      >
+        Game Options Panel
+      </Button>
 
-        <Button
-          className={classes.button}
-          variant="contained"
-          color="primary"
-          size="large"
-          onClick={() => setDisplayImageUpload(true)}
-        >
-          Image Upload Panel
-        </Button>
-      </div>
-    );
-  };
-
-  return adminPanel();
+      <Button
+        className={classes.button}
+        variant="contained"
+        color="primary"
+        size="large"
+        onClick={() => setDisplayImageUpload(true)}
+      >
+        Image Upload Panel
+      </Button>
+    </div>
+  );
 };
 
 export default AdminPanel;

@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { Button, ButtonGroup, TextField, Typography } from "@material-ui/core";
+import { Button, ButtonGroup, TextField, Typography, useMediaQuery } from "@material-ui/core";
 import { db } from "../../firebase/firebaseApp";
 import colors from "../../res/colors";
 
@@ -17,13 +17,29 @@ const useStyles = makeStyles((theme) =>
     box: {
       backgroundColor: "white",
       width: "60%",
-      height: "80%",
       display: "flex",
       flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
-      padding: 24,
       boxSizing: "border-box",
+      alignSelf: "center",
+      align: "center",
+    },
+    desktopBox: {
+      height: "80%",
+      padding: 24,
+    },
+    mobileBox: {
+      height: "95%",
+      padding: 16,
+    },
+    desktopSettingsContainer: {
+      height: "80%",
+    },
+    mobileSettingsContainer: {
+      marginTop: "15%",
+      marginBottom: "8%",
+      height: "90%",
     },
     inline: {
       display: "flex",
@@ -32,28 +48,38 @@ const useStyles = makeStyles((theme) =>
       alignItems: "center",
       margin: 10,
     },
-    buttonGroup: {
-      margin: 20,
+    genericButtonGroup: {
+      alignSelf: "center",
+      align: "center",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    buttonGroupDesktop: {
+      width: "70%",
+    },
+    buttonGroupMobile: {
+      width: "100%",
+      marginBottom: "20%",
     },
     button: {
       margin: 8,
       borderRadius: 20,
       [theme.breakpoints.only("xs")]: {
-        width: 250,
-        fontSize: "1rem",
+        width: "80%",
+        fontSize: "0.6rem",
       },
       [theme.breakpoints.only("sm")]: {
-        width: 300,
-        fontSize: "1rem",
+        width: "80%",
+        fontSize: "0.6rem",
       },
       [theme.breakpoints.up("md")]: {
-        width: 320,
-        fontSize: "1.25rem",
+        width: "100%",
+        fontSize: "1rem",
       },
     },
     gameOptionsTitle: {
       [theme.breakpoints.only("xs")]: {
-        fontSize: "1.25rem",
+        fontSize: "1rem",
       },
       [theme.breakpoints.only("sm")]: {
         fontSize: "1.5rem",
@@ -62,12 +88,12 @@ const useStyles = makeStyles((theme) =>
         fontSize: "2rem",
       },
       textAlign: "center",
-      marginBottom: 24,
+      padding: 8,
     },
     textField: {
       marginLeft: theme.spacing(1),
       marginRight: theme.spacing(1),
-      width: "25ch",
+      width: "100%",
     },
   })
 );
@@ -77,6 +103,9 @@ const Settings: React.FC = () => {
 
   const [loadData, setLoadData] = useState<boolean>(true);
   const [currentData, setCurrentData] = useState<FirestoreOptionsData>(null!);
+
+  const minScreenWidth = useMediaQuery("(min-width:600px)");
+  const minScreenHeight = useMediaQuery("(min-height:750px)");
 
   // To add an option to the list:
   //  a) Create Firebase number field: in default_options and current_options
@@ -177,8 +206,19 @@ const Settings: React.FC = () => {
   }, []);
 
   return (
-    <>
-      <div className={classes.box}>
+    <div
+      className={[
+        classes.box,
+        minScreenHeight && minScreenWidth ? classes.desktopBox : classes.mobileBox,
+      ].join(" ")}
+    >
+      <div
+        className={
+          minScreenHeight && minScreenWidth
+            ? classes.desktopSettingsContainer
+            : classes.mobileSettingsContainer
+        }
+      >
         <Typography className={classes.gameOptionsTitle}>Game options</Typography>
         {optionsList.map((option) => {
           return (
@@ -200,31 +240,34 @@ const Settings: React.FC = () => {
             </div>
           );
         })}
-
-        <div className={classes.inline}>
-          <ButtonGroup orientation="horizontal" className={classes.buttonGroup}>
-            <Button
-              onClick={pushChanges}
-              className={classes.button}
-              variant="contained"
-              color="primary"
-              size="large"
-            >
-              Update
-            </Button>
-            <Button
-              onClick={resetChanges}
-              className={classes.button}
-              variant="contained"
-              color="primary"
-              size="large"
-            >
-              Reset Default
-            </Button>
-          </ButtonGroup>
-        </div>
       </div>
-    </>
+      <ButtonGroup
+        orientation={minScreenWidth ? "horizontal" : "vertical"}
+        className={[
+          classes.genericButtonGroup,
+          minScreenWidth ? classes.buttonGroupDesktop : classes.buttonGroupMobile,
+        ].join(" ")}
+      >
+        <Button
+          onClick={pushChanges}
+          className={classes.button}
+          variant="contained"
+          color="primary"
+          size="large"
+        >
+          Update
+        </Button>
+        <Button
+          onClick={resetChanges}
+          className={classes.button}
+          variant="contained"
+          color="primary"
+          size="large"
+        >
+          Reset Default
+        </Button>
+      </ButtonGroup>
+    </div>
   );
 };
 
