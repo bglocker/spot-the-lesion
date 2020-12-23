@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Button, Card, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { TwitterIcon, TwitterShareButton } from "react-share";
 import ScoreWithIncrement from "../../components/ScoreWithIncrement";
 import LoadingButton from "../../components/LoadingButton";
 import colors from "../../res/colors";
+import ShareMenu from "./ShareMenu";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -138,12 +138,7 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
           Submit
         </Button>
 
-        <TwitterShareButton
-          url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
-          title={`I got ${playerScore} points in Spot-the-Lesion! Can you beat my score?`}
-        >
-          <TwitterIcon size="50px" round />
-        </TwitterShareButton>
+        <ShareMenu playerScore={playerScore} />
       </div>
     );
   };
