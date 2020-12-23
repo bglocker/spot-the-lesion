@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AppBar, Toolbar, Typography } from "@material-ui/core";
+import { AppBar, Toolbar, Typography, useMediaQuery } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import axios from "axios";
 import Button from "@material-ui/core/Button";
@@ -26,13 +26,19 @@ const useStyles = makeStyles((theme) =>
     box: {
       backgroundColor: "white",
       width: "60%",
-      height: "80%",
       display: "flex",
       flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
-      padding: 24,
       boxSizing: "border-box",
+    },
+    desktopBox: {
+      height: "80%",
+      padding: 24,
+    },
+    mobileBox: {
+      height: "95%",
+      padding: 16,
     },
     text: {
       [theme.breakpoints.only("xs")]: {
@@ -45,7 +51,6 @@ const useStyles = makeStyles((theme) =>
         fontSize: "2rem",
       },
       textAlign: "center",
-      marginBottom: 24,
     },
     submit: {
       display: "flex",
@@ -54,26 +59,49 @@ const useStyles = makeStyles((theme) =>
       alignItems: "center",
       margin: 24,
     },
-    uploadButton: {
+    desktopUploadButton: {
       margin: theme.spacing(5),
     },
-    uploadSection: {
+    mobileUploadButton: {
+      marginTop: "5%",
+      marginBottom: "5%",
+      width: "80%",
+      alignSelf: "center",
+      alignItems: "center",
+    },
+    uploadSectionContainer: {
+      marginBottom: "5%",
+      marginTop: "35%",
+      alignSelf: "center",
+      alignItems: "center",
+      justifyContent: "center",
+      align: "center",
+    },
+    desktopUploadSection: {
       display: "flex",
       flexDirection: "row",
     },
+    mobileUploadSection: {
+      display: "flex",
+      flexDirection: "column",
+      width: "100%",
+      height: "100%",
+      marginTop: "25%",
+    },
     submitButton: {
-      margin: theme.spacing(10),
+      marginTop: "10%",
+      marginBottom: "35%",
       borderRadius: 20,
       [theme.breakpoints.only("xs")]: {
-        width: 250,
+        width: "70%",
         fontSize: "1rem",
       },
       [theme.breakpoints.only("sm")]: {
-        width: 300,
+        width: "75%",
         fontSize: "1rem",
       },
       [theme.breakpoints.up("md")]: {
-        width: 320,
+        width: "40%",
         fontSize: "1.25rem",
       },
     },
@@ -107,6 +135,9 @@ const FileUpload: React.FC = () => {
     status: 0,
     message: "",
   });
+
+  const minScreenWidth = useMediaQuery("(min-width:600px)");
+  // const minScreenHeight = useMediaQuery("(min-height:750px)");
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -265,84 +296,106 @@ const FileUpload: React.FC = () => {
         </Toolbar>
       </AppBar>
 
-      <div className={classes.box}>
-        <Typography className={classes.text}>Image upload panel</Typography>
-        <div className={classes.submit}>
-          <div className={classes.uploadSection}>
-            <Button
-              variant="contained"
-              color="primary"
-              size="large"
-              className={classes.uploadButton}
-              startIcon={<CloudUploadIcon />}
-              component="label"
+      <div
+        className={[classes.box, minScreenWidth ? classes.desktopBox : classes.mobileBox].join(" ")}
+      >
+        <div className={classes.uploadSectionContainer}>
+          <Typography className={classes.text}>Image upload panel</Typography>
+          <div className={classes.submit}>
+            <div
+              className={
+                minScreenWidth ? classes.desktopUploadSection : classes.mobileUploadSection
+              }
             >
-              Upload Image
-              <input
-                accept="image/*"
-                type="file"
-                hidden
-                multiple
-                onChange={(event) => prepareCurrentImagesForUpload(event)}
+              <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                className={
+                  minScreenWidth ? classes.desktopUploadButton : classes.mobileUploadButton
+                }
+                startIcon={<CloudUploadIcon />}
+                component="label"
+              >
+                Upload Image
+                <input
+                  accept="image/*"
+                  type="file"
+                  hidden
+                  multiple
+                  onChange={(event) => prepareCurrentImagesForUpload(event)}
+                />
+              </Button>
+              <TextField
+                className={
+                  minScreenWidth ? classes.desktopUploadButton : classes.mobileUploadButton
+                }
+                value={selectedImageFileNames}
+                helperText={getUploadStatus(
+                  serverResponse,
+                  currentImagesForUpload.length === 0 ||
+                    currentImagesForUpload.length < currentJsonsForUpload.length,
+                  !matchingFileNames &&
+                    currentImagesForUpload.length === currentJsonsForUpload.length
+                )}
+                FormHelperTextProps={{
+                  className: serverResponseOK ? classes.successMessage : classes.errorMessage,
+                }}
               />
-            </Button>
-            <TextField
-              className={classes.uploadButton}
-              value={selectedImageFileNames}
-              helperText={getUploadStatus(
-                serverResponse,
-                currentImagesForUpload.length === 0 ||
-                  currentImagesForUpload.length < currentJsonsForUpload.length,
-                !matchingFileNames && currentImagesForUpload.length === currentJsonsForUpload.length
-              )}
-              FormHelperTextProps={{
-                className: serverResponseOK ? classes.successMessage : classes.errorMessage,
-              }}
-            />
-          </div>
-          <div className={classes.uploadSection}>
-            <Button
-              variant="contained"
-              color="primary"
-              size="large"
-              className={classes.uploadButton}
-              startIcon={<CloudUploadIcon />}
-              component="label"
+            </div>
+            <div
+              className={
+                minScreenWidth ? classes.desktopUploadSection : classes.mobileUploadSection
+              }
             >
-              Upload JSON
-              <input
-                type="file"
-                accept=".json"
-                hidden
-                multiple
-                onChange={(event) => prepareCurrentJsonsForUpload(event)}
+              <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                className={
+                  minScreenWidth ? classes.desktopUploadButton : classes.mobileUploadButton
+                }
+                startIcon={<CloudUploadIcon />}
+                component="label"
+              >
+                Upload JSON
+                <input
+                  type="file"
+                  accept=".json"
+                  hidden
+                  multiple
+                  onChange={(event) => prepareCurrentJsonsForUpload(event)}
+                />
+              </Button>
+              <TextField
+                className={
+                  minScreenWidth ? classes.desktopUploadButton : classes.mobileUploadButton
+                }
+                value={selectedJSONFileNames}
+                helperText={getUploadStatus(
+                  serverResponse,
+                  currentJsonsForUpload.length === 0 ||
+                    currentJsonsForUpload.length < currentImagesForUpload.length,
+                  !matchingFileNames &&
+                    currentImagesForUpload.length === currentJsonsForUpload.length
+                )}
+                FormHelperTextProps={{
+                  className: serverResponseOK ? classes.successMessage : classes.errorMessage,
+                }}
               />
-            </Button>
-            <TextField
-              className={classes.uploadButton}
-              value={selectedJSONFileNames}
-              helperText={getUploadStatus(
-                serverResponse,
-                currentJsonsForUpload.length === 0 ||
-                  currentJsonsForUpload.length < currentImagesForUpload.length,
-                !matchingFileNames && currentImagesForUpload.length === currentJsonsForUpload.length
-              )}
-              FormHelperTextProps={{
-                className: serverResponseOK ? classes.successMessage : classes.errorMessage,
-              }}
-            />
+            </div>
           </div>
-          <Button
-            variant="contained"
-            color="primary"
-            size="large"
-            className={classes.submitButton}
-            component="span"
-            onClick={submitClick}
-          >
-            Submit
-          </Button>
         </div>
+        <Button
+          variant="contained"
+          color="primary"
+          size="large"
+          className={classes.submitButton}
+          component="span"
+          onClick={submitClick}
+        >
+          Submit
+        </Button>
       </div>
     </>
   );
