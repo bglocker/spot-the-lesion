@@ -51,6 +51,7 @@ const useStyles = makeStyles((theme) =>
         fontSize: "2rem",
       },
       textAlign: "center",
+      marginTop: "5%",
     },
     submit: {
       display: "flex",
@@ -69,13 +70,18 @@ const useStyles = makeStyles((theme) =>
       alignSelf: "center",
       alignItems: "center",
     },
-    uploadSectionContainer: {
-      marginBottom: "5%",
-      marginTop: "35%",
+    genericUploadSectionContainer: {
       alignSelf: "center",
       alignItems: "center",
       justifyContent: "center",
       align: "center",
+    },
+    desktopUploadSectionContainer: {
+      marginBottom: "5%",
+      marginTop: "35%",
+    },
+    mobileUploadSectionContainer: {
+      marginTop: "60%",
     },
     desktopUploadSection: {
       display: "flex",
@@ -86,11 +92,9 @@ const useStyles = makeStyles((theme) =>
       flexDirection: "column",
       width: "100%",
       height: "100%",
-      marginTop: "25%",
-    },
-    submitButton: {
       marginTop: "10%",
-      marginBottom: "35%",
+    },
+    genericSubmitButton: {
       borderRadius: 20,
       [theme.breakpoints.only("xs")]: {
         width: "70%",
@@ -104,6 +108,12 @@ const useStyles = makeStyles((theme) =>
         width: "40%",
         fontSize: "1.25rem",
       },
+    },
+    desktopSubmitButton: {
+      marginBottom: "45%",
+    },
+    mobileSubmitButton: {
+      marginBottom: "70%",
     },
     successMessage: {
       color: "green",
@@ -137,7 +147,6 @@ const FileUpload: React.FC = () => {
   });
 
   const minScreenWidth = useMediaQuery("(min-width:600px)");
-  // const minScreenHeight = useMediaQuery("(min-height:750px)");
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -278,7 +287,10 @@ const FileUpload: React.FC = () => {
       return "Please Select a file.";
     }
     if (invalidFileNames && submitClicked) {
-      return "Selected Images and JSONs don't match.";
+      return "Images and JSONs don't match.";
+    }
+    if (submitClicked && response.status === 200 && response.message !== WRONG_PASS) {
+      return "Upload Successful!";
     }
     if (submitClicked) {
       return response.message;
@@ -299,7 +311,14 @@ const FileUpload: React.FC = () => {
       <div
         className={[classes.box, minScreenWidth ? classes.desktopBox : classes.mobileBox].join(" ")}
       >
-        <div className={classes.uploadSectionContainer}>
+        <div
+          className={[
+            classes.genericUploadSectionContainer,
+            minScreenWidth
+              ? classes.desktopUploadSectionContainer
+              : classes.mobileUploadSectionContainer,
+          ].join(" ")}
+        >
           <Typography className={classes.text}>Image upload panel</Typography>
           <div className={classes.submit}>
             <div
@@ -390,7 +409,10 @@ const FileUpload: React.FC = () => {
           variant="contained"
           color="primary"
           size="large"
-          className={classes.submitButton}
+          className={[
+            classes.genericSubmitButton,
+            minScreenWidth ? classes.desktopSubmitButton : classes.mobileSubmitButton,
+          ].join(" ")}
           component="span"
           onClick={submitClick}
         >

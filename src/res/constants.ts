@@ -69,7 +69,7 @@ const constants = {
       vertical: "bottom",
       horizontal: "left",
     },
-    autoHideDuration: 3000,
+    autoHideDuration: 6000,
     variant: "success",
   } as OptionsObject,
   uploadFilesSnackbarOptions: {
@@ -77,7 +77,7 @@ const constants = {
       vertical: "bottom",
       horizontal: "left",
     },
-    autoHideDuration: 3000,
+    autoHideDuration: 4000,
     variant: "warning",
   } as OptionsObject,
 };
