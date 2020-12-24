@@ -28,6 +28,9 @@ const useStyles = makeStyles((theme) =>
     shareButton: {
       margin: "10px",
     },
+    buttonClass: {
+      margin: "5px",
+    },
   })
 );
 
@@ -46,7 +49,13 @@ const ShareMenu: React.FC<ShareMenuProps> = ({ playerScore }: ShareMenuProps) =>
 
   return (
     <>
-      <Button variant="contained" color="primary" size="large" onClick={handleClickOpen}>
+      <Button
+        className={classes.buttonClass}
+        variant="contained"
+        color="primary"
+        size="large"
+        onClick={handleClickOpen}
+      >
         Share
       </Button>
       <Dialog open={open} fullWidth maxWidth="xs">

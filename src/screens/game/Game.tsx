@@ -111,6 +111,10 @@ const useStyles = makeStyles((theme) =>
     heatmapCanvas: {
       zIndex: 2,
     },
+    background: {
+      height: "100%",
+      overflow: "scroll",
+    },
   })
 );
 
@@ -881,7 +885,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
   );
 
   return (
-    <>
+    <div className={classes.background}>
       <NavigationAppBar showBack>
         <Button color="inherit" disabled={!roundEnded || roundLoading} onClick={onShowImageStats}>
           Show Image Stats
@@ -951,7 +955,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
         onClose={onCloseImageStats}
         data={createPieChartData()}
       />
-    </>
+    </div>
   );
 };
 
