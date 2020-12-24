@@ -191,8 +191,14 @@ const Settings: React.FC = () => {
       .set(newData)
       .then(() => {
         enqueueSnackbar(
-          "The settings were uploaded successfully!",
+          "The game options were updated successfully!",
           constants.successSnackbarOptions
+        );
+      })
+      .catch(() => {
+        enqueueSnackbar(
+          "Error occurred while updating the game options. Please try again.",
+          constants.errorSnackbarOptions
         );
       });
   };
@@ -209,10 +215,22 @@ const Settings: React.FC = () => {
     await db
       .collection("game_options")
       .doc("current_options")
-      .set(defaultSettingsSnapshot.data() as FirestoreOptionsData);
+      .set(defaultSettingsSnapshot.data() as FirestoreOptionsData)
+      .then(() => {
+        enqueueSnackbar(
+          "The game options were reset to default!",
+          constants.successSnackbarOptions
+        );
+      })
+      .catch(() => {
+        enqueueSnackbar(
+          "Error occurred while resetting the game options. Please try again.",
+          constants.errorSnackbarOptions
+        );
+      });
 
     setLoadData(true);
-  }, []);
+  }, [enqueueSnackbar]);
 
   return (
     <div
