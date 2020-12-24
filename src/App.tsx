@@ -10,7 +10,6 @@ import Tutorial from "./screens/tutorial/Tutorial";
 import Leaderboard from "./screens/leaderboard/Leaderboard";
 import Achievements from "./screens/achievements/Achievements";
 import Statistics from "./screens/statistics/Statistics";
-import About from "./screens/about/About";
 import Credits from "./screens/credits/Credits";
 import colors from "./res/colors";
 
@@ -89,10 +88,6 @@ const App: React.FC = () => {
 
               <Route path="/statistics">
                 <Statistics />
-              </Route>
-
-              <Route path="/about">
-                <About />
               </Route>
 
               <Route path="/credits">

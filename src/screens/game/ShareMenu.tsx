@@ -1,13 +1,25 @@
 import React, { useState } from "react";
-import { FacebookIcon, FacebookShareButton, TwitterIcon, TwitterShareButton } from "react-share";
-import { Button, Dialog } from "@material-ui/core";
+import {
+  FacebookIcon,
+  FacebookShareButton,
+  TwitterIcon,
+  TwitterShareButton,
+  LinkedinIcon,
+  LinkedinShareButton,
+  EmailIcon,
+  EmailShareButton,
+} from "react-share";
+import { Button, Dialog, DialogTitle, IconButton, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
+import CloseIcon from "@material-ui/icons/Close";
 
-const useStyles = makeStyles(() =>
+const useStyles = makeStyles((theme) =>
   createStyles({
     closeButton: {
-      width: "60px",
-      float: "right",
+      position: "absolute",
+      right: theme.spacing(1),
+      top: theme.spacing(1),
+      color: theme.palette.grey[500],
     },
     background: {
       width: "100%",
@@ -38,11 +50,12 @@ const ShareMenu: React.FC<ShareMenuProps> = ({ playerScore }: ShareMenuProps) =>
         Share
       </Button>
       <Dialog open={open} fullWidth maxWidth="xs">
-        <div>
-          <Button className={classes.closeButton} onClick={handleClose}>
-            X
-          </Button>
-        </div>
+        <DialogTitle id="simple-dialog-title">
+          <Typography variant="h6">Share your score!</Typography>
+          <IconButton aria-label="close" className={classes.closeButton} onClick={handleClose}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
         <div className={classes.background}>
           <TwitterShareButton
             className={classes.shareButton}
@@ -54,10 +67,24 @@ const ShareMenu: React.FC<ShareMenuProps> = ({ playerScore }: ShareMenuProps) =>
           <FacebookShareButton
             className={classes.shareButton}
             url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
-            title={`I got ${playerScore.total} points in Spot-the-Lesion! Can you beat my score?`}
+            quote={`I got ${playerScore.total} points in Spot-the-Lesion! Can you beat my score?`}
           >
             <FacebookIcon size="50px" round />
           </FacebookShareButton>
+          <LinkedinShareButton
+            className={classes.shareButton}
+            url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
+            title={`I got ${playerScore.total} points in Spot-the-Lesion! Can you beat my score?`}
+          >
+            <LinkedinIcon size="50px" round />
+          </LinkedinShareButton>
+          <EmailShareButton
+            className={classes.shareButton}
+            url="http://cb3618.pages.doc.ic.ac.uk/spot-the-lesion"
+            subject={`I got ${playerScore.total} points in Spot-the-Lesion! Can you beat my score?`}
+          >
+            <EmailIcon size="50px" round />
+          </EmailShareButton>
         </div>
       </Dialog>
     </>
