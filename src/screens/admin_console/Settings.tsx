@@ -1,8 +1,10 @@
 import React, { useCallback, useState } from "react";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { Button, ButtonGroup, TextField, Typography, useMediaQuery } from "@material-ui/core";
+import { useSnackbar } from "notistack";
 import { db } from "../../firebase/firebaseApp";
 import colors from "../../res/colors";
+import constants from "../../res/constants";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -123,6 +125,8 @@ const Settings: React.FC = () => {
   const [roundsNumber, setRoundsNumber] = useState(0);
   const [aiScoreMultiplier, setAiScoreMultiplier] = useState(0);
 
+  const { enqueueSnackbar } = useSnackbar();
+
   const optionsList: SettingType[] = [
     { name: "AI Score Multiplier", state: aiScoreMultiplier, changer: setAiScoreMultiplier },
     { name: "Animation Duration", state: animationDuration, changer: setAnimationDuration },
@@ -185,7 +189,18 @@ const Settings: React.FC = () => {
     db.collection("game_options")
       .doc("current_options")
       .set(newData)
-      .then(() => {});
+      .then(() => {
+        enqueueSnackbar(
+          "The game options were updated successfully!",
+          constants.successSnackbarOptions
+        );
+      })
+      .catch(() => {
+        enqueueSnackbar(
+          "Error occurred while updating the game options. Please try again.",
+          constants.errorSnackbarOptions
+        );
+      });
   };
 
   /**
@@ -200,10 +215,22 @@ const Settings: React.FC = () => {
     await db
       .collection("game_options")
       .doc("current_options")
-      .set(defaultSettingsSnapshot.data() as FirestoreOptionsData);
+      .set(defaultSettingsSnapshot.data() as FirestoreOptionsData)
+      .then(() => {
+        enqueueSnackbar(
+          "The game options were reset to default!",
+          constants.successSnackbarOptions
+        );
+      })
+      .catch(() => {
+        enqueueSnackbar(
+          "Error occurred while resetting the game options. Please try again.",
+          constants.errorSnackbarOptions
+        );
+      });
 
     setLoadData(true);
-  }, []);
+  }, [enqueueSnackbar]);
 
   return (
     <div
