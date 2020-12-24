@@ -31,6 +31,7 @@ const useStyles = makeStyles(() =>
       display: "flex",
       flexDirection: "column",
       backgroundColor: colors.secondary,
+      overflow: "scroll",
     },
   })
 );
