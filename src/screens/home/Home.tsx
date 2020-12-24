@@ -152,16 +152,6 @@ const Home: React.FC = () => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => history.push("/about")}
-            >
-              About CT Scans
-            </Button>
-
-            <Button
-              className={classes.button}
-              variant="contained"
-              color="primary"
-              size="large"
               onClick={() => history.push("/credits")}
             >
               Credits

@@ -55,9 +55,12 @@ const useStyles = makeStyles((theme) =>
     submitShareContainer: {
       width: "100%",
       display: "flex",
-      flexDirection: "row",
+      flexDirection: "column",
       justifyContent: "space-evenly",
       alignItems: "center",
+    },
+    buttonClass: {
+      margin: "5px",
     },
   })
 );
@@ -115,6 +118,7 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
 
     return (
       <LoadingButton
+        className={classes.buttonClass}
         variant="contained"
         color="primary"
         size="large"
@@ -134,7 +138,13 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
 
     return (
       <div className={classes.submitShareContainer}>
-        <Button variant="contained" color="primary" size="large" onClick={onSubmitClick}>
+        <Button
+          className={classes.buttonClass}
+          variant="contained"
+          color="primary"
+          size="large"
+          onClick={onSubmitClick}
+        >
           Submit
         </Button>
         <ShareMenu playerScore={playerScore} />
@@ -159,6 +169,7 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
 
     return (
       <LoadingButton
+        className={classes.buttonClass}
         variant="contained"
         color="primary"
         size="large"
