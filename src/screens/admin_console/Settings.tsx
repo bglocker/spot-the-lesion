@@ -2,7 +2,7 @@ import React, { useCallback, useState } from "react";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { Button, ButtonGroup, TextField, Typography, useMediaQuery } from "@material-ui/core";
 import { useSnackbar } from "notistack";
-import { db } from "../../firebase/firebaseApp";
+import firebase from "firebase/app";
 import colors from "../../res/colors";
 import constants from "../../res/constants";
 
@@ -142,7 +142,11 @@ const Settings: React.FC = () => {
    */
   const getData = async () => {
     setLoadData(false);
-    const settingsDoc = await db.collection("game_options").doc("current_options").get();
+    const settingsDoc = await firebase
+      .firestore()
+      .collection("game_options")
+      .doc("current_options")
+      .get();
 
     const data = (settingsDoc.exists ? settingsDoc.data() : {}) as FirestoreOptionsData;
 
@@ -186,7 +190,9 @@ const Settings: React.FC = () => {
       }
     }
 
-    db.collection("game_options")
+    firebase
+      .firestore()
+      .collection("game_options")
       .doc("current_options")
       .set(newData)
       .then(() => {
@@ -207,12 +213,14 @@ const Settings: React.FC = () => {
    * Function for resetting the game options to default
    */
   const resetChanges = useCallback(async () => {
-    const defaultSettingsSnapshot = await db
+    const defaultSettingsSnapshot = await firebase
+      .firestore()
       .collection("game_options")
       .doc("default_options")
       .get();
 
-    await db
+    await firebase
+      .firestore()
       .collection("game_options")
       .doc("current_options")
       .set(defaultSettingsSnapshot.data() as FirestoreOptionsData)

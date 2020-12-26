@@ -4,7 +4,7 @@ import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { useHistory } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import axios from "axios";
-import { db, firebaseStorage } from "../../firebase/firebaseApp";
+import firebase from "firebase/app";
 import GameTopBar from "./GameTopBar";
 import GameSideBar from "./GameSideBar";
 import SubmitScoreDialog from "./SubmitScoreDialog";
@@ -289,7 +289,11 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       };
 
       try {
-        await db.collection(constants.images(difficulty)).doc(docName).set(newImageData);
+        await firebase
+          .firestore()
+          .collection(constants.images(difficulty))
+          .doc(docName)
+          .set(newImageData);
       } catch (error) {
         if (isFirestoreError(error)) {
           handleFirestoreError(error);
@@ -565,7 +569,8 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
     const docName = fileId.toString();
 
-    const unsubscribe = db
+    const unsubscribe = firebase
+      .firestore()
       .collection(constants.images(difficulty))
       .doc(docName)
       .onSnapshot(
@@ -605,7 +610,8 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
    * @return Void promise
    */
   const loadAnnotation = async (annotationId: number): Promise<void> => {
-    const url = await firebaseStorage
+    const url = await firebase
+      .storage()
       .ref(getAnnotationPath(annotationId, difficulty))
       .getDownloadURL();
 
@@ -638,7 +644,8 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       image.onerror = (_ev, _src, _line, _col, error) => reject(error);
 
       /* Set source after onload to ensure onload gets called (in case the image is cached) */
-      firebaseStorage
+      firebase
+        .storage()
         .ref(getImagePath(imageId, difficulty))
         .getDownloadURL()
         .then((url) => {
@@ -789,11 +796,11 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
     const docName = `${scoreData.year}.${scoreData.month}.${scoreData.day}.${scoreData.user}`;
 
     try {
-      const scoreDoc = await db.collection(scores).doc(docName).get();
+      const scoreDoc = await firebase.firestore().collection(scores).doc(docName).get();
 
       /* Set if first time played today, or a higher score was achieved */
       if (!scoreDoc.exists || (scoreDoc.data() as FirestoreScoreData).score < scoreData.score) {
-        await db.collection(scores).doc(docName).set(scoreData);
+        await firebase.firestore().collection(scores).doc(docName).set(scoreData);
       }
 
       enqueueSnackbar("Score successfully submitted!", constants.successSnackbarOptions);

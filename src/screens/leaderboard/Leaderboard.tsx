@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { AppBar, Tab, Tabs } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { db } from "../../firebase/firebaseApp";
+import firebase from "firebase/app";
 import BasicTable from "./scoreTabel/BasicTable";
 import DbUtils from "../../utils/DbUtils";
 import ScoreType from "../../utils/ScoreType";
@@ -78,7 +78,7 @@ const Leaderboard: React.FC = () => {
 
     const leaderboard =
       leaderboardIndex === 0 ? DbUtils.LEADERBOARD_CASUAL : DbUtils.LEADERBOARD_COMPETITIVE;
-    const leaderboardRef = db.collection(leaderboard);
+    const leaderboardRef = firebase.firestore().collection(leaderboard);
 
     let snapshot;
     snapshot = leaderboardRef;

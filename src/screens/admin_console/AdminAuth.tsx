@@ -11,9 +11,9 @@ import {
 } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { Visibility, VisibilityOff } from "@material-ui/icons";
+import firebase from "firebase/app";
 import { NavigationAppBar } from "../../components";
 import AdminPanel from "./AdminPanel";
-import { firebaseAuth } from "../../firebase/firebaseApp";
 import colors from "../../res/colors";
 
 const useStyles = makeStyles((theme) =>
@@ -120,7 +120,8 @@ const AdminAuth: React.FC = () => {
    * Function for authenticating the user upon password submission
    */
   const submitClick = () => {
-    firebaseAuth
+    firebase
+      .auth()
       .signInWithEmailAndPassword("spot-the-lesion@gmail.com", password.value)
       .then(() => {
         setPassword({ ...password, displayError: false });
