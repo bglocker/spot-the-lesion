@@ -2,6 +2,123 @@ import React from "react";
 import constants from "../res/constants";
 
 /**
+ * Draws a cross
+ *
+ * @param ctx         Context to draw the cross on
+ * @param x           Width coordinate
+ * @param y           Height coordinate
+ * @param size        Cross size from center to edge
+ * @param lineWidth   Width of the cross lines
+ * @param strokeStyle Style for drawing the cross
+ */
+const drawCross = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  lineWidth: number,
+  strokeStyle: string
+): void => {
+  ctx.lineWidth = lineWidth;
+  ctx.strokeStyle = strokeStyle;
+  ctx.beginPath();
+  ctx.moveTo(x - size, y - size);
+  ctx.lineTo(x + size, y + size);
+  ctx.moveTo(x + size, y - size);
+  ctx.lineTo(x - size, y + size);
+  ctx.stroke();
+};
+
+/**
+ * Draws a circle
+ *
+ * @param ctx         Context to draw the circle on
+ * @param x           Width coordinate
+ * @param y           Height coordinate
+ * @param radius      Circle radius
+ * @param lineWidth   Width of the circle line
+ * @param strokeStyle Style for drawing the circle
+ */
+const drawCircle = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  radius: number,
+  lineWidth: number,
+  strokeStyle: string
+): void => {
+  ctx.lineWidth = lineWidth;
+  ctx.strokeStyle = strokeStyle;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, 2 * Math.PI);
+  ctx.stroke();
+};
+
+/**
+ * Draws a rectangle
+ *
+ * @param ctx         Context to draw the rectangle on
+ * @param rect        Coordinates for the corners of the rectangle to draw
+ * @param lineWidth   Width of the rectangle lines
+ * @param strokeStyle Style for drawing the rectangle
+ */
+const drawRectangle = (
+  ctx: CanvasRenderingContext2D,
+  rect: number[],
+  lineWidth: number,
+  strokeStyle: string
+): void => {
+  const xBase = rect[0];
+  const xEnd = rect[2];
+  const yBase = rect[1];
+  const yEnd = rect[3];
+
+  const width = xEnd - xBase;
+  const height = yEnd - yBase;
+
+  ctx.lineWidth = lineWidth;
+  ctx.strokeStyle = strokeStyle;
+  ctx.beginPath();
+  ctx.rect(xBase, yBase, width, height);
+  ctx.stroke();
+};
+
+/**
+ * Draws a stroked text
+ *
+ * @param ctx         Context to draw the text on
+ * @param text        Text to draw
+ * @param x           Width coordinate
+ * @param y           Height coordinate
+ * @param textAlign   Text alignment
+ * @param strokeWidth Text stroke width
+ * @param strokeStyle Text stroke style
+ * @param fillStyle   Text fill style
+ */
+const drawStrokedText = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  textAlign: CanvasTextAlign,
+  strokeWidth: number,
+  strokeStyle: string,
+  fillStyle: string
+): void => {
+  ctx.font = "4rem Roboto";
+  ctx.lineJoin = "miter";
+  ctx.miterLimit = 2;
+
+  ctx.textAlign = textAlign;
+  ctx.lineWidth = strokeWidth;
+  ctx.strokeStyle = strokeStyle;
+  ctx.fillStyle = fillStyle;
+
+  ctx.strokeText(text, x, y);
+  ctx.fillText(text, x, y);
+};
+
+/**
  * Maps a given value from the scale of the given canvas to the default scale
  * Equivalent to the inverse of toCanvasScale
  *
@@ -58,134 +175,6 @@ const mapClickToCanvas = (
   };
 };
 
-/**
- * Get a random value in a range around a start point
- *
- * @param x     Start point
- * @param range Random range (-range, range)
- *
- * @return Random value in range around x
- */
-const randomAround = (x: number, range: number): number =>
-  x + Math.floor(Math.random() * (range * 2)) - range;
-
-/**
- * Draws a rectangle
- *
- * @param ctx         Context to draw the rectangle on
- * @param rect        Coordinates for the corners of the rectangle to draw
- * @param lineWidth   Width of the rectangle lines
- * @param strokeStyle Style for drawing the rectangle
- */
-const drawRectangle = (
-  ctx: CanvasRenderingContext2D,
-  rect: number[],
-  lineWidth: number,
-  strokeStyle: string
-): void => {
-  const xBase = rect[0];
-  const xEnd = rect[2];
-  const yBase = rect[1];
-  const yEnd = rect[3];
-
-  const width = xEnd - xBase;
-  const height = yEnd - yBase;
-
-  ctx.lineWidth = lineWidth;
-  ctx.strokeStyle = strokeStyle;
-  ctx.beginPath();
-  ctx.rect(xBase, yBase, width, height);
-  ctx.stroke();
-};
-
-/**
- * Draws a cross
- *
- * @param ctx         Context to draw the cross on
- * @param x           Width coordinate
- * @param y           Height coordinate
- * @param size        Cross size from center to edge
- * @param lineWidth   Width of the cross lines
- * @param strokeStyle Style for drawing the cross
- */
-const drawCross = (
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  size: number,
-  lineWidth: number,
-  strokeStyle: string
-): void => {
-  ctx.lineWidth = lineWidth;
-  ctx.strokeStyle = strokeStyle;
-  ctx.beginPath();
-  ctx.moveTo(x - size, y - size);
-  ctx.lineTo(x + size, y + size);
-  ctx.moveTo(x + size, y - size);
-  ctx.lineTo(x - size, y + size);
-  ctx.stroke();
-};
-
-/**
- * Draws a circle
- *
- * @param ctx         Context to draw the circle on
- * @param x           Width coordinate
- * @param y           Height coordinate
- * @param radius      Circle radius
- * @param lineWidth   Width of the circle line
- * @param strokeStyle Style for drawing the circle
- */
-const drawCircle = (
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  radius: number,
-  lineWidth: number,
-  strokeStyle: string
-): void => {
-  ctx.lineWidth = lineWidth;
-  ctx.strokeStyle = strokeStyle;
-  ctx.beginPath();
-  ctx.arc(x, y, radius, 0, 2 * Math.PI);
-  ctx.stroke();
-};
-
-/**
- * Draws a stroked text
- *
- * @param ctx         Context to draw the text on
- * @param text        Text to draw
- * @param x           Width coordinate
- * @param y           Height coordinate
- * @param textAlign   Text alignment
- * @param strokeWidth Text stroke width
- * @param strokeStyle Text stroke style
- * @param fillStyle   Text fill style
- */
-const drawStrokedText = (
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  x: number,
-  y: number,
-  textAlign: CanvasTextAlign,
-  strokeWidth: number,
-  strokeStyle: string,
-  fillStyle: string
-): void => {
-  ctx.font = "4rem Roboto";
-  ctx.lineJoin = "miter";
-  ctx.miterLimit = 2;
-
-  ctx.textAlign = textAlign;
-  ctx.lineWidth = strokeWidth;
-  ctx.strokeStyle = strokeStyle;
-  ctx.fillStyle = fillStyle;
-
-  ctx.strokeText(text, x, y);
-  ctx.fillText(text, x, y);
-};
-
 export {
   drawCircle,
   drawCross,
@@ -193,7 +182,6 @@ export {
   drawStrokedText,
   mapClickToCanvas,
   mapCoordinatesToCanvasScale,
-  randomAround,
   toCanvasScale,
   toDefaultScale,
 };

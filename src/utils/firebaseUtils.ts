@@ -71,48 +71,6 @@ const handleAuthError = (
 };
 
 /**
- * Checks if an error is a Firestore error
- *
- * @param error Error to check
- *
- * @return FirestoreError type predicate
- */
-const isFirestoreError = (error: Error): error is FirestoreError =>
-  (error as FirestoreError).code !== undefined;
-
-/**
- * Logs a Firestore error
- *
- * @param error Firestore error to log
- */
-const logFirestoreError = (error: FirestoreError): void =>
-  console.error(`Firebase firestore error\n code: ${error.code}\n message: ${error.message}`);
-
-/**
- * Log the given error, optionally displaying a snackbar
- *
- * @param error           Error to handle
- * @param enqueueSnackbar Function to display a snackbar
- */
-const handleFirestoreError = (
-  error: FirestoreError,
-  enqueueSnackbar?: (message: ReactNode, options?: OptionsObject) => void
-): void => {
-  logFirestoreError(error);
-
-  /* Snackbar should be displayed */
-  if (enqueueSnackbar) {
-    let message = "Please try again";
-
-    if (error.code === "unavailable") {
-      message = "Please check your internet connection and try again.";
-    }
-
-    enqueueSnackbar(message, constants.errorSnackbarOptions);
-  }
-};
-
-/**
  * Checks if an error is a Firebase storage error
  *
  * @param error Error to check
@@ -148,6 +106,48 @@ const handleFirebaseStorageError = (
 
     /* Internet connection error */
     if (error.code === "storage/retry-limit-exceeded") {
+      message = "Please check your internet connection and try again.";
+    }
+
+    enqueueSnackbar(message, constants.errorSnackbarOptions);
+  }
+};
+
+/**
+ * Checks if an error is a Firestore error
+ *
+ * @param error Error to check
+ *
+ * @return FirestoreError type predicate
+ */
+const isFirestoreError = (error: Error): error is FirestoreError =>
+  (error as FirestoreError).code !== undefined;
+
+/**
+ * Logs a Firestore error
+ *
+ * @param error Firestore error to log
+ */
+const logFirestoreError = (error: FirestoreError): void =>
+  console.error(`Firebase firestore error\n code: ${error.code}\n message: ${error.message}`);
+
+/**
+ * Log the given error, optionally displaying a snackbar
+ *
+ * @param error           Error to handle
+ * @param enqueueSnackbar Function to display a snackbar
+ */
+const handleFirestoreError = (
+  error: FirestoreError,
+  enqueueSnackbar?: (message: ReactNode, options?: OptionsObject) => void
+): void => {
+  logFirestoreError(error);
+
+  /* Snackbar should be displayed */
+  if (enqueueSnackbar) {
+    let message = "Please try again";
+
+    if (error.code === "unavailable") {
       message = "Please check your internet connection and try again.";
     }
 

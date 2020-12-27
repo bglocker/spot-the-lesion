@@ -1,5 +1,5 @@
 import { useArrayGenerator, useUniqueRandomGenerator } from "../../components";
-import { getFilesNumber } from "../../utils/GameUtils";
+import { getFilesNumber } from "../../utils/gameUtils";
 
 /**
  * Custom hook for generating a new file id, either from the given difficulty,

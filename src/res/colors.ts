@@ -19,6 +19,12 @@ const colors = {
   playerLost: "red",
   playerWon: "green",
 
+  /* Leaderboard */
+  bronze: "#CD7F32",
+  gold: "#FFCC00",
+  rowDefault: "#C4DFE6",
+  silver: "#A9A9A9",
+
   /* ScoreWithIncrement */
   positiveIncrement: "green",
   zeroIncrement: "red",

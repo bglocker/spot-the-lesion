@@ -18,24 +18,16 @@ import {
   useHeatmap,
   useInterval,
 } from "../../components";
+import { handleAxiosError, isAxiosError } from "../../utils/axiosUtils";
 import {
   drawCircle,
   drawCross,
   drawRectangle,
   mapClickToCanvas,
   mapCoordinatesToCanvasScale,
-  randomAround,
   toCanvasScale,
   toDefaultScale,
 } from "../../utils/canvasUtils";
-import {
-  drawRoundEndText,
-  getAnnotationPath,
-  getImagePath,
-  getIntersectionOverUnion,
-  unlockAchievement,
-} from "../../utils/GameUtils";
-import { handleAxiosError, isAxiosError } from "../../utils/axiosUtils";
 import { handleImageLoadError, handleUncaughtError } from "../../utils/errorUtils";
 import {
   getMonthName,
@@ -44,6 +36,14 @@ import {
   isFirebaseStorageError,
   isFirestoreError,
 } from "../../utils/firebaseUtils";
+import {
+  drawRoundEndText,
+  getAnnotationPath,
+  getImagePath,
+  getIntersectionOverUnion,
+  unlockAchievement,
+} from "../../utils/gameUtils";
+import { randomAround } from "../../utils/numberUtils";
 import colors from "../../res/colors";
 import constants from "../../res/constants";
 import variables from "../../res/variables";
