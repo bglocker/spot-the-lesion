@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { createMuiTheme, createStyles, makeStyles, ThemeProvider } from "@material-ui/core/styles";
 import { SnackbarProvider } from "notistack";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
+import { getGlobalVariables, initializeFirebase } from "./firebase/firebaseApp";
 import Home from "./screens/home/Home";
 import AdminAuth from "./screens/admin_console/AdminAuth";
 import GameMenu from "./screens/game/GameMenu";
@@ -36,6 +37,16 @@ const useStyles = makeStyles(() =>
 
 const App: React.FC = () => {
   const classes = useStyles();
+
+  useEffect(() => {
+    const initializeApp = async () => {
+      if (!(await initializeFirebase()) || !(await getGlobalVariables())) {
+        console.warn("App initialization unsuccessful");
+      }
+    };
+
+    initializeApp().then(() => {});
+  }, []);
 
   return (
     <ThemeProvider theme={theme}>

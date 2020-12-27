@@ -3,7 +3,16 @@ import "firebase/firestore";
 import "firebase/storage";
 import "firebase/auth";
 import axios from "axios";
-import { handleAuthError, isAuthError } from "../utils/firebaseUtils";
+import { handleAxiosError, isAxiosError } from "../utils/axiosUtils";
+import { handleUncaughtError } from "../utils/errorUtils";
+import {
+  handleAuthError,
+  handleFirebaseStorageError,
+  handleFirestoreError,
+  isAuthError,
+  isFirebaseStorageError,
+  isFirestoreError,
+} from "../utils/firebaseUtils";
 import constants from "../res/constants";
 import variables from "../res/variables";
 
@@ -19,35 +28,44 @@ const firebaseConfig = {
 };
 
 /**
- * Initialize the Firebase project
- *
+ * Initialize the Firebase app
  * Sign in with a default account to enable Firestore security rules
  * Set the maximum operation retry time for Storage
+ *
+ * @return True if successful, false otherwise
  */
-const initializeFirebase = (): void => {
+const initializeFirebase = async (): Promise<boolean> => {
   if (process.env.REACT_APP_FIREBASE_API_KEY === undefined) {
-    console.error("Firebase api key not set");
-    return;
+    console.error("Firebase API key not set.");
+
+    return false;
+  }
+
+  /* Check if app already initialized */
+  if (firebase.apps.length === 1) {
+    return true;
   }
 
   firebase.initializeApp(firebaseConfig);
 
-  /* Sign in with a default account */
-  const defaultEmail = "user@gmail.com";
+  const defaultEmail = "user@gmail.coms";
   const defaultPassword = process.env.REACT_APP_SERVER_KEY || "N/A";
 
-  firebase
-    .auth()
-    .signInWithEmailAndPassword(defaultEmail, defaultPassword)
-    .catch((error) => {
+  try {
+    await firebase.auth().signInWithEmailAndPassword(defaultEmail, defaultPassword);
+
+    firebase.storage().setMaxOperationRetryTime(constants.maxOperationRetryTime);
+
+    return true;
+  } catch (error) {
+    if (isAuthError(error)) {
       console.error("Default user sign in failed.");
 
-      if (isAuthError(error)) {
-        handleAuthError(error);
-      }
-    });
+      handleAuthError(error);
+    }
 
-  firebase.storage().setMaxOperationRetryTime(constants.maxOperationRetryTime);
+    return false;
+  }
 };
 
 /**
@@ -55,29 +73,47 @@ const initializeFirebase = (): void => {
  *
  * Get game settings from Firestore
  * Get image numbers from Storage
+ *
+ * @return True if successful, false otherwise
  */
-const getGlobalVariables = async (): Promise<void> => {
-  /* Get game settings from Firestore */
-  const optionsSnapshot = await firebase
-    .firestore()
-    .collection("game_options")
-    .doc("current_options")
-    .get();
+const getGlobalVariables = async (): Promise<boolean> => {
+  try {
+    /* Get game settings form Firestore */
+    const optionsSnapshot = await firebase
+      .firestore()
+      .collection("game_options")
+      .doc("current_options")
+      .get();
 
-  const optionsData = optionsSnapshot.data() as FirestoreOptionsData | undefined;
+    const optionsData = optionsSnapshot.data() as FirestoreOptionsData | undefined;
 
-  Object.assign(variables, optionsData);
+    Object.assign(variables, optionsData);
 
-  /* Get image numbers from Storage */
-  const url = await firebase.storage().ref("image_numbers.json").getDownloadURL();
+    /* Get image numbers from Storage */
+    const url = await firebase.storage().ref("image_numbers.json").getDownloadURL();
 
-  const response = await axios.get<ImageNumbersData>(url, { timeout: constants.axiosTimeout });
+    const response = await axios.get<ImageNumbersData>(url, { timeout: constants.axiosTimeout });
 
-  const { easy, medium, hard } = response.data;
+    const { easy, medium, hard } = response.data;
 
-  variables.easyFilesNumber = easy;
-  variables.mediumFilesNumber = medium;
-  variables.hardFilesNumber = hard;
+    variables.easyFilesNumber = easy;
+    variables.mediumFilesNumber = medium;
+    variables.hardFilesNumber = hard;
+
+    return true;
+  } catch (error) {
+    if (isFirestoreError(error)) {
+      handleFirestoreError(error);
+    } else if (isFirebaseStorageError(error)) {
+      handleFirebaseStorageError(error);
+    } else if (isAxiosError(error)) {
+      handleAxiosError(error);
+    } else {
+      handleUncaughtError(error, "getGlobalVariables");
+    }
+
+    return false;
+  }
 };
 
 export { getGlobalVariables, initializeFirebase };

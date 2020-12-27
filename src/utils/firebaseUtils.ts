@@ -40,8 +40,7 @@ const getMonthName = (month: number): Month => months[month];
  *
  * @return AuthError type predicate
  */
-const isAuthError = (error: unknown): error is AuthError =>
-  (error as AuthError).email !== undefined;
+const isAuthError = (error: unknown): error is AuthError => (error as AuthError).code !== undefined;
 
 /**
  * Logs an Auth error
