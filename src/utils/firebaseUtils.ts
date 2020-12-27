@@ -3,6 +3,8 @@ import { ReactNode } from "react";
 import { OptionsObject } from "notistack";
 import constants from "../res/constants";
 
+type AuthError = firebase.auth.AuthError;
+
 type FirestoreError = firebase.firestore.FirestoreError;
 
 type FirebaseStorageError = firebase.storage.FirebaseStorageError;
@@ -30,6 +32,44 @@ const months: Month[] = [
  * @return Three letter month name
  */
 const getMonthName = (month: number): Month => months[month];
+
+/**
+ * Checks if an error is an Auth error
+ *
+ * @param error Error to check
+ *
+ * @return AuthError type predicate
+ */
+const isAuthError = (error: unknown): error is AuthError =>
+  (error as AuthError).email !== undefined;
+
+/**
+ * Logs an Auth error
+ *
+ * @param error Auth error to log
+ */
+const logAuthError = (error: AuthError): void =>
+  console.error(`Firebase auth error\n code: ${error.code}\n message: ${error.message}`);
+
+/**
+ * Logs the given error, optionally displaying a snackbar
+ *
+ * @param error           Error to handle
+ * @param enqueueSnackbar Function to display a snackbar
+ */
+const handleAuthError = (
+  error: AuthError,
+  enqueueSnackbar?: (message: ReactNode, options?: OptionsObject) => void
+): void => {
+  logAuthError(error);
+
+  /* Snackbar should be displayed */
+  if (enqueueSnackbar) {
+    const message = "Please try again";
+
+    enqueueSnackbar(message, constants.errorSnackbarOptions);
+  }
+};
 
 /**
  * Checks if an error is a Firestore error
@@ -118,8 +158,10 @@ const handleFirebaseStorageError = (
 
 export {
   getMonthName,
+  handleAuthError,
   handleFirebaseStorageError,
   handleFirestoreError,
+  isAuthError,
   isFirebaseStorageError,
   isFirestoreError,
 };

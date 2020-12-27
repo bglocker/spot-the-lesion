@@ -3,6 +3,7 @@ import "firebase/firestore";
 import "firebase/storage";
 import "firebase/auth";
 import axios from "axios";
+import { handleAuthError, isAuthError } from "../utils/firebaseUtils";
 import constants from "../res/constants";
 import variables from "../res/variables";
 
@@ -20,7 +21,7 @@ const firebaseConfig = {
 /**
  * Initialize the Firebase project
  *
- * Sign in with an anonymous account to enable Firestore security rules
+ * Sign in with a default account to enable Firestore security rules
  * Set the maximum operation retry time for Storage
  */
 const initializeFirebase = (): void => {
@@ -31,14 +32,20 @@ const initializeFirebase = (): void => {
 
   firebase.initializeApp(firebaseConfig);
 
-  /* Sign in with an anonymous account */
-  const userKey = process.env.REACT_APP_SERVER_KEY || "N/A";
+  /* Sign in with a default account */
+  const defaultEmail = "user@gmail.com";
+  const defaultPassword = process.env.REACT_APP_SERVER_KEY || "N/A";
 
-  // TODO: use signInAnonymously
   firebase
     .auth()
-    .signInWithEmailAndPassword("user@gmail.com", userKey)
-    .catch((error) => console.error(`Failed to connect to firebase: ${error}`));
+    .signInWithEmailAndPassword(defaultEmail, defaultPassword)
+    .catch((error) => {
+      console.error("Default user sign in failed.");
+
+      if (isAuthError(error)) {
+        handleAuthError(error);
+      }
+    });
 
   firebase.storage().setMaxOperationRetryTime(constants.maxOperationRetryTime);
 };
