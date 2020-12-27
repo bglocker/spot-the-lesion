@@ -48,7 +48,7 @@ const initializeFirebase = async (): Promise<boolean> => {
 
   firebase.initializeApp(firebaseConfig);
 
-  const defaultEmail = "user@gmail.coms";
+  const defaultEmail = "user@gmail.com";
   const defaultPassword = process.env.REACT_APP_SERVER_KEY || "N/A";
 
   try {
