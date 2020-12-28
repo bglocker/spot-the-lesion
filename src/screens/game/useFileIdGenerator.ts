@@ -1,4 +1,4 @@
-import { useArrayGenerator, useUniqueRandomGenerator } from "../../components";
+import { useArrayGenerator, useUniqueRandomGenerator } from "../../hooks";
 import { getFilesNumber } from "../../utils/gameUtils";
 
 /**

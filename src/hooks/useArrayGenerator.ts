@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { modulo } from "../utils/numberUtils";
 
 /**
  * Custom hook for creating a generator from a given array
@@ -11,14 +12,14 @@ import { useState } from "react";
 const useArrayGenerator = (array: number[]): (() => number) => {
   const [ix, setIx] = useState(0);
 
-  return () => {
-    if (array.length === 0) {
-      return -1;
-    }
+  if (array.length === 0) {
+    return () => -1;
+  }
 
+  return () => {
     const number = array[ix];
 
-    setIx((prevState) => (prevState === array.length - 1 ? 0 : prevState + 1));
+    setIx((prevState) => modulo(prevState + 1, array.length));
 
     return number;
   };

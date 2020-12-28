@@ -8,6 +8,13 @@ interface StylesProps {
   showIncrement: boolean;
 }
 
+interface ScoreWithIncrementProps {
+  player: string;
+  score: number;
+  increment: number;
+  showIncrement: boolean;
+}
+
 const useStyles = makeStyles((theme) =>
   createStyles({
     text: {

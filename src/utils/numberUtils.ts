@@ -1,4 +1,15 @@
 /**
+ * Returns the modulo of two given numbers
+ * This differs from the remainder operator (%) for negative dividends
+ *
+ * @param x Dividend
+ * @param y Divider
+ *
+ * @return Modulo of the two numbers
+ */
+const modulo = (x: number, y: number): number => ((x % y) + y) % y;
+
+/**
  * Get a random value in a range around a start point
  *
  * @param x     Start point
@@ -53,4 +64,4 @@ const shuffledRange = (start = 1, stop: number, step = 1): number[] => {
   return nums;
 };
 
-export { randomAround, range, shuffledRange };
+export { modulo, randomAround, range, shuffledRange };

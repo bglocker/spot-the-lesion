@@ -11,13 +11,8 @@ import SubmitScoreDialog from "./SubmitScoreDialog";
 import ChallengeDialog from "./ChallengeDialog";
 import ImageStatsDialog from "./ImageStatsDialog";
 import useFileIdGenerator from "./useFileIdGenerator";
-import {
-  LoadingButton,
-  NavigationAppBar,
-  useCanvasContext,
-  useHeatmap,
-  useInterval,
-} from "../../components";
+import { LoadingButton, NavigationAppBar } from "../../components";
+import { useCanvasContext, useHeatmap, useInterval } from "../../hooks";
 import { handleAxiosError, isAxiosError } from "../../utils/axiosUtils";
 import {
   drawCircle,

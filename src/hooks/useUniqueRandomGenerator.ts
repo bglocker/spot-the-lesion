@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { range } from "../utils/numberUtils";
+import { modulo, range } from "../utils/numberUtils";
 
 /**
  * Custom hook for creating a unique random generator
@@ -11,7 +11,7 @@ import { range } from "../utils/numberUtils";
  *
  * @return Unique random generator function
  */
-const useUniqueRandomGenerator = (min = 0, max: number): (() => number) => {
+const useUniqueRandomGenerator = (min: number, max: number): (() => number) => {
   const [nums] = useState(() => range(min, max));
   const [ix, setIx] = useState(max - min - 1);
 
@@ -24,7 +24,7 @@ const useUniqueRandomGenerator = (min = 0, max: number): (() => number) => {
 
     nums[ix] = randomNum;
 
-    setIx((prevState) => (prevState > 0 ? prevState - 1 : max - min - 1));
+    setIx((prevState) => modulo(prevState - 1, max - min));
 
     return randomNum;
   };
