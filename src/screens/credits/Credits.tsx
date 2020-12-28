@@ -1,7 +1,17 @@
 import React from "react";
-import { AppBar, Card, Tab, Tabs, Typography } from "@material-ui/core";
+import {
+  AppBar,
+  Card,
+  List,
+  ListItem,
+  ListItemText,
+  Tab,
+  Tabs,
+  Typography,
+} from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { NavigationAppBar } from "../../components";
+import licenses from "../../licenses.json";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -51,14 +61,47 @@ const Credits: React.FC = () => {
   const classes = useStyles();
 
   const [currentTableIndex, setCurrentTableIndex] = React.useState(0);
+  const numberRegex = /\d+(\.\d+)*/;
+  const atRegex = /(?:@)/gi;
+
+  const getLibraryLicenses = () => {
+    const processedLicenses: ProcessedLicense[] = [];
+    Object.keys(licenses).forEach((libraryName) => {
+      // Extract the version
+      const version = libraryName.match(numberRegex);
+      // Removes the part after the @
+      const nameWithoutVersion = libraryName
+        .replace(atRegex, "")
+        .replace(version ? version[0] : "", "");
+
+      processedLicenses.push({
+        name: nameWithoutVersion,
+        version: version ? version[0] : "",
+        licenseSpecs: licenses[libraryName],
+      });
+    });
+
+    return processedLicenses;
+  };
+
+  const createLibraryLicenseListItems = (libraryLicenses) => {
+    return libraryLicenses.map((license) => {
+      return (
+        <ListItem key={license.name}>
+          <ListItemText primary={license.name} secondary={license.version} />
+        </ListItem>
+      );
+    });
+  };
 
   const getTableContent = (tableIndex) => {
+    // Check if we just return the game information that we require
     if (tableIndex === 0) {
       return (
         <div className={classes.container}>
           <Card className={classes.card}>
             <Typography className={classes.text}>
-              This demo is based on our{" "}
+              The AI for this game is based on the{" "}
               <a href="https://arxiv.org/abs/1906.02283" target="blank">
                 MICCAI 2019 paper
               </a>
@@ -87,7 +130,25 @@ const Credits: React.FC = () => {
         </div>
       );
     }
-    return <div>Revolution</div>;
+    // Here we should return licences so we just deal with that
+    const libraryLicenses = getLibraryLicenses();
+
+    return (
+      <div className={classes.container}>
+        <Card className={classes.card}>
+          <Typography className={classes.text}>
+            Here is a list of libraries and images used, kudos to the creators for enabling us to
+            work effectively.
+          </Typography>
+
+          <Typography className={classes.text}>
+            Here are the libraries that this game uses:
+          </Typography>
+
+          <List dense={false}>{createLibraryLicenseListItems(libraryLicenses)}</List>
+        </Card>
+      </div>
+    );
   };
 
   return (
