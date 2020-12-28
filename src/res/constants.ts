@@ -1,6 +1,26 @@
 import { OptionsObject } from "notistack";
 
 const constants = {
+  /* Achievements */
+  numberOfAchievements: 12,
+
+  /* axios */
+  axiosTimeout: 3000,
+
+  /* canvasUtils */
+  defaultImageSize: 512,
+
+  /* Dynamic Links */
+  domainUriPrefix: "https://spotthelesion.page.link",
+
+  /* Firebase Firestore */
+  scoresCasual: "leaderboard_casual",
+  scoresCompetitive: "leaderboard_competitive",
+  images: (difficulty: Difficulty): string => `images_${difficulty}`,
+
+  /* Firebase Storage */
+  maxOperationRetryTime: 3000,
+
   /* Game */
   animationCubesNumber: 10,
   canvasSize: 750,
@@ -18,26 +38,6 @@ const constants = {
   drawTruthTime: 500,
   evaluationTime: 1000,
   redTime: 2000,
-
-  /* Achievements */
-  numberOfAchievements: 12,
-
-  /* canvasUtils */
-  defaultImageSize: 512,
-
-  /* axios */
-  axiosTimeout: 3000,
-
-  /* Dynamic Links */
-  domainUriPrefix: "https://spotthelesion.page.link",
-
-  /* Firestore */
-  scoresCasual: "leaderboard_casual",
-  scoresCompetitive: "leaderboard_competitive",
-  images: (difficulty: Difficulty): string => `images_${difficulty}`,
-
-  /* Storage */
-  maxOperationRetryTime: 3000,
 
   /* Snackbar */
   achievementSnackbarOptions: {
