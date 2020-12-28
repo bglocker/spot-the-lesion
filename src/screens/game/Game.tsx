@@ -800,7 +800,10 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
       enqueueSnackbar("Score successfully submitted!", constants.successSnackbarOptions);
 
-      if (playerScore.total + playerScore.round > aiScore.total + aiScore.round) {
+      if (
+        playerScore.total + playerScore.round > aiScore.total + aiScore.round &&
+        gameMode === "casual"
+      ) {
         unlockAchievement("firstCasualWin", "Achievement! Casually Winning!", enqueueSnackbar);
       }
 
