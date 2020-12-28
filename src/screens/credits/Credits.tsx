@@ -16,10 +16,21 @@ import licenses from "../../licenses.json";
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
-      height: "100%",
+      flex: 1,
+      height: 0,
       display: "flex",
+      flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
+    },
+    appBar: {
+      backgroundColor: "#004445",
+    },
+    tabIndicator: {
+      backgroundColor: "#C4DFE6",
+    },
+    tab: {
+      fontSize: "1rem",
     },
     card: {
       height: "80%",
@@ -44,15 +55,10 @@ const useStyles = makeStyles((theme) =>
         fontSize: "2rem",
       },
     },
-    appBar: {
-      alignItems: "center",
-      backgroundColor: "#004445",
-    },
-    tabIndicator: {
-      backgroundColor: "#C4DFE6",
-    },
-    tab: {
-      fontSize: "1rem",
+    list: {
+      flex: 1,
+      height: 0,
+      overflow: "auto",
     },
   })
 );
@@ -60,7 +66,7 @@ const useStyles = makeStyles((theme) =>
 const Credits: React.FC = () => {
   const classes = useStyles();
 
-  const [currentTableIndex, setCurrentTableIndex] = React.useState(0);
+  const [tabIndex, setTabIndex] = React.useState(0);
   const numberRegex = /\d+(\.\d+)*/;
   const atRegex = /(?:@)/gi;
 
@@ -84,19 +90,9 @@ const Credits: React.FC = () => {
     return processedLicenses;
   };
 
-  const createLibraryLicenseListItems = (libraryLicenses) => {
-    return libraryLicenses.map((license) => {
-      return (
-        <ListItem key={license.name}>
-          <ListItemText primary={license.name} secondary={license.version} />
-        </ListItem>
-      );
-    });
-  };
-
-  const getTableContent = (tableIndex) => {
+  const getTabsContent = () => {
     // Check if we just return the game information that we require
-    if (tableIndex === 0) {
+    if (tabIndex === 0) {
       return (
         <div className={classes.container}>
           <Card className={classes.card}>
@@ -130,6 +126,7 @@ const Credits: React.FC = () => {
         </div>
       );
     }
+
     // Here we should return licences so we just deal with that
     const libraryLicenses = getLibraryLicenses();
 
@@ -145,7 +142,13 @@ const Credits: React.FC = () => {
             Here are the libraries that this game uses:
           </Typography>
 
-          <List dense={false}>{createLibraryLicenseListItems(libraryLicenses)}</List>
+          <List className={classes.list}>
+            {libraryLicenses.map(({ name, version }) => (
+              <ListItem key={name}>
+                <ListItemText primary={name} secondary={version} />
+              </ListItem>
+            ))}
+          </List>
         </Card>
       </div>
     );
@@ -154,30 +157,22 @@ const Credits: React.FC = () => {
   return (
     <>
       <NavigationAppBar showBack />
+
       <AppBar className={classes.appBar} position="sticky">
         <Tabs
-          value={currentTableIndex}
-          onChange={(_, newTableIndex) => setCurrentTableIndex(newTableIndex)}
-          aria-label="Leaderboards"
           classes={{ indicator: classes.tabIndicator }}
+          centered
+          aria-label="Credits pages"
+          value={tabIndex}
+          onChange={(_, newIndex) => setTabIndex(newIndex)}
         >
-          <Tab
-            className={classes.tab}
-            label="About The Game"
-            id="game-info"
-            aria-controls="about-view-0"
-          />
+          <Tab className={classes.tab} label="About The Game" />
 
-          <Tab
-            className={classes.tab}
-            label="Libraries & Images"
-            id="game-credits"
-            aria-controls="about-view-1"
-          />
+          <Tab className={classes.tab} label="Libraries & Images" />
         </Tabs>
       </AppBar>
 
-      {getTableContent(currentTableIndex)}
+      {getTabsContent()}
     </>
   );
 };
