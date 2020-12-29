@@ -139,6 +139,14 @@ const Credits: React.FC = () => {
           </Typography>
 
           <Typography className={classes.text}>
+            You can find a link to the authors and the licenses for the images by following{" "}
+            <a href="https://drive.google.com/file/d/1zAs8cqA91jkWzLExid3EvleiB8e1yIuu/view?usp=sharing">
+              this link
+            </a>
+            .
+          </Typography>
+
+          <Typography className={classes.text}>
             Here are the libraries that this game uses:
           </Typography>
 
