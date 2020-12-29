@@ -7,13 +7,13 @@ import { useCallback, useState } from "react";
  */
 const useCanvasContext = (): readonly [
   CanvasRenderingContext2D,
-  (canvas: HTMLCanvasElement) => void
+  (canvas: HTMLCanvasElement | null) => void
 ] => {
   /* State won't ever be called while null, as it is set on render with the callback ref */
   const [context, setContext] = useState<CanvasRenderingContext2D>(null!);
 
   /* Callback ref for setting canvas context */
-  const ref = useCallback((canvas) => {
+  const ref = useCallback((canvas: HTMLCanvasElement | null) => {
     /* Called with null on component unmount */
     if (canvas !== null) {
       setContext(canvas.getContext("2d")!);

@@ -1,16 +1,17 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { createMuiTheme, createStyles, makeStyles, ThemeProvider } from "@material-ui/core/styles";
 import { SnackbarProvider } from "notistack";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
-import Home from "./screens/home/Home";
+import { getGlobalVariables, initializeFirebase } from "./firebase/firebaseApp";
+import Achievements from "./screens/achievements/Achievements";
 import AdminAuth from "./screens/admin_console/AdminAuth";
+import Credits from "./screens/credits/Credits";
 import GameMenu from "./screens/game/GameMenu";
 import GameRoute from "./screens/game/GameRoute";
-import Tutorial from "./screens/tutorial/Tutorial";
+import Home from "./screens/home/Home";
 import Leaderboard from "./screens/leaderboard/Leaderboard";
-import Achievements from "./screens/achievements/Achievements";
 import Statistics from "./screens/statistics/Statistics";
-import Credits from "./screens/credits/Credits";
+import Tutorial from "./screens/tutorial/Tutorial";
 import colors from "./res/colors";
 
 const theme = createMuiTheme({
@@ -30,14 +31,22 @@ const useStyles = makeStyles(() =>
       height: "100%",
       display: "flex",
       flexDirection: "column",
-      backgroundColor: colors.secondary,
-      overflow: "scroll",
     },
   })
 );
 
 const App: React.FC = () => {
   const classes = useStyles();
+
+  useEffect(() => {
+    const initializeApp = async () => {
+      if (!(await initializeFirebase()) || !(await getGlobalVariables())) {
+        console.warn("App initialization unsuccessful");
+      }
+    };
+
+    initializeApp().then(() => {});
+  }, []);
 
   return (
     <ThemeProvider theme={theme}>
@@ -49,20 +58,13 @@ const App: React.FC = () => {
                 <Home />
               </Route>
 
+              <Route path="/achievements">
+                <Achievements />
+              </Route>
+
               <Route path="/admin">
                 <AdminAuth />
               </Route>
-
-              <Route path="/game-menu">
-                <GameMenu />
-              </Route>
-
-              <Route
-                path="/game"
-                render={({ history, location }) => (
-                  <GameRoute history={history} location={location} />
-                )}
-              />
 
               <Route
                 path="/challenge"
@@ -75,27 +77,35 @@ const App: React.FC = () => {
                 }}
               />
 
-              <Route path="/tutorial">
-                <Tutorial />
+              <Route path="/credits">
+                <Credits />
+              </Route>
+
+              <Route
+                path="/game"
+                render={({ history, location }) => (
+                  <GameRoute history={history} location={location} />
+                )}
+              />
+
+              <Route path="/game-menu">
+                <GameMenu />
               </Route>
 
               <Route path="/leaderboard">
                 <Leaderboard />
               </Route>
 
-              <Route path="/achievements">
-                <Achievements />
-              </Route>
-
               <Route path="/statistics">
                 <Statistics />
               </Route>
 
-              <Route path="/credits">
-                <Credits />
+              <Route path="/tutorial">
+                <Tutorial />
               </Route>
 
               <Route path="*">
+                {/* TODO: 404 page */}
                 <h1>Error 404</h1>
               </Route>
             </Switch>

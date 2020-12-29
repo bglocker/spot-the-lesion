@@ -17,6 +17,7 @@ const useHeatmap = (
 ): void => {
   const [heatmapInstance, setHeatmapInstance] = useState<h337>(null!);
 
+  /* Initialize a heatmap instance */
   useEffect(() => {
     if (container.current === null) {
       return;
@@ -38,6 +39,7 @@ const useHeatmap = (
     setHeatmapInstance(instance);
   }, [className, container]);
 
+  /* Load data on the heatmap instance */
   useEffect(() => {
     if (heatmapInstance === null) {
       return;

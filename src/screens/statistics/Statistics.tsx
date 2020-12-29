@@ -15,11 +15,11 @@ import {
 } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { ArrowBack, ArrowForward } from "@material-ui/icons";
+import firebase from "firebase/app";
 import { Pie } from "@nivo/pie";
 import { NavigationAppBar } from "../../components";
-import { db } from "../../firebase/firebaseApp";
-import DbUtils from "../../utils/DbUtils";
 import useWindowDimensions from "../../components/useWindowDimensions";
+import constants from "../../res/constants";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -176,10 +176,9 @@ const Statistics: React.FC = () => {
    *                   - 1 for 'How many players used hints'
    */
   const retrieveUserStats = async (gameModeIndex: number, statsIndex: number) => {
-    const leaderboard =
-      gameModeIndex === 0 ? DbUtils.LEADERBOARD_CASUAL : DbUtils.LEADERBOARD_COMPETITIVE;
+    const leaderboard = gameModeIndex === 0 ? constants.scoresCasual : constants.scoresCompetitive;
 
-    const snapshot = await db.collection(leaderboard).get();
+    const snapshot = await firebase.firestore().collection(leaderboard).get();
 
     if (statsIndex === 0) {
       // Statistics: Human vs AI wins

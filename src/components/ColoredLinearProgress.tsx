@@ -1,22 +1,25 @@
 import React from "react";
-import { LinearProgress, LinearProgressProps, Theme } from "@material-ui/core";
+import { LinearProgress, LinearProgressProps } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
+
+interface StylesProps {
+  barColor?: string;
+  barBackgroundColor?: string;
+}
 
 interface ColoredLinearProgressProps extends LinearProgressProps {
   barColor?: string;
   barBackgroundColor?: string;
 }
 
-const useStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles((theme) =>
   createStyles({
     root: {
       width: "100%",
-      backgroundColor: ({ barBackgroundColor }: ColoredLinearProgressProps) =>
-        barBackgroundColor !== "" ? barBackgroundColor : "gray",
+      backgroundColor: (props: StylesProps) => props.barBackgroundColor || "gray",
     },
     bar: {
-      backgroundColor: ({ barColor }: ColoredLinearProgressProps) =>
-        barColor !== "" ? barColor : theme.palette.primary.main,
+      backgroundColor: (props: StylesProps) => props.barColor || theme.palette.primary.main,
     },
   })
 );
@@ -26,16 +29,11 @@ const ColoredLinearProgress: React.FC<ColoredLinearProgressProps> = ({
   barBackgroundColor,
   ...other
 }: ColoredLinearProgressProps) => {
-  const classes = useStyles({ barColor });
+  const classes = useStyles({ barColor, barBackgroundColor });
 
   // Props are properly destructured and passed
   // eslint-disable-next-line react/jsx-props-no-spreading
   return <LinearProgress classes={classes} {...other} />;
-};
-
-ColoredLinearProgress.defaultProps = {
-  barColor: "",
-  barBackgroundColor: "",
 };
 
 export default ColoredLinearProgress;

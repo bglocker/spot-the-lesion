@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { AppBar, Tab, Tabs } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { db } from "../../firebase/firebaseApp";
+import firebase from "firebase/app";
 import BasicTable from "./scoreTabel/BasicTable";
-import DbUtils from "../../utils/DbUtils";
 import ScoreType from "../../utils/ScoreType";
 import BasicGrid from "./scoreTabel/tableGrid/TableGrid";
 import { NavigationAppBar } from "../../components";
+import { getMonthName } from "../../utils/firebaseUtils";
+import colors from "../../res/colors";
+import constants from "../../res/constants";
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -30,6 +32,8 @@ const useStyles = makeStyles(() =>
   })
 );
 
+const tableNames = ["daily-scores", "monthly-scores", "alltime-scores"];
+
 const Leaderboard: React.FC = () => {
   const classes = useStyles();
 
@@ -46,13 +50,13 @@ const Leaderboard: React.FC = () => {
   function selectRowColour(rowIndex: number) {
     switch (rowIndex) {
       case 1:
-        return DbUtils.GOLD;
+        return colors.gold;
       case 2:
-        return DbUtils.SILVER;
+        return colors.silver;
       case 3:
-        return DbUtils.BRONZE;
+        return colors.bronze;
       default:
-        return DbUtils.DEFAULT_ROW_COLOUR;
+        return colors.rowDefault;
     }
   }
 
@@ -65,7 +69,7 @@ const Leaderboard: React.FC = () => {
    * gameIndex = 0 for casual, 1 for competitive
    */
   async function createLeaderboard(tableIndex: number, leaderboardIndex: number) {
-    const table: string = DbUtils.tableNames[tableIndex];
+    const table: string = tableNames[tableIndex];
     const date: Date = new Date();
     const results: ScoreType[] = [];
     let rankPosition = 0;
@@ -77,8 +81,8 @@ const Leaderboard: React.FC = () => {
     const uniqueUsersMap: Map<string, boolean> = new Map<string, boolean>();
 
     const leaderboard =
-      leaderboardIndex === 0 ? DbUtils.LEADERBOARD_CASUAL : DbUtils.LEADERBOARD_COMPETITIVE;
-    const leaderboardRef = db.collection(leaderboard);
+      leaderboardIndex === 0 ? constants.scoresCasual : constants.scoresCompetitive;
+    const leaderboardRef = firebase.firestore().collection(leaderboard);
 
     let snapshot;
     snapshot = leaderboardRef;
@@ -88,12 +92,12 @@ const Leaderboard: React.FC = () => {
         snapshot = snapshot
           .where("day", "==", date.getDate())
           .where("year", "==", date.getFullYear())
-          .where("month", "==", DbUtils.monthNames[date.getMonth()]);
+          .where("month", "==", getMonthName(date.getMonth()));
         break;
       case "monthly-scores":
         snapshot = snapshot
           .where("year", "==", date.getFullYear())
-          .where("month", "==", DbUtils.monthNames[date.getMonth()]);
+          .where("month", "==", getMonthName(date.getMonth()));
         break;
       default:
         break;

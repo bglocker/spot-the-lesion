@@ -5,27 +5,18 @@ import constants from "../res/constants";
 import variables from "../res/variables";
 
 /**
- * Returns the path to the annotation file corresponding to the given annotationId
+ * Draw the round end text
  *
- * @param annotationId Id of the annotation file to retrieve
- * @param difficulty   Game difficulty, specifying the sub folder name
- *
- * @return Path to annotation file
+ * @param ctx   Context to draw the text on
+ * @param text  Text to draw
+ * @param color Text color
  */
+const drawRoundEndText = (ctx: CanvasRenderingContext2D, text: string, color: string): void => {
+  const x = Math.round(ctx.canvas.width / 2);
+  const y = Math.round(ctx.canvas.height / 10);
 
-const getAnnotationPath = (annotationId: number, difficulty: Difficulty): string =>
-  `annotation/${difficulty}/${annotationId}.json`;
-
-/**
- * Returns the path to the image file corresponding to the given imageId
- *
- * @param imageId Id of the image file to retrieve
- * @param difficulty   Game difficulty, specifying the sub folder name
- *
- * @return Path to image file
- */
-const getImagePath = (imageId: number, difficulty: Difficulty): string =>
-  `images/${difficulty}/${imageId}.png`;
+  drawStrokedText(ctx, text, x, y, "center", 3, "white", color);
+};
 
 /**
  * Given the coordinates of two rectangles, returns the ratio of their intersection
@@ -55,18 +46,27 @@ const getIntersectionOverUnion = (rectA: number[], rectB: number[]): number => {
 };
 
 /**
- * Draw the round end text
+ * Returns the path to the annotation file corresponding to the given annotationId
  *
- * @param ctx   Context to draw the text on
- * @param text  Text to draw
- * @param color Text color
+ * @param annotationId Id of the annotation file to retrieve
+ * @param difficulty   Game difficulty, specifying the sub folder name
+ *
+ * @return Path to annotation file
  */
-const drawRoundEndText = (ctx: CanvasRenderingContext2D, text: string, color: string): void => {
-  const x = Math.round(ctx.canvas.width / 2);
-  const y = Math.round(ctx.canvas.height / 10);
 
-  drawStrokedText(ctx, text, x, y, "center", 3, "white", color);
-};
+const getAnnotationPath = (annotationId: number, difficulty: Difficulty): string =>
+  `annotation/${difficulty}/${annotationId}.json`;
+
+/**
+ * Returns the path to the image file corresponding to the given imageId
+ *
+ * @param imageId    Id of the image file to retrieve
+ * @param difficulty Game difficulty, specifying the sub folder name
+ *
+ * @return Path to image file
+ */
+const getImagePath = (imageId: number, difficulty: Difficulty): string =>
+  `images/${difficulty}/${imageId}.png`;
 
 /**
  * Return the number of files corresponding to the given difficulty
@@ -133,6 +133,7 @@ const getDifficultyOrDefault = (
  * @return Valid file ids array, or undefined
  */
 const getFileIdsOrDefault = (fileIds: string | null, def?: number[]): number[] | undefined => {
+  /* Check for array-style string */
   if (
     fileIds === null ||
     fileIds.length < 2 ||
@@ -147,50 +148,6 @@ const getFileIdsOrDefault = (fileIds: string | null, def?: number[]): number[] |
   } catch (_error) {
     return def;
   }
-};
-
-/**
- * Create an array from a given range
- *
- * @param start First value of range (inclusive)
- * @param stop  Last value of range (exclusive)
- * @param step  Step between consecutive range values
- *
- * @return Array range
- */
-const range = (start = 1, stop: number, step = 1): number[] => {
-  const nums: number[] = [];
-
-  for (let i = start; i < stop; i += step) {
-    nums.push(i);
-  }
-
-  return nums;
-};
-
-/**
- * Create a (randomly) shuffled array from a given range
- *
- * @param start First value of range (inclusive)
- * @param stop  Last value of range (exclusive)
- * @param step  Step between consecutive range values
- *
- * @return Shuffled array range
- */
-const shuffledRange = (start = 1, stop: number, step = 1): number[] => {
-  const nums: number[] = [];
-
-  for (let i = 0; i < (stop - start) / step; i++) {
-    const j = Math.floor(Math.random() * (i + 1));
-
-    if (j !== i) {
-      nums.push(nums[j]);
-    }
-
-    nums[j] = start + i * step;
-  }
-
-  return nums;
 };
 
 /**
@@ -221,7 +178,5 @@ export {
   getGameModeOrDefault,
   getImagePath,
   getIntersectionOverUnion,
-  range,
-  shuffledRange,
   unlockAchievement,
 };

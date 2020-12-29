@@ -8,8 +8,12 @@
     "importHelpers": true,
     "incremental": true,
     "isolatedModules": true,
-    "jsx": "react",
-    "lib": [ "dom", "dom.iterable", "esnext" ],
+    "jsx": "react-jsx",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "module": "esnext",
     "moduleResolution": "node",
     "noEmit": true,
@@ -29,6 +33,11 @@
       "./node_modules/@types"
     ]
   },
-  "include": [ "src/**/*" ],
-  "exclude": [ "node_modules", "build" ]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "build"
+  ]
 }

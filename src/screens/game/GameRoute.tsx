@@ -4,7 +4,7 @@ import {
   getDifficultyOrDefault,
   getFileIdsOrDefault,
   getGameModeOrDefault,
-} from "../../utils/GameUtils";
+} from "../../utils/gameUtils";
 import Game from "./Game";
 
 type GameRouteProps = Omit<RouteComponentProps<never>, "match">;
