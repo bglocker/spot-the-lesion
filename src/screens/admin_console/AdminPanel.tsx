@@ -1,40 +1,23 @@
 import React, { useState } from "react";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
-import Button from "@material-ui/core/Button";
-import colors from "../../res/colors";
-import Settings from "./Settings";
-import FileUpload from "./fileUpload/FileUpload";
+import { Button } from "@material-ui/core/";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
+import { NavigationAppBar } from "../../components";
+import GameSettings from "./GameSettings";
+import FileUpload from "./FileUpload";
 
-const useStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles((theme) =>
   createStyles({
-    backButton: {
-      marginRight: 8,
-    },
     container: {
       height: "100%",
       display: "flex",
       flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: colors.secondary,
-    },
-    box: {
-      backgroundColor: "white",
-      width: "60%",
-      height: "80%",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "center",
-      padding: 24,
-      boxSizing: "border-box",
     },
     buttonContainer: {
-      alignSelf: "center",
-      align: "center",
-      alignItems: "center",
       display: "flex",
       flexDirection: "column",
+      alignItems: "center",
     },
     button: {
       margin: 8,
@@ -58,40 +41,45 @@ const useStyles = makeStyles((theme: Theme) =>
 const AdminPanel: React.FC = () => {
   const classes = useStyles();
 
-  const [displayGameOptions, setDisplayGameOptions] = useState(false);
-  const [displayImageUpload, setDisplayImageUpload] = useState(false);
+  const [showGameSettings, setShowGameSettings] = useState(false);
+  const [showFileUpload, setShowFileUpload] = useState(false);
 
-  /**
-   * Function for conditional rendering of the Admin Panel
-   */
-  if (displayGameOptions) {
-    return <Settings />;
+  if (showGameSettings) {
+    return <GameSettings />;
   }
-  if (displayImageUpload) {
+
+  if (showFileUpload) {
     return <FileUpload />;
   }
-  return (
-    <div className={classes.buttonContainer}>
-      <Button
-        className={classes.button}
-        variant="contained"
-        color="primary"
-        size="large"
-        onClick={() => setDisplayGameOptions(true)}
-      >
-        Game Options Panel
-      </Button>
 
-      <Button
-        className={classes.button}
-        variant="contained"
-        color="primary"
-        size="large"
-        onClick={() => setDisplayImageUpload(true)}
-      >
-        Image Upload Panel
-      </Button>
-    </div>
+  return (
+    <>
+      <NavigationAppBar />
+
+      <div className={classes.container}>
+        <div className={classes.buttonContainer}>
+          <Button
+            className={classes.button}
+            variant="contained"
+            color="primary"
+            size="large"
+            onClick={() => setShowGameSettings(true)}
+          >
+            Game Settings Panel
+          </Button>
+
+          <Button
+            className={classes.button}
+            variant="contained"
+            color="primary"
+            size="large"
+            onClick={() => setShowFileUpload(true)}
+          >
+            File Upload Panel
+          </Button>
+        </div>
+      </div>
+    </>
   );
 };
 

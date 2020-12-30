@@ -1,20 +1,10 @@
 import React, { useState } from "react";
-import {
-  Button,
-  FormControl,
-  FormHelperText,
-  IconButton,
-  Input,
-  InputAdornment,
-  InputLabel,
-  Typography,
-} from "@material-ui/core";
+import { Button, Card, IconButton, InputAdornment, TextField, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { Visibility, VisibilityOff } from "@material-ui/icons";
 import firebase from "firebase/app";
 import { NavigationAppBar } from "../../components";
 import AdminPanel from "./AdminPanel";
-import colors from "../../res/colors";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -24,21 +14,18 @@ const useStyles = makeStyles((theme) =>
       flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: colors.secondary,
     },
-    box: {
-      backgroundColor: "white",
+    card: {
       width: "60%",
       height: "60%",
       display: "flex",
       flexDirection: "column",
-      justifyContent: "center",
+      justifyContent: "space-evenly",
       alignItems: "center",
-      alignSelf: "center",
-      padding: 24,
-      boxSizing: "border-box",
     },
     text: {
+      marginBottom: 24,
+      textAlign: "center",
       [theme.breakpoints.only("xs")]: {
         fontSize: "1.25rem",
       },
@@ -48,42 +35,25 @@ const useStyles = makeStyles((theme) =>
       [theme.breakpoints.up("md")]: {
         fontSize: "2rem",
       },
-      textAlign: "center",
-      marginBottom: 24,
     },
-    submit: {
+    formContainer: {
       display: "flex",
       flexDirection: "column",
-      justifyContent: "center",
       alignItems: "center",
     },
-    spacing: {
-      margin: 15,
-    },
     button: {
-      margin: 24,
+      width: "100%",
+      marginTop: 24,
       borderRadius: 20,
       [theme.breakpoints.only("xs")]: {
-        width: "100%",
         fontSize: "1rem",
       },
       [theme.breakpoints.only("sm")]: {
-        width: "100%",
         fontSize: "1rem",
       },
       [theme.breakpoints.up("md")]: {
-        width: "100%",
         fontSize: "1.25rem",
       },
-    },
-    password: {
-      margin: theme.spacing(1),
-    },
-    textField: {
-      width: "90%",
-    },
-    passwordError: {
-      color: "red",
     },
   })
 );
@@ -91,104 +61,84 @@ const useStyles = makeStyles((theme) =>
 const AdminAuth: React.FC = () => {
   const classes = useStyles();
 
-  const [wasLogged, setWasLogged] = useState<boolean>(false);
+  const [loggedIn, setLoggedIn] = useState(true);
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showError, setShowError] = useState(false);
 
-  const [password, setPassword] = React.useState<PasswordType>({
-    value: "",
-    showPassword: false,
-    displayError: false,
-  });
-
-  /**
-   * Function for updating the password typed by the user in the provided text field
-   * @param prop - specific value of the password to be updated
-   */
-  const handleChange = (prop: keyof PasswordType) => (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setPassword({ ...password, [prop]: event.target.value });
+  const onPasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setShowError(false);
+    setPassword(event.target.value);
   };
 
-  /**
-   * Function for showing the password in text mode upon user click
-   */
-  const handleClickShowPassword = () => {
-    setPassword({ ...password, showPassword: !password.showPassword });
+  const onPasswordKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      onSubmitClick().then(() => {});
+    }
   };
 
-  /**
-   * Function for authenticating the user upon password submission
-   */
-  const submitClick = () => {
+  const onShowPasswordClick = () => setShowPassword((prevState) => !prevState);
+
+  const onShowPasswordMouseDown = (event: React.MouseEvent<HTMLButtonElement>) =>
+    event.preventDefault();
+
+  const onSubmitClick = () =>
     firebase
       .auth()
-      .signInWithEmailAndPassword("spot-the-lesion@gmail.com", password.value)
-      .then(() => {
-        setPassword({ ...password, displayError: false });
-        setWasLogged(true);
-      })
-      .catch((_) => {
-        setPassword({ ...password, value: "", displayError: true });
-      });
-  };
+      .signInWithEmailAndPassword("spot-the-lesion@gmail.com", password)
+      .then(() => setLoggedIn(true))
+      .catch((_error) => setShowError(true));
 
-  return wasLogged ? (
-    <>
-      <NavigationAppBar />
-      <div className={classes.container}>
-        <AdminPanel />
-      </div>
-    </>
-  ) : (
+  if (loggedIn) {
+    return <AdminPanel />;
+  }
+
+  return (
     <>
       <NavigationAppBar />
 
       <div className={classes.container}>
-        <div className={classes.box}>
-          <Typography className={classes.text}> Enter Password </Typography>
-          <div className={[classes.submit, classes.spacing].join(" ")}>
-            <FormControl
-              className={[
-                classes.submit,
-                classes.spacing,
-                classes.password,
-                classes.textField,
-              ].join(" ")}
-            >
-              <InputLabel htmlFor="standard-adornment-password">Password</InputLabel>
-              <Input
-                id="standard-adornment-password"
-                type={password.showPassword ? "text" : "password"}
-                value={password.value}
-                error={password.displayError}
-                onChange={handleChange("value")}
-                aria-describedby="incorrect-password"
-                endAdornment={
+        <Card className={classes.card}>
+          <Typography className={classes.text}>Admin Screen</Typography>
+
+          <div className={classes.formContainer}>
+            <TextField
+              autoFocus
+              variant="outlined"
+              label="Password"
+              required
+              type={showPassword ? "text" : "password"}
+              error={showError}
+              helperText={showError ? "Incorrect password" : ""}
+              value={password}
+              onChange={onPasswordChange}
+              InputProps={{
+                onKeyDown: onPasswordKeyDown,
+                endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
                       aria-label="toggle password visibility"
-                      onClick={handleClickShowPassword}
+                      onClick={onShowPasswordClick}
+                      onMouseDown={onShowPasswordMouseDown}
                     >
-                      {password.showPassword ? <Visibility /> : <VisibilityOff />}
+                      {showPassword ? <Visibility /> : <VisibilityOff />}
                     </IconButton>
                   </InputAdornment>
-                }
-              />
-              <FormHelperText id="incorrect-password" className={classes.passwordError}>
-                {password.displayError ? "Incorrect Password" : ""}
-              </FormHelperText>
-            </FormControl>
+                ),
+              }}
+            />
+
             <Button
               className={classes.button}
               variant="contained"
               color="primary"
               size="large"
-              onClick={submitClick}
+              onClick={onSubmitClick}
             >
               Log In
             </Button>
           </div>
-        </div>
+        </Card>
       </div>
     </>
   );
