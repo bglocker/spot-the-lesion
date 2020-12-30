@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect } from "react";
 import { createMuiTheme, createStyles, makeStyles, ThemeProvider } from "@material-ui/core/styles";
 import { SnackbarProvider } from "notistack";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import { getGlobalVariables, initializeFirebase } from "./firebase/firebaseApp";
+import useSessionState from "./hooks/useSessionState";
 import Achievements from "./screens/achievements/Achievements";
 import Admin from "./screens/admin/Admin";
 import AdminAuthContext from "./screens/admin/AdminAuthContext";
@@ -53,12 +54,11 @@ const App: React.FC = () => {
     initializeApp().then(() => {});
   }, []);
 
-  /* TODO: use sessionStorage to persist after refresh */
-  const [adminLoggedIn, setAdminLoggedIn] = useState(false);
+  const [adminLoggedIn, setAdminLoggedIn] = useSessionState(false, "adminLoggedIn");
 
   const adminLogIn = useCallback(() => {
     setAdminLoggedIn(true);
-  }, []);
+  }, [setAdminLoggedIn]);
 
   return (
     <ThemeProvider theme={theme}>
