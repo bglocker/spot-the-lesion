@@ -1,12 +1,12 @@
-interface License {
+interface Library {
+  name: string;
+  version: string;
+  licenseInfo: LicenseInfo;
+}
+
+interface LicenseInfo {
   licenses: string;
   repository: string;
   licenseUrl: string;
   parents: string;
-}
-
-interface ProcessedLicense {
-  name: string;
-  version: string;
-  licenseSpecs: ILicense;
 }

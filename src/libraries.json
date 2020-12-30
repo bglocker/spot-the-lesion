@@ -65,6 +65,12 @@
         "licenseUrl": "https://github.com/DefinitelyTyped/DefinitelyTyped/raw/master/LICENSE",
         "parents": "spot-the-lesion"
     },
+    "@types/react@17.0.0": {
+        "licenses": "MIT",
+        "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+        "licenseUrl": "https://github.com/DefinitelyTyped/DefinitelyTyped/raw/master/LICENSE",
+        "parents": "spot-the-lesion"
+    },
     "@types/react-dom@17.0.0": {
         "licenses": "MIT",
         "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
@@ -72,12 +78,6 @@
         "parents": "spot-the-lesion"
     },
     "@types/react-router-dom@5.1.6": {
-        "licenses": "MIT",
-        "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-        "licenseUrl": "https://github.com/DefinitelyTyped/DefinitelyTyped/raw/master/LICENSE",
-        "parents": "spot-the-lesion"
-    },
-    "@types/react@17.0.0": {
         "licenses": "MIT",
         "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
         "licenseUrl": "https://github.com/DefinitelyTyped/DefinitelyTyped/raw/master/LICENSE",
@@ -143,16 +143,16 @@
         "licenseUrl": "https://github.com/prettier/eslint-plugin-prettier/raw/master/LICENSE.md",
         "parents": "spot-the-lesion"
     },
-    "eslint-plugin-react-hooks@4.2.0": {
-        "licenses": "MIT",
-        "repository": "https://github.com/facebook/react",
-        "licenseUrl": "https://github.com/facebook/react/raw/master/LICENSE",
-        "parents": "spot-the-lesion"
-    },
     "eslint-plugin-react@7.21.5": {
         "licenses": "MIT",
         "repository": "https://github.com/yannickcr/eslint-plugin-react",
         "licenseUrl": "https://github.com/yannickcr/eslint-plugin-react/raw/master/LICENSE",
+        "parents": "spot-the-lesion"
+    },
+    "eslint-plugin-react-hooks@4.2.0": {
+        "licenses": "MIT",
+        "repository": "https://github.com/facebook/react",
+        "licenseUrl": "https://github.com/facebook/react/raw/master/LICENSE",
         "parents": "spot-the-lesion"
     },
     "firebase@8.2.1": {
@@ -176,6 +176,12 @@
         "licenses": "MIT",
         "repository": "https://github.com/prettier/prettier",
         "licenseUrl": "https://github.com/prettier/prettier/raw/master/LICENSE",
+        "parents": "spot-the-lesion"
+    },
+    "react@17.0.1": {
+        "licenses": "MIT",
+        "repository": "https://github.com/facebook/react",
+        "licenseUrl": "https://github.com/facebook/react/raw/master/LICENSE",
         "parents": "spot-the-lesion"
     },
     "react-dom@17.0.1": {
@@ -206,18 +212,6 @@
         "licenses": "MIT",
         "repository": "https://github.com/nygardk/react-share",
         "licenseUrl": "https://github.com/nygardk/react-share/raw/master/LICENSE",
-        "parents": "spot-the-lesion"
-    },
-    "react@17.0.1": {
-        "licenses": "MIT",
-        "repository": "https://github.com/facebook/react",
-        "licenseUrl": "https://github.com/facebook/react/raw/master/LICENSE",
-        "parents": "spot-the-lesion"
-    },
-    "string-builder@0.1.8": {
-        "licenses": "MIT",
-        "repository": "https://github.com/halil/string-builder",
-        "licenseUrl": "https://github.com/halil/string-builder/raw/master/LICENSE",
         "parents": "spot-the-lesion"
     },
     "typescript@4.1.3": {
