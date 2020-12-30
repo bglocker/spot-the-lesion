@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { Button, Card, IconButton, InputAdornment, TextField, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { Visibility, VisibilityOff } from "@material-ui/icons";
 import firebase from "firebase/app";
+import AdminAuthContext from "./AdminAuthContext";
 import { NavigationAppBar } from "../../components";
-import AdminPanel from "./AdminPanel";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -58,13 +58,14 @@ const useStyles = makeStyles((theme) =>
   })
 );
 
-const AdminAuth: React.FC = () => {
-  const classes = useStyles();
-
-  const [loggedIn, setLoggedIn] = useState(true);
+const AdminLogin: React.FC = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showError, setShowError] = useState(false);
+
+  const { adminLogIn } = useContext(AdminAuthContext);
+
+  const classes = useStyles();
 
   const onPasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setShowError(false);
@@ -86,16 +87,12 @@ const AdminAuth: React.FC = () => {
     firebase
       .auth()
       .signInWithEmailAndPassword("spot-the-lesion@gmail.com", password)
-      .then(() => setLoggedIn(true))
+      .then(() => adminLogIn())
       .catch((_error) => setShowError(true));
-
-  if (loggedIn) {
-    return <AdminPanel />;
-  }
 
   return (
     <>
-      <NavigationAppBar />
+      <NavigationAppBar showBack />
 
       <div className={classes.container}>
         <Card className={classes.card}>
@@ -144,4 +141,4 @@ const AdminAuth: React.FC = () => {
   );
 };
 
-export default AdminAuth;
+export default AdminLogin;

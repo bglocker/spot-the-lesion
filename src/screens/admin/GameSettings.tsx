@@ -105,14 +105,14 @@ const getMinValue = (name: string): number => {
 };
 
 const GameSettings: React.FC = () => {
-  const classes = useStyles();
-
   const [loadData, setLoadData] = useState(true);
   const [currentData, setCurrentData] = useState<FirestoreOptionsData>(null!);
 
   const smallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down("xs"));
 
   const { enqueueSnackbar } = useSnackbar();
+
+  const classes = useStyles();
 
   // To add an option to the list:
   //  a) Create Firebase number field: in default_options and current_options
@@ -242,7 +242,7 @@ const GameSettings: React.FC = () => {
 
   return (
     <>
-      <NavigationAppBar />
+      <NavigationAppBar showBack />
 
       <div className={classes.container}>
         <Card className={classes.card}>

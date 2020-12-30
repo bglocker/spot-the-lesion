@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@material-ui/core/";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
+import { useHistory } from "react-router-dom";
 import { NavigationAppBar } from "../../components";
-import GameSettings from "./GameSettings";
-import FileUpload from "./FileUpload";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -38,23 +37,18 @@ const useStyles = makeStyles((theme) =>
   })
 );
 
-const AdminPanel: React.FC = () => {
+const Admin: React.FC = () => {
+  const history = useHistory();
+
   const classes = useStyles();
 
-  const [showGameSettings, setShowGameSettings] = useState(false);
-  const [showFileUpload, setShowFileUpload] = useState(false);
+  const onGameSettingsClick = () => history.push("/admin/game-settings");
 
-  if (showGameSettings) {
-    return <GameSettings />;
-  }
-
-  if (showFileUpload) {
-    return <FileUpload />;
-  }
+  const onFileUploadClick = () => history.push("/admin/file-upload");
 
   return (
     <>
-      <NavigationAppBar />
+      <NavigationAppBar showBack />
 
       <div className={classes.container}>
         <div className={classes.buttonContainer}>
@@ -63,7 +57,7 @@ const AdminPanel: React.FC = () => {
             variant="contained"
             color="primary"
             size="large"
-            onClick={() => setShowGameSettings(true)}
+            onClick={onGameSettingsClick}
           >
             Game Settings Panel
           </Button>
@@ -73,7 +67,7 @@ const AdminPanel: React.FC = () => {
             variant="contained"
             color="primary"
             size="large"
-            onClick={() => setShowFileUpload(true)}
+            onClick={onFileUploadClick}
           >
             File Upload Panel
           </Button>
@@ -83,4 +77,4 @@ const AdminPanel: React.FC = () => {
   );
 };
 
-export default AdminPanel;
+export default Admin;

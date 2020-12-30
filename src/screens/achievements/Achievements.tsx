@@ -57,10 +57,10 @@ const useStyles = makeStyles((theme) =>
 );
 
 const Achievements: React.FC = () => {
-  const classes = useStyles();
-
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedAchievement, setSelectedAchievement] = useState(lockedAchievement);
+
+  const classes = useStyles();
 
   const onDialogClose = () => setDialogOpen(false);
 

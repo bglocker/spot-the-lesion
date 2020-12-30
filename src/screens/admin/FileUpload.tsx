@@ -97,8 +97,6 @@ const axiosConfig = { headers: { "content-type": "multipart/form-data" } };
 const wrongPasswordResponse = "Upload has not been completed, the server password was not correct!";
 
 const FileUpload: React.FC = () => {
-  const classes = useStyles();
-
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [selectedJsons, setSelectedJsons] = useState<File[]>([]);
 
@@ -108,6 +106,8 @@ const FileUpload: React.FC = () => {
   const [uploadSuccessful, setUploadSuccessful] = useState(false);
 
   const { enqueueSnackbar } = useSnackbar();
+
+  const classes = useStyles();
 
   const resetState = () => {
     setImageHelperText("");
@@ -245,7 +245,7 @@ const FileUpload: React.FC = () => {
 
   return (
     <>
-      <NavigationAppBar />
+      <NavigationAppBar showBack />
 
       <div className={classes.container}>
         <Card className={classes.card}>
