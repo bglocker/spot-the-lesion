@@ -7,7 +7,6 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Theme,
 } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { useHistory } from "react-router-dom";
@@ -16,7 +15,7 @@ import logo from "../../res/images/home/logo.gif";
 import scan from "../../res/images/home/ct-scan.png";
 import brain from "../../res/images/home/brain.png";
 
-const useStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
       height: "100%",
@@ -70,14 +69,14 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 const Home: React.FC = () => {
-  const classes = useStyles();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const history = useHistory();
 
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const classes = useStyles();
 
-  const suggestTutorialIfFirstTimePlaying = () => {
-    if (localStorage.getItem("firstSession")) {
+  const onPlayClick = () => {
+    if (localStorage.getItem("firstSession") === "true") {
       history.push("/game-menu");
     } else {
       localStorage.setItem("firstSession", "true");
@@ -85,6 +84,16 @@ const Home: React.FC = () => {
       setDialogOpen(true);
     }
   };
+
+  const onTutorialClick = () => history.push("/tutorial");
+
+  const onLeaderboardClick = () => history.push("/leaderboard");
+
+  const onAchievementsClick = () => history.push("/achievements");
+
+  const onStatisticsClick = () => history.push("/statistics");
+
+  const onCreditsClick = () => history.push("/credits");
 
   return (
     <>
@@ -102,7 +111,7 @@ const Home: React.FC = () => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={suggestTutorialIfFirstTimePlaying}
+              onClick={onPlayClick}
             >
               Play
             </Button>
@@ -112,7 +121,7 @@ const Home: React.FC = () => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => history.push("/tutorial")}
+              onClick={onTutorialClick}
             >
               How to Play
             </Button>
@@ -122,7 +131,7 @@ const Home: React.FC = () => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => history.push("/leaderboard")}
+              onClick={onLeaderboardClick}
             >
               Leaderboard
             </Button>
@@ -132,7 +141,7 @@ const Home: React.FC = () => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => history.push("/achievements")}
+              onClick={onAchievementsClick}
             >
               Achievements
             </Button>
@@ -142,7 +151,7 @@ const Home: React.FC = () => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => history.push("/statistics")}
+              onClick={onStatisticsClick}
             >
               Statistics
             </Button>
@@ -152,7 +161,7 @@ const Home: React.FC = () => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => history.push("/credits")}
+              onClick={onCreditsClick}
             >
               Credits
             </Button>
@@ -173,11 +182,11 @@ const Home: React.FC = () => {
           </DialogContent>
 
           <DialogActions>
-            <Button color="primary" onClick={() => history.push("/tutorial")}>
+            <Button color="primary" onClick={onTutorialClick}>
               Show me the tutorial
             </Button>
 
-            <Button color="primary" onClick={() => history.push("/game-menu")}>
+            <Button color="primary" onClick={onPlayClick}>
               I just want to play
             </Button>
           </DialogActions>
