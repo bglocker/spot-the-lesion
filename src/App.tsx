@@ -3,7 +3,8 @@ import { createMuiTheme, createStyles, makeStyles, ThemeProvider } from "@materi
 import { SnackbarProvider } from "notistack";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import { getGlobalVariables, initializeFirebase } from "./firebase/firebaseApp";
-import useSessionState from "./hooks/useSessionState";
+import { ProtectedRoute } from "./components";
+import { useSessionState } from "./hooks";
 import Achievements from "./screens/achievements/Achievements";
 import Admin from "./screens/admin/Admin";
 import AdminAuthContext from "./screens/admin/AdminAuthContext";
@@ -15,7 +16,6 @@ import GameMenu from "./screens/game/GameMenu";
 import GameRoute from "./screens/game/GameRoute";
 import Home from "./screens/home/Home";
 import Leaderboard from "./screens/leaderboard/Leaderboard";
-import ProtectedRoute from "./components/ProtectedRoute";
 import Statistics from "./screens/statistics/Statistics";
 import Tutorial from "./screens/tutorial/Tutorial";
 import colors from "./res/colors";

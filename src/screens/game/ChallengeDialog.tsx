@@ -6,11 +6,9 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  FormControl,
   IconButton,
   InputAdornment,
-  InputLabel,
-  OutlinedInput,
+  TextField,
   Tooltip,
 } from "@material-ui/core";
 import { AssignmentTurnedInOutlined } from "@material-ui/icons";
@@ -20,10 +18,10 @@ const ChallengeDialog: React.FC<ChallengeDialogProps> = ({
   onClose,
   link,
 }: ChallengeDialogProps) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const [tooltipTitle, setTooltipTitle] = useState("Copy to clipboard");
+
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const selectInputText = () => {
     if (inputRef.current === null) {
@@ -49,9 +47,7 @@ const ChallengeDialog: React.FC<ChallengeDialogProps> = ({
     setTooltipOpen(true);
   };
 
-  const onMouseLeaveAdornment = () => {
-    setTooltipOpen(false);
-  };
+  const onMouseLeaveAdornment = () => setTooltipOpen(false);
 
   return (
     <Dialog open={open} onClose={onClose}>
@@ -60,19 +56,19 @@ const ChallengeDialog: React.FC<ChallengeDialogProps> = ({
       <DialogContent>
         <DialogContentText>Share this link to a friend to challenge them</DialogContentText>
 
-        <FormControl variant="outlined" fullWidth margin="dense">
-          <InputLabel htmlFor="challengeLinkTextField">Challenge link</InputLabel>
-
-          <OutlinedInput
-            id="challengeLinkTextField"
-            inputRef={inputRef}
-            autoFocus
-            type="url"
-            readOnly
-            label="Challenge link"
-            value={link}
-            onClick={selectInputText}
-            endAdornment={
+        <TextField
+          inputRef={inputRef}
+          variant="outlined"
+          fullWidth
+          margin="dense"
+          autoFocus
+          type="url"
+          label="Challenge link"
+          value={link}
+          onClick={selectInputText}
+          InputProps={{
+            readOnly: true,
+            endAdornment: (
               <InputAdornment
                 position="end"
                 onMouseEnter={onMouseEnterAdornment}
@@ -84,9 +80,9 @@ const ChallengeDialog: React.FC<ChallengeDialogProps> = ({
                   </IconButton>
                 </Tooltip>
               </InputAdornment>
-            }
-          />
-        </FormControl>
+            ),
+          }}
+        />
       </DialogContent>
 
       <DialogActions>

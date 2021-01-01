@@ -85,26 +85,25 @@ const useStyles = makeStyles((theme) =>
 );
 
 const GameMenu: React.FC = () => {
-  const classes = useStyles();
-
-  const history = useHistory();
-
   const [gameModes, setGameModes] = useState<GameMode[]>([]);
   const [difficulties, setDifficulties] = useState<Difficulty[]>([]);
 
+  const history = useHistory();
+
+  const classes = useStyles();
+
   const onToggleGameMode = (
-    _unusedEvent: React.MouseEvent<HTMLButtonElement>,
+    _event: React.MouseEvent<HTMLButtonElement>,
     newGameModes: GameMode[]
   ) => setGameModes(newGameModes);
 
   const onToggleDifficulty = (
-    _unusedEvent: React.MouseEvent<HTMLButtonElement>,
+    _event: React.MouseEvent<HTMLButtonElement>,
     newDifficulties: Difficulty[]
   ) => setDifficulties(newDifficulties);
 
-  const onStartClick = () => {
+  const onStartClick = () =>
     history.push(`/game?gameMode=${gameModes[0]}&difficulty=${difficulties[0]}`);
-  };
 
   return (
     <>

@@ -1,0 +1,55 @@
+const partition = <T>(xs: T[], predicate: (value: T) => boolean): [T[], T[]] =>
+  xs.reduce(
+    (acc, x) => {
+      acc[predicate(x) ? 0 : 1].push(x);
+
+      return acc;
+    },
+    [[], []] as [T[], T[]]
+  );
+
+/**
+ * Create an array from a given range
+ *
+ * @param start First value of range (inclusive)
+ * @param stop  Last value of range (exclusive)
+ * @param step  Step between consecutive range values
+ *
+ * @return Array range
+ */
+const range = (start = 1, stop: number, step = 1): number[] => {
+  const nums: number[] = [];
+
+  for (let i = start; i < stop; i += step) {
+    nums.push(i);
+  }
+
+  return nums;
+};
+
+/**
+ * Create a (randomly) shuffled array from a given range
+ *
+ * @param start First value of range (inclusive)
+ * @param stop  Last value of range (exclusive)
+ * @param step  Step between consecutive range values
+ *
+ * @return Shuffled array range
+ */
+const shuffledRange = (start = 1, stop: number, step = 1): number[] => {
+  const nums: number[] = [];
+
+  for (let i = 0; i < (stop - start) / step; i++) {
+    const j = Math.floor(Math.random() * (i + 1));
+
+    if (j !== i) {
+      nums.push(nums[j]);
+    }
+
+    nums[j] = start + i * step;
+  }
+
+  return nums;
+};
+
+export { partition, range, shuffledRange };

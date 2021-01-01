@@ -35,7 +35,7 @@ const NavigationAppBar: React.FC<NavigationAppBarProps> = ({
       <Toolbar variant="dense">
         <IconButton
           className={classes.backButton}
-          style={{ display: showBack ? "inline-flex" : "none " }}
+          style={{ display: showBack ? "" : "none" }}
           edge="start"
           color="inherit"
           aria-label="Back"

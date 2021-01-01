@@ -45,9 +45,6 @@ const useStyles = makeStyles((theme) =>
       [theme.breakpoints.down("sm")]: {
         display: "none",
       },
-      [theme.breakpoints.up("md")]: {
-        display: "inline-block",
-      },
     },
     button: {
       margin: 8,

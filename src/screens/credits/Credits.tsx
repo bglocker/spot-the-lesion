@@ -93,65 +93,67 @@ const Credits: React.FC = () => {
         </Tabs>
       </AppBar>
 
-      <TabPanel className={classes.container} value={tabIndex} index={0}>
-        <Card className={classes.card}>
-          <Typography className={classes.text}>
-            The AI for this game is based on the{" "}
-            <a href="https://arxiv.org/abs/1906.02283" target="blank">
-              MICCAI 2019 paper
-            </a>
-          </Typography>
+      <div className={classes.container}>
+        <TabPanel value={tabIndex} index={0}>
+          <Card className={classes.card}>
+            <Typography className={classes.text}>
+              The AI for this game is based on the{" "}
+              <a href="https://arxiv.org/abs/1906.02283" target="blank">
+                MICCAI 2019 paper
+              </a>
+            </Typography>
 
-          <Typography className={classes.text}>
-            CT Scan AI developed by Martin Zlocha, Qi Dou and Ben Glocker.
-          </Typography>
+            <Typography className={classes.text}>
+              CT Scan AI developed by Martin Zlocha, Qi Dou and Ben Glocker.
+            </Typography>
 
-          <Typography className={classes.text}>
-            This site was made with React for the 3rd year Software Engineering Group Project by:
-            Andrei-Matei Roman, Andrei-Ovidiu Badea, Calin-Andrei Alexandru, Calin Biberea,
-            Cosmin-Ionut Baies, Tiberiu-Andrei Georgescu
-          </Typography>
+            <Typography className={classes.text}>
+              This site was made with React for the 3rd year Software Engineering Group Project by:
+              Andrei-Matei Roman, Andrei-Ovidiu Badea, Calin-Andrei Alexandru, Calin Biberea,
+              Cosmin-Ionut Baies, Tiberiu-Andrei Georgescu
+            </Typography>
 
-          <Typography className={classes.text}>
-            (c) 2019 Data obtained from the{" "}
-            <a
-              href="https://www.nih.gov/news-events/news-releases/nih-clinical-center-releases-dataset-32000-ct-images"
-              target="blank"
-            >
-              NIH Clinical Center
-            </a>
-          </Typography>
-        </Card>
-      </TabPanel>
+            <Typography className={classes.text}>
+              (c) 2019 Data obtained from the{" "}
+              <a
+                href="https://www.nih.gov/news-events/news-releases/nih-clinical-center-releases-dataset-32000-ct-images"
+                target="blank"
+              >
+                NIH Clinical Center
+              </a>
+            </Typography>
+          </Card>
+        </TabPanel>
 
-      <TabPanel className={classes.container} value={tabIndex} index={1}>
-        <Card className={classes.card}>
-          <Typography className={classes.text}>
-            Here is a list of libraries and images used, kudos to the creators for enabling us to
-            work effectively.
-          </Typography>
+        <TabPanel value={tabIndex} index={1}>
+          <Card className={classes.card}>
+            <Typography className={classes.text}>
+              Here is a list of libraries and images used, kudos to the creators for enabling us to
+              work effectively.
+            </Typography>
 
-          <Typography className={classes.text}>
-            You can find a link to the authors and the licenses for the images by following{" "}
-            <a href="https://drive.google.com/file/d/1zAs8cqA91jkWzLExid3EvleiB8e1yIuu/view?usp=sharing">
-              this link
-            </a>
-            .
-          </Typography>
+            <Typography className={classes.text}>
+              You can find a link to the authors and the licenses for the images by following{" "}
+              <a href="https://drive.google.com/file/d/1zAs8cqA91jkWzLExid3EvleiB8e1yIuu/view?usp=sharing">
+                this link
+              </a>
+              .
+            </Typography>
 
-          <Typography className={classes.text}>
-            Here are the libraries that this game uses:
-          </Typography>
+            <Typography className={classes.text}>
+              Here are the libraries that this game uses:
+            </Typography>
 
-          <List className={classes.list}>
-            {getLibraries().map(({ name, version }) => (
-              <ListItem key={name}>
-                <ListItemText primary={name} secondary={version} />
-              </ListItem>
-            ))}
-          </List>
-        </Card>
-      </TabPanel>
+            <List className={classes.list}>
+              {getLibraries().map(({ name, version }) => (
+                <ListItem key={name}>
+                  <ListItemText primary={name} secondary={version} />
+                </ListItem>
+              ))}
+            </List>
+          </Card>
+        </TabPanel>
+      </div>
     </>
   );
 };

@@ -21,6 +21,7 @@ const constants = {
   /* Firebase Storage */
   maxOperationRetryTime: 3000,
 
+  /* TODO: set canvasSize to multiple of 512 */
   /* Game */
   animationCubesNumber: 10,
   canvasSize: 750,

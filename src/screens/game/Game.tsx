@@ -4,13 +4,8 @@ import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { useHistory } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import axios from "axios";
+import clsx from "clsx";
 import firebase from "firebase/app";
-import GameTopBar from "./GameTopBar";
-import GameSideBar from "./GameSideBar";
-import SubmitScoreDialog from "./SubmitScoreDialog";
-import ChallengeDialog from "./ChallengeDialog";
-import ImageStatsDialog from "./ImageStatsDialog";
-import useFileIdGenerator from "./useFileIdGenerator";
 import { LoadingButton, NavigationAppBar } from "../../components";
 import { useCanvasContext, useHeatmap, useInterval } from "../../hooks";
 import { handleAxiosError, isAxiosError } from "../../utils/axiosUtils";
@@ -39,6 +34,13 @@ import {
   unlockAchievement,
 } from "../../utils/gameUtils";
 import { randomAround } from "../../utils/numberUtils";
+import GameTopBar from "./GameTopBar";
+import GameSideBar from "./GameSideBar";
+import SubmitScoreDialog from "./SubmitScoreDialog";
+import ShareScoreDialog from "./ShareScoreDialog";
+import ChallengeDialog from "./ChallengeDialog";
+import ImageStatsDialog from "./ImageStatsDialog";
+import useFileIdGenerator from "./useFileIdGenerator";
 import colors from "../../res/colors";
 import constants from "../../res/constants";
 import variables from "../../res/variables";
@@ -61,9 +63,6 @@ const useStyles = makeStyles((theme) =>
       flex: 1,
       [theme.breakpoints.down("sm")]: {
         display: "none",
-      },
-      [theme.breakpoints.up("md")]: {
-        display: "block",
       },
     },
     topBarCanvasContainer: {
@@ -117,26 +116,15 @@ const defaultImageData: FirestoreImageData = {
 };
 
 const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: GameProps) => {
-  const classes = useStyles();
-
-  const history = useHistory();
-
-  const [context, canvasRef] = useCanvasContext();
-  const [animationContext, animationCanvasRef] = useCanvasContext();
-
-  const getNewFileId = useFileIdGenerator(difficulty, challengeFileIds);
-
-  const canvasContainer = useRef<HTMLDivElement>(null);
-
-  const [showImageStats, setShowImageStats] = useState(false);
-
-  const [showChallenge, setShowChallenge] = useState(false);
-  const [challengeLink, setChallengeLink] = useState("");
-
   const [heatmapLoading, setHeatmapLoading] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
 
-  const [showSubmit, setShowSubmit] = useState(false);
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [imageStatsDialogOpen, setImageStatsDialogOpen] = useState(false);
+  const [challengeDialogOpen, setChallengeDialogOpen] = useState(false);
+
+  const [challengeLink, setChallengeLink] = useState("");
 
   const [roundNumber, setRoundNumber] = useState(0);
   const [gameEnded, setGameEnded] = useState(false);
@@ -178,7 +166,18 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
   const [aiScore, setAiScore] = useState({ total: 0, round: 0 });
   const [aiCorrectAnswers, setAiCorrectAnswers] = useState(0);
 
+  const [context, canvasRef] = useCanvasContext();
+  const [animationContext, animationCanvasRef] = useCanvasContext();
+
+  const canvasContainer = useRef<HTMLDivElement>(null);
+
+  const getNewFileId = useFileIdGenerator(difficulty, challengeFileIds);
+
   const { enqueueSnackbar } = useSnackbar();
+
+  const history = useHistory();
+
+  const classes = useStyles();
 
   /**
    * Round timer
@@ -195,7 +194,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
   /**
    * Draw the hint circle
    */
-  const showHint = useCallback(() => {
+  const drawHint = useCallback(() => {
     setHintedCurrent(true);
     setHinted(true);
 
@@ -223,7 +222,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
        */
       setTimerColor(colors.timerOrange);
 
-      showHint();
+      drawHint();
     } else if (roundTime === constants.redTime) {
       /*
        * set timer color to timer red
@@ -236,7 +235,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       setEndRunning(true);
       setRoundRunning(false);
     }
-  }, [roundRunning, roundTime, showHint]);
+  }, [roundRunning, roundTime, drawHint]);
 
   /**
    * End timer
@@ -248,7 +247,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
   useInterval(() => setEndTime((prevState) => prevState + 100), endRunning ? 100 : null);
 
   /**
-   * Upload the player click (if available), in order to gather statistics and generate heatmaps
+   * Upload the player click in order to gather statistics and generate heatmaps
    *
    * @param x       Width coordinate
    * @param y       Height coordinate
@@ -465,8 +464,6 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
    * Round end based events
    */
   useEffect(() => {
-    const unlockAchievementHandler = (key, msg) => unlockAchievement(key, msg, enqueueSnackbar);
-
     if (!roundEnded || roundLoading) {
       return;
     }
@@ -476,6 +473,8 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
     if (gameMode === "competitive" && roundNumber === variables.roundsNumber) {
       setGameEnded(true);
     }
+
+    const unlockAchievementHandler = (key, msg) => unlockAchievement(key, msg, enqueueSnackbar);
 
     /* Check general achievements */
     if (playerCorrectCurrent) {
@@ -535,11 +534,11 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
    * Game end based events
    */
   useEffect(() => {
-    const unlockAchievementHandler = (key, msg) => unlockAchievement(key, msg, enqueueSnackbar);
-
     if (!gameEnded) {
       return;
     }
+
+    const unlockAchievementHandler = (key, msg) => unlockAchievement(key, msg, enqueueSnackbar);
 
     if (playerCorrectAnswers === 5) {
       unlockAchievementHandler("fiveCorrectSameRunCompetitive", "Achievement! Master Spotter!");
@@ -650,32 +649,6 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
     });
 
   /**
-   * Create the data to be shown in the Image Stats Pie Chart
-   */
-  const createPieChartData = () => {
-    return [
-      {
-        id: "Correct Answers",
-        label: "Correct Answers",
-        value: imageData.correctClicks,
-        color: "hsl(150, 100%, 35%)",
-      },
-      {
-        id: "Wrong Answers",
-        label: "Wrong Answers",
-        value: imageData.wrongClicks,
-        color: "hsl(0, 100%, 50%)",
-      },
-      {
-        id: "Hints",
-        label: "Total Hints",
-        value: imageData.hintCount,
-        color: "hsl(48, 100%, 45%)",
-      },
-    ];
-  };
-
-  /**
    * Starts a new round, loading a new annotation - image pair
    */
   const startRound = async () => {
@@ -770,14 +743,19 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
    * (Over)write if achieved score is greater than stored one, or there is no stored value
    *
    * @param username Player username to identify achieved score
+   *
+   * @return True if successful, false otherwise
    */
   const submitScore = async (username: string): Promise<void> => {
     const date = new Date();
 
+    const playerScoreFull = playerScore.total + playerScore.round;
+    const aiScoreFull = aiScore.total + aiScore.round;
+
     const scoreData: FirestoreScoreData = {
       user: username,
-      score: playerScore.total + playerScore.round,
-      ai_score: aiScore.total + aiScore.round,
+      score: playerScoreFull,
+      ai_score: aiScoreFull,
       correct_player_answers: playerCorrectAnswers,
       usedHints: hinted,
       correct_ai_answers: aiCorrectAnswers,
@@ -791,19 +769,16 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
     const docName = `${scoreData.year}.${scoreData.month}.${scoreData.day}.${scoreData.user}`;
 
     try {
-      const scoreDoc = await firebase.firestore().collection(scores).doc(docName).get();
+      const snapshot = await firebase.firestore().collection(scores).doc(docName).get();
 
       /* Set if first time played today, or a higher score was achieved */
-      if (!scoreDoc.exists || (scoreDoc.data() as FirestoreScoreData).score < scoreData.score) {
+      if (!snapshot.exists || (snapshot.data() as FirestoreScoreData).score < scoreData.score) {
         await firebase.firestore().collection(scores).doc(docName).set(scoreData);
       }
 
       enqueueSnackbar("Score successfully submitted!", constants.successSnackbarOptions);
 
-      if (
-        playerScore.total + playerScore.round > aiScore.total + aiScore.round &&
-        gameMode === "casual"
-      ) {
+      if (playerScoreFull > aiScoreFull && gameMode === "casual") {
         unlockAchievement("firstCasualWin", "Achievement! Casually Winning!", enqueueSnackbar);
       }
 
@@ -814,9 +789,6 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       } else {
         handleUncaughtError(error, "submitScore", enqueueSnackbar);
       }
-
-      /* Catch again in caller */
-      throw error;
     }
   };
 
@@ -853,7 +825,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
       setChallengeLink(response.data.shortLink);
 
-      setShowChallenge(true);
+      setChallengeDialogOpen(true);
     } catch (error) {
       if (isAxiosError(error)) {
         handleAxiosError(error, enqueueSnackbar);
@@ -863,20 +835,24 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
     }
   };
 
+  const onChallengeClose = () => setChallengeDialogOpen(false);
+
   const onToggleHeatmap = () => {
     setHeatmapLoading(!showHeatmap);
     setShowHeatmap((prevState) => !prevState);
   };
 
-  const onShowSubmit = () => setShowSubmit(true);
+  const onSubmitClick = () => setSubmitDialogOpen(true);
 
-  const onCloseSubmit = () => setShowSubmit(false);
+  const onSubmitClose = () => setSubmitDialogOpen(false);
 
-  const onCloseChallenge = () => setShowChallenge(false);
+  const onShareClick = () => setShareDialogOpen(true);
 
-  const onShowImageStats = () => setShowImageStats(true);
+  const onShareClose = () => setShareDialogOpen(false);
 
-  const onCloseImageStats = () => setShowImageStats(false);
+  const onImageStatsClick = () => setImageStatsDialogOpen(true);
+
+  const onImageStatsClose = () => setImageStatsDialogOpen(false);
 
   useHeatmap(
     showHeatmap,
@@ -888,7 +864,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
   return (
     <>
       <NavigationAppBar showBack>
-        <Button color="inherit" disabled={!roundEnded || roundLoading} onClick={onShowImageStats}>
+        <Button color="inherit" disabled={!roundEnded || roundLoading} onClick={onImageStatsClick}>
           Show Image Stats
         </Button>
 
@@ -909,21 +885,21 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
           <GameTopBar
             gameMode={gameMode}
             hintDisabled={hintedCurrent || !roundRunning}
-            onHintClick={showHint}
+            onHintClick={drawHint}
             roundTime={roundTime}
             timerColor={timerColor}
           />
 
           <Card className={classes.canvasContainer} ref={canvasContainer}>
             <canvas
-              className={`${classes.canvas} ${classes.imageCanvas}`}
+              className={clsx(classes.canvas, classes.imageCanvas)}
               ref={canvasRef}
               height={constants.canvasSize}
               width={constants.canvasSize}
             />
 
             <canvas
-              className={`${classes.canvas} ${classes.animationCanvas}`}
+              className={clsx(classes.canvas, classes.animationCanvas)}
               ref={animationCanvasRef}
               height={constants.canvasSize}
               width={constants.canvasSize}
@@ -940,21 +916,28 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
           roundLoading={roundLoading}
           showIncrement={showIncrement}
           onStartRound={startRound}
-          onSubmitClick={onShowSubmit}
+          onSubmitClick={onSubmitClick}
+          onShareClick={onShareClick}
           onChallenge={createChallenge}
           playerScore={playerScore}
           aiScore={aiScore}
         />
       </div>
 
-      <SubmitScoreDialog open={showSubmit} onClose={onCloseSubmit} onSubmit={submitScore} />
+      <SubmitScoreDialog open={submitDialogOpen} onClose={onSubmitClose} onSubmit={submitScore} />
 
-      <ChallengeDialog open={showChallenge} onClose={onCloseChallenge} link={challengeLink} />
+      <ShareScoreDialog
+        open={shareDialogOpen}
+        onClose={onShareClose}
+        score={playerScore.total + playerScore.round}
+      />
+
+      <ChallengeDialog open={challengeDialogOpen} onClose={onChallengeClose} link={challengeLink} />
 
       <ImageStatsDialog
-        open={showImageStats}
-        onClose={onCloseImageStats}
-        data={createPieChartData()}
+        open={imageStatsDialogOpen}
+        onClose={onImageStatsClose}
+        imageData={imageData}
       />
     </>
   );
