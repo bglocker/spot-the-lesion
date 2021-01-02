@@ -41,13 +41,7 @@ const GameTopBar: React.FC<GameTopBarProps> = ({
   return (
     <Card className={classes.container}>
       <HideFragment hide={gameMode !== "casual"}>
-        <Button
-          hidden={gameMode !== "casual"}
-          variant="contained"
-          color="secondary"
-          disabled={hintDisabled}
-          onClick={onHintClick}
-        >
+        <Button variant="contained" color="secondary" disabled={hintDisabled} onClick={onHintClick}>
           Show hint
         </Button>
       </HideFragment>

@@ -120,7 +120,7 @@ const Home: React.FC = () => {
               size="large"
               onClick={onTutorialClick}
             >
-              How to Play
+              Tutorial
             </Button>
 
             <Button

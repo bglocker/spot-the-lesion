@@ -23,7 +23,7 @@ import constants from "../../res/constants";
 const useStyles = makeStyles(() =>
   createStyles({
     appBar: {
-      backgroundColor: "#003B46",
+      backgroundColor: "#004445",
     },
     tabIndicator: {
       backgroundColor: "#C4DFE6",
@@ -73,8 +73,8 @@ const numSlides = 2;
 
 const Statistics: React.FC = () => {
   const [tabIndex, setTabIndex] = useState(0);
-  const [slideIndex, setSlideIndex] = useState(0);
 
+  const [slideIndex, setSlideIndex] = useState(0);
   const [slideIn, setSlideIn] = useState(true);
   const [slideDirection, setSlideDirection] = useState<"left" | "right">("left");
 
@@ -201,7 +201,7 @@ const Statistics: React.FC = () => {
           classes={{ indicator: classes.tabIndicator }}
           variant={smallScreen ? "fullWidth" : "standard"}
           centered
-          aria-label="Game mode"
+          aria-label="Statistics pages"
           value={tabIndex}
           onChange={onTabChange}
         >

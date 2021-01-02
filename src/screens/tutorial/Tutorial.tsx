@@ -1,130 +1,95 @@
 import React, { useEffect, useState } from "react";
-import { Button, ButtonGroup, Card, Slide, SlideProps } from "@material-ui/core";
-import { ArrowBack, ArrowForward } from "@material-ui/icons";
+import {
+  AppBar,
+  Button,
+  ButtonGroup,
+  Slide,
+  Tab,
+  Tabs,
+  Theme,
+  useMediaQuery,
+} from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
+import { ArrowBack, ArrowForward } from "@material-ui/icons";
 import { useHistory } from "react-router-dom";
-import { NavigationAppBar } from "../../components";
-import TutorialCard from "./card/TutorialCard";
-import doctor from "../../res/images/tutorial/doctor.png";
-import start_screen from "../../res/images/tutorial/start screen.png";
-import strategy_game from "../../res/images/tutorial/strategy_game.png";
-import help from "../../res/images/tutorial/help.png";
-import answer from "../../res/images/tutorial/answer.png";
-import wrong_ai from "../../res/images/tutorial/wrong ai.png";
-import ai_answer from "../../res/images/tutorial/right ai.png";
-import giftbox from "../../res/images/tutorial/giftbox.png";
-import hourglass from "../../res/images/tutorial/hourglass.png";
-import calm from "../../res/images/tutorial/calm.png";
-import application from "../../res/images/tutorial/application.png";
-import hint from "../../res/images/tutorial/mystery.png";
-import points from "../../res/images/tutorial/scoring.png";
-
-const slideImages = [
-  doctor,
-  start_screen,
-  strategy_game,
-  start_screen,
-  help,
-  answer,
-  points,
-  hourglass,
-  giftbox,
-  wrong_ai,
-  ai_answer,
-  calm,
-  hint,
-  application,
-  "",
-];
-
-const slideTexts = [
-  "Welcome to Spot-the-Lesion!",
-  "You’ll receive a sample of a CT scan like this one below, and you’ll have to find the lesion present in it.",
-  "There are 2 game modes: competitive and casual",
-  "In the competitive mode you have 10 seconds to click on the region of the scan where you think the lesion is located.",
-  "After 5 seconds, a hint will appear - the red circle indicates the part of the image which you should look at.",
-  "When you click on the CT scan, an orange cross will appear",
-  "If your click was correct, then you’ll see a green (+) and points added in the card near the CT scan",
-  "The faster you answer, the more points you score (10 * time remaining)...",
-  "...and if you answer without a hint, you get double the points",
-  "You’ll also see the AI’s prediction on the lesion, marked in red",
-  "Finally, you will see the correct answer marked in green.",
-  "In the casual game mode, you can take your time when answering, as there is no time limit per picture",
-  "If you want some help, you can use the hint button located on top of the CT scan image",
-  "You can play as much as you want and when you are done you can just submit your score",
-  "That's it! Now, can you spot more lesions than the AI?",
-];
+import { HideFragment, NavigationAppBar, TabPanel } from "../../components";
+import TutorialCard from "./TutorialCard";
+import tutorialItems from "./tutorialItems";
 
 const useStyles = makeStyles(() =>
   createStyles({
-    backButton: {
-      marginRight: 8,
+    appBar: {
+      backgroundColor: "#004445",
+    },
+    tabIndicator: {
+      backgroundColor: "#C4DFE6",
+    },
+    tab: {
+      fontSize: "1rem",
     },
     container: {
-      width: "100%",
+      height: "100%",
       display: "flex",
       flexDirection: "column",
-      justifyContent: "center",
+      justifyContent: "space-evenly",
       alignItems: "center",
-      overflow: "hidden",
+      overflowX: "hidden",
     },
-    card: {
-      width: "90%",
-      height: "80vh",
+    tutorialCard: {
+      width: "80%",
+      height: "80%",
+    },
+    playButtonContainer: {
+      flex: 1,
       display: "flex",
       flexDirection: "column",
       justifyContent: "center",
-      alignItems: "center",
-      marginTop: 24,
     },
     playButton: {
-      display: (props: Record<string, unknown>) => (props.index === 14 ? "inline-flex" : "none"),
       borderRadius: 20,
-      paddingLeft: 24,
-      paddingRight: 24,
       fontSize: "3rem",
-    },
-    buttonGroup: {
-      marginTop: 16,
     },
   })
 );
 
-const Tutorial: React.FC = () => {
-  const [index, setIndex] = useState(0);
-  const [slideIn, setSlideIn] = useState(true);
-  const [slideDirection, setSlideDirection] = useState<SlideProps["direction"]>("down");
+const numSlides = tutorialItems.length;
 
-  const classes = useStyles({ index });
+const Tutorial: React.FC = () => {
+  const [tabIndex, setTabIndex] = useState(0);
+
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [slideIn, setSlideIn] = useState(true);
+  const [slideDirection, setSlideDirection] = useState<"left" | "right">("left");
+
+  const smallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down("xs"));
 
   const history = useHistory();
 
-  const textContent = slideTexts[index];
-  const imageContent = slideImages[index];
-  const numSlides = slideTexts.length;
+  const classes = useStyles();
 
-  const onArrowClick = (direction: SlideProps["direction"]) => {
-    const increment = direction === "left" ? -1 : 1;
-    const newIndex = (index + increment + numSlides) % numSlides;
-    const oppDirection = direction === "left" ? "right" : "left";
+  const onTabChange = async (_event, newValue: number) => setTabIndex(newValue);
 
+  const onArrowClick = (direction: "left" | "right") => {
     setSlideDirection(direction);
     setSlideIn(false);
+  };
 
-    window.setTimeout(() => {
-      setIndex(newIndex);
-      setSlideDirection(oppDirection);
-      setSlideIn(true);
-    }, 500);
+  const onSlideExited = () => {
+    const increment = slideDirection === "left" ? -1 : 1;
+    const newIndex = (slideIndex + increment + numSlides) % numSlides;
+
+    setSlideIndex(newIndex);
+    setSlideDirection((prevState) => (prevState === "left" ? "right" : "left"));
+    setSlideIn(true);
   };
 
   useEffect(() => {
-    const onKeyDown = (e: { keyCode: number }) => {
-      if (e.keyCode === 37) {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowLeft") {
         onArrowClick("left");
       }
 
-      if (e.keyCode === 39) {
+      if (event.key === "ArrowRight") {
         onArrowClick("right");
       }
     };
@@ -134,36 +99,67 @@ const Tutorial: React.FC = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   });
 
+  const onPlayClick = () => history.replace("/game-menu");
+
   return (
     <>
       <NavigationAppBar showBack />
 
+      <AppBar className={classes.appBar} position="sticky">
+        <Tabs
+          classes={{ indicator: classes.tabIndicator }}
+          variant={smallScreen ? "fullWidth" : "standard"}
+          centered
+          aria-label="Tutorial pages"
+          value={tabIndex}
+          onChange={onTabChange}
+        >
+          <Tab className={classes.tab} label="How to Play" />
+
+          <Tab className={classes.tab} label="Lesions" />
+        </Tabs>
+      </AppBar>
+
       <div className={classes.container}>
-        <Slide in={slideIn} direction={slideDirection}>
-          <Card className={classes.card}>
-            <TutorialCard textContent={textContent} imageLink={imageContent} />
+        <TabPanel value={tabIndex} index={0}>
+          <Slide
+            appear={false}
+            in={slideIn}
+            direction={slideDirection}
+            timeout={{ enter: 400, exit: 400 }}
+            onExited={onSlideExited}
+          >
+            <TutorialCard className={classes.tutorialCard} tutorialItem={tutorialItems[slideIndex]}>
+              <HideFragment hide={slideIndex !== 14}>
+                <div className={classes.playButtonContainer}>
+                  <Button
+                    className={classes.playButton}
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    onClick={onPlayClick}
+                  >
+                    Play
+                  </Button>
+                </div>
+              </HideFragment>
+            </TutorialCard>
+          </Slide>
 
-            <Button
-              className={classes.playButton}
-              variant="contained"
-              color="primary"
-              size="large"
-              onClick={() => history.replace("/game-menu")}
-            >
-              Play
+          <ButtonGroup size="large">
+            <Button color="primary" variant="contained" onClick={() => onArrowClick("left")}>
+              <ArrowBack />
             </Button>
-          </Card>
-        </Slide>
 
-        <ButtonGroup size="large" className={classes.buttonGroup}>
-          <Button color="primary" variant="contained" onClick={() => onArrowClick("left")}>
-            <ArrowBack>Prev</ArrowBack>
-          </Button>
+            <Button color="primary" variant="contained" onClick={() => onArrowClick("right")}>
+              <ArrowForward />
+            </Button>
+          </ButtonGroup>
+        </TabPanel>
 
-          <Button color="primary" variant="contained" onClick={() => onArrowClick("right")}>
-            <ArrowForward>Next</ArrowForward>
-          </Button>
-        </ButtonGroup>
+        <TabPanel value={tabIndex} index={1}>
+          Lesions info
+        </TabPanel>
       </div>
     </>
   );

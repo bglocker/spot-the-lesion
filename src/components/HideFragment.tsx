@@ -1,8 +1,8 @@
 import React, { ReactNode } from "react";
 
 interface HideFragmentProps {
-  children: ReactNode;
   hide?: boolean;
+  children: ReactNode;
 }
 
 const HideFragment: React.FC<HideFragmentProps> = ({
