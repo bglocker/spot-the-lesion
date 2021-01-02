@@ -1,4 +1,4 @@
-import { partition, range } from "../../utils/arrayUtils";
+import { partition, range, shuffledRange } from "../../utils/arrayUtils";
 
 describe("Partition", () => {
   it("works for simple predicate functions", () => {
@@ -62,5 +62,61 @@ describe("Range", () => {
     expect(() => {
       range(1, 6, -2);
     }).toThrowError();
+  });
+});
+
+/**
+ * Checks a shuffled array, whether its elements belong to an array of the specified range
+ *
+ * @param array The shuffled array that needs to be checked
+ * @param start First value of range (inclusive)
+ * @param stop  Last value of range (exclusive)
+ * @param step  Step between consecutive range values
+ *
+ * @return If the shuffled array is valid, by definition
+ */
+const checkShuffledRange = (array: number[], start: number, stop: number, step: number): boolean =>
+  arraysEqual(
+    range(start, stop, step),
+    array.sort((a, b) => (a > b ? 1 : -1))
+  );
+
+/**
+ * Compare two arrays to make sure they have the same elements in the same order
+ *
+ * @param a First array
+ * @param b Second array
+ *
+ * @return If they are equal or not
+ */
+const arraysEqual = (a: number[], b: number[]): boolean => {
+  if (a === b) {
+    return true;
+  }
+  if (a == null || b == null) {
+    return false;
+  }
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  for (let i = 0; i < a.length; ++i) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+  return true;
+};
+
+describe("ShuffleRange", () => {
+  it("works for positive start, stop and step", () => {
+    let start = 1;
+    let stop = 2;
+    let step = 1;
+    expect(checkShuffledRange(shuffledRange(start, stop, step), start, stop, step)).toBe(true);
+    start = 0;
+    stop = 3;
+    step = 1;
+    expect(checkShuffledRange(shuffledRange(start, stop, step), start, stop, step)).toBe(true);
   });
 });
