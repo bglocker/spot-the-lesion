@@ -1,4 +1,37 @@
-import { range } from "../../utils/arrayUtils";
+import { partition, range } from "../../utils/arrayUtils";
+
+describe("Partition", () => {
+  it("works for simple predicate functions", () => {
+    expect(partition([1, 2, 3, 4], () => true)).toStrictEqual([[1, 2, 3, 4], []]);
+    expect(partition([1, 2, 3, 4], () => false)).toStrictEqual([[], [1, 2, 3, 4]]);
+  });
+
+  it("works for more complex predicate functions", () => {
+    expect(partition([1, 2, 3, 4], (x) => x % 2 === 0)).toStrictEqual([
+      [2, 4],
+      [1, 3],
+    ]);
+    expect(partition([1, 2, 3, 4], (x) => x <= 2)).toStrictEqual([
+      [1, 2],
+      [3, 4],
+    ]);
+    expect(partition([-1, -2, 3, 4], (x) => x <= 2)).toStrictEqual([
+      [-1, -2],
+      [3, 4],
+    ]);
+  });
+
+  it("maintains the order of the elements", () => {
+    expect(partition([3, 2, 1, 4], (x) => x % 2 === 0)).toStrictEqual([
+      [2, 4],
+      [3, 1],
+    ]);
+    expect(partition([4, -2, 3, -1], (x) => x <= 2)).toStrictEqual([
+      [-2, -1],
+      [4, 3],
+    ]);
+  });
+});
 
 describe("Range", () => {
   it("works for positive start, stop and step", () => {
