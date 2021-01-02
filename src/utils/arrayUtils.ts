@@ -1,3 +1,12 @@
+/**
+ * Given an array, partitions it into two complementary arrays based on a predicate function
+ *
+ * @param xs        Array of elements
+ * @param predicate Predicate function to partition the array on
+ *
+ * @return A pair of two arrays, the first being the values for which the predicate returned true,
+ *         and the latter the values for which it returned false
+ */
 const partition = <T>(xs: T[], predicate: (value: T) => boolean): [T[], T[]] =>
   xs.reduce(
     (acc, x) => {
