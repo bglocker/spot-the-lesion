@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { createMuiTheme, createStyles, makeStyles, ThemeProvider } from "@material-ui/core/styles";
 import { SnackbarProvider } from "notistack";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
@@ -44,21 +44,27 @@ const useStyles = makeStyles(() =>
 const App: React.FC = () => {
   const classes = useStyles();
 
+  const [loading, setLoading] = useState(true);
+  const [adminLoggedIn, setAdminLoggedIn] = useSessionState(false, "adminLoggedIn");
+
   useEffect(() => {
     const initializeApp = async () => {
       if (!(await initializeFirebase()) || !(await getGlobalVariables())) {
         console.warn("App initialization unsuccessful");
       }
+
+      setLoading(false);
     };
 
     initializeApp().then(() => {});
   }, []);
 
-  const [adminLoggedIn, setAdminLoggedIn] = useSessionState(false, "adminLoggedIn");
+  const adminLogIn = useCallback(() => setAdminLoggedIn(true), [setAdminLoggedIn]);
 
-  const adminLogIn = useCallback(() => {
-    setAdminLoggedIn(true);
-  }, [setAdminLoggedIn]);
+  if (loading) {
+    /* TODO: loading screen */
+    return null;
+  }
 
   return (
     <ThemeProvider theme={theme}>

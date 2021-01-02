@@ -1,12 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   AppBar,
   Button,
   ButtonGroup,
   Card,
-  Grid,
+  CircularProgress,
   Slide,
-  SlideProps,
   Tab,
   Tabs,
   Theme,
@@ -16,487 +15,302 @@ import {
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { ArrowBack, ArrowForward } from "@material-ui/icons";
 import firebase from "firebase/app";
-import { Pie } from "@nivo/pie";
-import { NavigationAppBar } from "../../components";
-import useWindowDimensions from "../../components/useWindowDimensions";
+import { ResponsivePie } from "@nivo/pie";
+import { HideFragment, NavigationAppBar } from "../../components";
+import { handleFirestoreError } from "../../utils/firebaseUtils";
 import constants from "../../res/constants";
 
-const useStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles(() =>
   createStyles({
-    basicCard: {
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "center",
-      marginTop: 24,
-      padding: 8,
-    },
-    userStatsCard: {
-      width: "90%",
-      height: "80vh",
-    },
-    imageStatsCard: {
-      width: "50%",
-      height: "60vh",
-    },
-    imageStatsContainer: {
-      marginTop: "5%",
-    },
-    container: {
-      width: "65%",
-      display: "flex",
-      flexDirection: "row",
-      justifyContent: "center",
-      alignItems: "center",
-      overflow: "hidden",
-      alignSelf: "center",
-      marginTop: 8,
-    },
-    gameTypeAppBar: {
-      alignItems: "center",
+    appBar: {
       backgroundColor: "#003B46",
-    },
-    tab: {
-      fontSize: "1.5rem",
     },
     tabIndicator: {
       backgroundColor: "#C4DFE6",
     },
-    gameModeSelectionText: {
-      fontSize: "150%",
-      fontWeight: "bold",
+    tab: {
+      fontSize: "1rem",
     },
-    statTitle: {
-      fontWeight: "bold",
-      margin: "inherit",
-      textAlign: "center",
-    },
-    buttonGroup: {
-      marginTop: 16,
-      alignSelf: "center",
-      padding: 8,
-    },
-    emptyDiv: {
-      [theme.breakpoints.down("sm")]: {
-        flex: 0,
-      },
-      [theme.breakpoints.up("md")]: {
-        flex: 1,
-      },
-    },
-    image: {
-      gridColumnStart: 1,
-      gridRowStart: 1,
-    },
-    imageContainer: {
-      [theme.breakpoints.up("md")]: {
-        height: "100%",
-        flex: 1,
-        display: "flex",
-        justifyContent: "flex-end",
-        alignItems: "center",
-      },
-    },
-    imageCard: {
+    container: {
+      height: "100%",
       display: "flex",
       flexDirection: "column",
+      justifyContent: "space-evenly",
       alignItems: "center",
-      alignContent: "center",
-      margin: 24,
-      padding: 8,
-      [theme.breakpoints.down("sm")]: {
-        width: "80vw",
-        maxWidth: "60vh",
-      },
-      [theme.breakpoints.up("md")]: {
-        minWidth: "20vw",
-      },
+      overflowX: "hidden",
+    },
+    card: {
+      height: "80%",
+      width: "80%",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "space-evenly",
+      alignItems: "center",
+    },
+    title: {
+      fontWeight: "bold",
+    },
+    pieContainer: {
+      height: "60vh",
+      width: "100%",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
     },
   })
 );
 
-/**
- * New type representing the direction of Legends in the Pie Chart
- * To be used for the 'direction' prop of the Pie component
- */
-type Direction = "row" | "column";
+const defaultStatsData: StatsData = {
+  aiWins: 0,
+  humanWins: 0,
+  draws: 0,
+  hints: 0,
+  noHints: 0,
+};
+
+const numSlides = 2;
 
 const Statistics: React.FC = () => {
+  const [tabIndex, setTabIndex] = useState(0);
+  const [slideIndex, setSlideIndex] = useState(0);
+
+  const [slideIn, setSlideIn] = useState(true);
+  const [slideDirection, setSlideDirection] = useState<"left" | "right">("left");
+
+  const [statsData, setStatsData] = useState(defaultStatsData);
+  const [loading, setLoading] = useState(true);
+
+  const smallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down("xs"));
+
   const classes = useStyles();
 
-  /**
-   * Retrieves the data from the database to display into the pie-chart and graph
-   */
-  const [aiWins, setAiWins] = useState(0);
-  const [humanWins, setHumanWins] = useState(0);
-  const [draws, setDraws] = useState(0);
+  useEffect(() => {
+    const scores = tabIndex === 0 ? constants.scoresCasual : constants.scoresCompetitive;
 
-  /**
-   * Hooks used for Player Stats
-   */
-  const [playersWithHints, setPlayerWithHints] = useState(0);
-  const [playersWithoutHints, setPlayersWithoutHints] = useState(0);
+    const unsubscribe = firebase
+      .firestore()
+      .collection(scores)
+      .onSnapshot(
+        (snapshot) => {
+          let humanWins = 0;
+          let aiWins = 0;
+          let draws = 0;
+          let hints = 0;
 
-  /**
-   * Index for the current Statistics page
-   * Casual Mode - index 0; Competitive Mode - index 1
-   */
-  const [currentTabIndex, setCurrentTabIndex] = useState(0);
+          snapshot.forEach((doc) => {
+            const { score, ai_score: aiScore, usedHints } = doc.data() as FirestoreScoreData;
 
-  /**
-   * Hook used for prompting the user to select the game mode
-   */
-  const [tabSelected, setTabSelected] = useState(false);
+            if (score > aiScore) {
+              humanWins += 1;
+            } else if (aiScore > score) {
+              aiWins += 1;
+            } else {
+              draws += 1;
+            }
 
-  /**
-   * Hooks used for slide show transitions between game stats
-   */
-  const [slideIn, setSlideIn] = useState(true);
-  const [slideDirection, setSlideDirection] = useState<SlideProps["direction"]>("down");
-  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+            hints += usedHints ? 1 : 0;
+          });
 
-  /**
-   * Media Queries for Window width and height
-   */
-  const screenWidthMatches = useMediaQuery("(min-width:600px)");
-  const screenHeightMatches = useMediaQuery("(min-height:750px)");
+          setStatsData({
+            humanWins,
+            aiWins,
+            draws,
+            hints,
+            noHints: snapshot.size - hints,
+          });
 
-  /**
-   * Hook for obtaining the Device Window Dimensions
-   */
-  const { windowWidth, windowHeight } = useWindowDimensions();
-
-  const numSlides = 2;
-  /**
-   * Function used for retrieving the statistics for the current game mode
-   * @param gameModeIndex - the index of the game mode for which the stats are retrieved
-   *                      - 0 for Casual, 1 for Competitive
-   * @param statsIndex - the index of the specific Stats page to display
-   *                   - 0 for 'Human vs AI wins'
-   *                   - 1 for 'How many players used hints'
-   */
-  const retrieveUserStats = async (gameModeIndex: number, statsIndex: number) => {
-    const leaderboard = gameModeIndex === 0 ? constants.scoresCasual : constants.scoresCompetitive;
-
-    const snapshot = await firebase.firestore().collection(leaderboard).get();
-
-    if (statsIndex === 0) {
-      // Statistics: Human vs AI wins
-      let noOfHumanWins = 0;
-      let noOfAiWins = 0;
-      let noOfDraws = 0;
-
-      snapshot.forEach((doc) => {
-        const playerScore = doc.data().score;
-        const aiScore = gameModeIndex === 0 ? doc.data().correct_ai_answers : doc.data().ai_score;
-        if (playerScore > aiScore) {
-          noOfHumanWins += 1;
-        } else if (aiScore > playerScore) {
-          noOfAiWins += 1;
-        } else {
-          noOfDraws += 1;
-        }
-      });
-
-      setHumanWins(noOfHumanWins);
-      setAiWins(noOfAiWins);
-      setDraws(noOfDraws);
-    } else if (statsIndex === 1) {
-      // Statistics: How many players used hints
-      let withHints = 0;
-      snapshot.forEach((doc) => {
-        withHints += doc.data().usedHints ? 1 : 0;
-      });
-      setPlayerWithHints(withHints);
-      setPlayersWithoutHints(snapshot.size - withHints);
-    }
-  };
-
-  /**
-   * Function for triggering the re-render of the statistics according to the new stats index
-   * @param newTabIndex - index of the Game mode for which to retrieve stats
-   *                      - 0 for Casual, 1 for Competitive
-   */
-  const onTabChange = async (newTabIndex: number) => {
-    setCurrentTabIndex(newTabIndex);
-    setTabSelected(true);
-
-    await retrieveUserStats(newTabIndex, currentSlideIndex);
-  };
-
-  /**
-   * Function for displaying the Player Statistics or Image Statistics
-   * If game mode not selected yet, prompt the user to do so
-   * Otherwise, show corresponding stats
-   * @param statIndex - index of the specific stats page to display
-   */
-  const displayStats = (statIndex: number) => {
-    if (!tabSelected) {
-      return (
-        <Grid container justify="center">
-          <Typography className={classes.gameModeSelectionText}>SELECT A STATISTICS TAB</Typography>
-        </Grid>
+          setLoading(false);
+        },
+        (error) => handleFirestoreError(error)
       );
-    }
-    return displayUserStats(statIndex);
-  };
 
-  /**
-   * Function for displaying a single User Stats page (slide)
-   * @param statsIndex - index of the stats page (slide) to display
-   */
-  const displayUserStats = (statsIndex: number) => {
-    if (statsIndex === 0) {
-      const data = [
-        {
-          id: "AI Wins",
-          label: "AI Wins",
-          value: aiWins,
-          color: "hsl(332, 70%, 50%)",
-        },
-        {
-          id: "Human Wins",
-          label: "Human Wins",
-          value: humanWins,
-          color: "hsl(194, 70%, 50%)",
-        },
-        {
-          id: "Draws",
-          label: "Draws",
-          value: draws,
-          color: "hsl(124, 43%, 81%)",
-        },
+    return () => unsubscribe();
+  }, [tabIndex]);
+
+  const [title, data] = useMemo(() => {
+    const { aiWins, humanWins, draws, hints, noHints } = statsData;
+
+    if (slideIndex === 0) {
+      return [
+        "Human vs AI",
+        [
+          {
+            id: "AI Wins",
+            label: "AI Wins",
+            value: aiWins,
+            color: "#D9267A",
+          },
+          {
+            id: "Human Wins",
+            label: "Human Wins",
+            value: humanWins,
+            color: "#26AFD9",
+          },
+          {
+            id: "Draws",
+            label: "Draws",
+            value: draws,
+            color: "#BAE3BC",
+          },
+        ],
       ];
-      return <div className={classes.container}>{displayUserPieChart("Human vs AI", data)}</div>;
     }
-    if (statsIndex === 1) {
-      const data = [
+
+    return [
+      "How many players used hints",
+      [
         {
           id: "Hints",
           label: "Hints",
-          value: playersWithHints,
-          color: "hsl(194, 70%, 50%)",
+          value: hints,
+          color: "#26AFD9",
         },
         {
           id: "No hints",
           label: "No hints",
-          value: playersWithoutHints,
-          color: "hsl(332, 70%, 50%)",
+          value: noHints,
+          color: "#D9267A",
         },
-      ];
-      return (
-        <div className={classes.container}>
-          {displayUserPieChart("How many players used hints", data)}
-        </div>
-      );
-    }
-    return <div className={classes.emptyDiv} />;
-  };
+      ],
+    ];
+  }, [slideIndex, statsData]);
 
-  /**
-   * Function for scaling the pie chart according to device window size
-   */
-  const getPieChartOptions = (): {
-    itemsSpacing: number;
-    translateY: number;
-    width: number;
-    height: number;
-    direction: Direction;
-  } => {
-    let translateY;
-    let height;
-    let width;
-    let itemsSpacing;
-    let direction;
+  const onTabChange = async (_event, newValue: number) => setTabIndex(newValue);
 
-    if (screenHeightMatches) {
-      translateY = windowHeight * 0.03;
-      height = windowHeight * 0.8;
-    } else {
-      translateY = windowHeight * 0.04;
-      height = windowHeight * 0.7;
-    }
-
-    if (screenWidthMatches) {
-      width = windowWidth * 0.7;
-      itemsSpacing = 50;
-      direction = "row";
-    } else {
-      width = windowWidth * 0.9;
-      itemsSpacing = 6;
-      direction = "column";
-    }
-    return { itemsSpacing, translateY, width, height, direction };
-  };
-
-  /**
-   * Function for displaying a Pie Chart with statistics
-   * @param title - Title of the stats page to be displayed
-   * @param data - the user statistics to be displayed
-   */
-  const displayUserPieChart = (
-    title: string,
-    data: { id: string; label: string; value: number; color: string }[]
-  ) => {
-    return (
-      <Card className={[classes.basicCard, classes.userStatsCard].join(" ")}>
-        <Typography className={classes.statTitle}>{title}</Typography>
-        <Pie
-          data={data}
-          margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
-          innerRadius={0.4}
-          padAngle={0.7}
-          cornerRadius={3}
-          colors={{ scheme: "red_blue" }}
-          borderWidth={9}
-          borderColor={{ theme: "background" }}
-          enableRadialLabels={false}
-          radialLabelsSkipAngle={5}
-          radialLabelsTextXOffset={12}
-          radialLabelsTextColor="#333333"
-          radialLabelsLinkOffset={0}
-          radialLabelsLinkDiagonalLength={23}
-          radialLabelsLinkHorizontalLength={32}
-          radialLabelsLinkStrokeWidth={3}
-          radialLabelsLinkColor={{ from: "color" }}
-          enableSliceLabels={false}
-          height={getPieChartOptions().height}
-          width={getPieChartOptions().width}
-          defs={[
-            {
-              id: "dots",
-              type: "patternDots",
-              background: "inherit",
-              color: "rgba(255, 255, 255, 0.3)",
-              size: 4,
-              padding: 1,
-              stagger: true,
-            },
-            {
-              id: "lines",
-              type: "patternLines",
-              background: "inherit",
-              color: "rgba(255, 255, 255, 0.3)",
-              rotation: -45,
-              lineWidth: 6,
-              spacing: 10,
-            },
-          ]}
-          fill={[
-            {
-              match: {
-                id: "Human Wins",
-              },
-              id: "dots",
-            },
-            {
-              match: {
-                id: "AI Wins",
-              },
-              id: "lines",
-            },
-          ]}
-          legends={[
-            {
-              anchor: "bottom",
-              direction: getPieChartOptions().direction,
-              translateY: getPieChartOptions().translateY,
-              itemWidth: 100,
-              itemHeight: 18,
-              itemTextColor: "#999",
-              symbolSize: 18,
-              itemsSpacing: getPieChartOptions().itemsSpacing,
-              symbolShape: "circle",
-              effects: [
-                {
-                  on: "hover",
-                  style: {
-                    itemTextColor: "#000",
-                  },
-                },
-              ],
-            },
-          ]}
-        />
-      </Card>
-    );
-  };
-
-  /**
-   * Function for rendering the next slide with statistics
-   * @param direction - "left" for prev slide, "right" for next
-   */
-  const onArrowClick = (direction: SlideProps["direction"]) => {
-    const increment = direction === "left" ? -1 : 1;
-    const newIndex = (currentSlideIndex + increment + numSlides) % numSlides;
-    const oppDirection = direction === "left" ? "right" : "left";
-
+  const onArrowClick = (direction: "left" | "right") => {
     setSlideDirection(direction);
     setSlideIn(false);
-
-    window.setTimeout(async () => {
-      setCurrentSlideIndex(newIndex);
-      setSlideDirection(oppDirection);
-      setSlideIn(true);
-      await retrieveUserStats(currentTabIndex, newIndex);
-    }, 500);
   };
 
-  /**
-   * Function for displaying the slideshow buttons after the game mode was selected
-   */
-  const displaySlideShowButtons = () => {
-    if (!tabSelected) {
-      return null;
-    }
-    return (
-      <ButtonGroup size="large" className={classes.buttonGroup}>
-        <Button color="primary" variant="contained" onClick={() => onArrowClick("left")}>
-          <ArrowBack>Prev</ArrowBack>
-        </Button>
+  const onSlideExited = () => {
+    const increment = slideDirection === "left" ? -1 : 1;
+    const newIndex = (slideIndex + increment + numSlides) % numSlides;
 
-        <Button color="primary" variant="contained" onClick={() => onArrowClick("right")}>
-          <ArrowForward>Next</ArrowForward>
-        </Button>
-      </ButtonGroup>
-    );
+    setSlideIndex(newIndex);
+    setSlideDirection((prevState) => (prevState === "left" ? "right" : "left"));
+    setSlideIn(true);
   };
 
-  /**
-   * Main return from the Statistics Functional Component
-   */
   return (
     <>
       <NavigationAppBar showBack />
 
-      <AppBar className={classes.gameTypeAppBar} position="sticky">
+      <AppBar className={classes.appBar} position="sticky">
         <Tabs
-          value={!tabSelected ? tabSelected : currentTabIndex}
-          onChange={(_, newTabIndex) => onTabChange(newTabIndex)}
-          aria-label="Gametypes"
           classes={{ indicator: classes.tabIndicator }}
+          variant={smallScreen ? "fullWidth" : "standard"}
+          centered
+          aria-label="Game mode"
+          value={tabIndex}
+          onChange={onTabChange}
         >
-          <Tab
-            className={classes.tab}
-            label="Casual"
-            id="gametype-0"
-            aria-controls="gametype-view-0"
-          />
+          <Tab className={classes.tab} label="Casual" />
 
-          <Tab
-            className={classes.tab}
-            label="Competitive"
-            id="gametype-1"
-            aria-controls="gametype-view-1"
-          />
+          <Tab className={classes.tab} label="Competitive" />
         </Tabs>
       </AppBar>
 
-      <Slide in={slideIn} direction={slideDirection}>
-        {displayStats(currentSlideIndex)}
-      </Slide>
+      <div className={classes.container}>
+        <Slide
+          appear={false}
+          in={slideIn}
+          direction={slideDirection}
+          timeout={{ enter: 400, exit: 400 }}
+          onExited={onSlideExited}
+        >
+          <Card className={classes.card}>
+            <Typography className={classes.title}>{title}</Typography>
 
-      {displaySlideShowButtons()}
+            <div className={classes.pieContainer}>
+              <HideFragment hide={!loading}>
+                <CircularProgress color="secondary" size={64} />
+              </HideFragment>
+
+              <HideFragment hide={loading}>
+                <ResponsivePie
+                  data={data}
+                  innerRadius={0.5}
+                  padAngle={0.7}
+                  cornerRadius={3}
+                  margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
+                  colors={{ scheme: "red_blue" }}
+                  borderWidth={1}
+                  borderColor={{ from: "color", modifiers: [["darker", 1]] }}
+                  enableRadialLabels={false}
+                  enableSliceLabels={false}
+                  defs={[
+                    {
+                      id: "dots",
+                      type: "patternDots",
+                      background: "inherit",
+                      color: "rgba(255,255,255,0.3)",
+                      size: 4,
+                      padding: 1,
+                      stagger: true,
+                    },
+                    {
+                      id: "lines",
+                      type: "patternLines",
+                      background: "inherit",
+                      color: "rgba(255,255,255,0.3)",
+                      rotation: -45,
+                      lineWidth: 6,
+                      spacing: 10,
+                    },
+                  ]}
+                  fill={[
+                    {
+                      match: {
+                        id: "Human Wins",
+                      },
+                      id: "dots",
+                    },
+                    {
+                      match: {
+                        id: "AI Wins",
+                      },
+                      id: "lines",
+                    },
+                  ]}
+                  legends={[
+                    {
+                      anchor: "bottom",
+                      direction: smallScreen ? "column" : "row",
+                      justify: false,
+                      translateY: 70,
+                      itemWidth: 75,
+                      itemHeight: 18,
+                      itemsSpacing: smallScreen ? 5 : 75,
+                      itemTextColor: "#000",
+                      symbolSize: 18,
+                      symbolShape: "circle",
+                      effects: [
+                        {
+                          on: "hover",
+                          style: {
+                            itemTextColor: "#888",
+                          },
+                        },
+                      ],
+                    },
+                  ]}
+                />
+              </HideFragment>
+            </div>
+          </Card>
+        </Slide>
+
+        <ButtonGroup size="large">
+          <Button color="primary" variant="contained" onClick={() => onArrowClick("left")}>
+            <ArrowBack />
+          </Button>
+
+          <Button color="primary" variant="contained" onClick={() => onArrowClick("right")}>
+            <ArrowForward />
+          </Button>
+        </ButtonGroup>
+      </div>
     </>
   );
 };

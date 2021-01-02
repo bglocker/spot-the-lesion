@@ -17,14 +17,6 @@ import { NavigationAppBar, TabPanel } from "../../components";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
-    container: {
-      flex: 1,
-      height: 0,
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "center",
-    },
     appBar: {
       backgroundColor: "#004445",
     },
@@ -33,6 +25,14 @@ const useStyles = makeStyles((theme) =>
     },
     tab: {
       fontSize: "1rem",
+    },
+    container: {
+      flex: 1,
+      height: 0,
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
     },
     card: {
       height: "80%",

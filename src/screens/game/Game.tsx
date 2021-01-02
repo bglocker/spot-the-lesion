@@ -573,9 +573,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
             setImageData(snapshot.data() as FirestoreImageData);
           }
         },
-        (error) => {
-          handleFirestoreError(error);
-        }
+        (error) => handleFirestoreError(error)
       );
 
     return () => unsubscribe();
