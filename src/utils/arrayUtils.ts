@@ -22,11 +22,14 @@ const partition = <T>(xs: T[], predicate: (value: T) => boolean): [T[], T[]] =>
  *
  * @param start First value of range (inclusive)
  * @param stop  Last value of range (exclusive)
- * @param step  Step between consecutive range values
+ * @param step  Strictly positive step between consecutive range values
  *
  * @return Array range
  */
 const range = (start = 1, stop: number, step = 1): number[] => {
+  if (step <= 0) {
+    throw new Error("Step size must be strictly positive (>= 0)");
+  }
   const nums: number[] = [];
 
   for (let i = start; i < stop; i += step) {
