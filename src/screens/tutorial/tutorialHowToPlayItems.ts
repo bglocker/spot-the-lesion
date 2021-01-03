@@ -11,8 +11,9 @@ import ai_answer from "../../res/images/tutorial/right ai.png";
 import calm from "../../res/images/tutorial/calm.png";
 import hint from "../../res/images/tutorial/mystery.png";
 import application from "../../res/images/tutorial/application.png";
+import lesion from "../../res/images/tutorial/lesion.png";
 
-const tutorialItems: TutorialItem[] = [
+const tutorialHowToPlayItems: TutorialItem[] = [
   {
     text: "Welcome to Spot-the-Lesion!",
     imageSrc: doctor,
@@ -79,4 +80,12 @@ const tutorialItems: TutorialItem[] = [
   },
 ];
 
-export default tutorialItems;
+const tutorialLesionsItems: TutorialItem[] = [
+  {
+    text:
+      "Hi! A lesion is any damage or abnormal change in the tissue of an organism, usually caused by disease or trauma. It can generally be identified as coloured differently than the rest of the tissue in the area. After playing a few rounds, you're likely to have an easy time figuring out where the lesion is.",
+    imageSrc: lesion,
+  },
+];
+
+export { tutorialHowToPlayItems, tutorialLesionsItems };

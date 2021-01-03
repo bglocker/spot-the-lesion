@@ -14,7 +14,7 @@ import { ArrowBack, ArrowForward } from "@material-ui/icons";
 import { useHistory } from "react-router-dom";
 import { HideFragment, NavigationAppBar, TabPanel } from "../../components";
 import TutorialCard from "./TutorialCard";
-import tutorialItems from "./tutorialItems";
+import { tutorialHowToPlayItems, tutorialLesionsItems } from "./tutorialHowToPlayItems";
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -52,7 +52,7 @@ const useStyles = makeStyles(() =>
   })
 );
 
-const numSlides = tutorialItems.length;
+const numSlides = tutorialHowToPlayItems.length;
 
 const Tutorial: React.FC = () => {
   const [tabIndex, setTabIndex] = useState(0);
@@ -129,7 +129,10 @@ const Tutorial: React.FC = () => {
             timeout={{ enter: 400, exit: 400 }}
             onExited={onSlideExited}
           >
-            <TutorialCard className={classes.tutorialCard} tutorialItem={tutorialItems[slideIndex]}>
+            <TutorialCard
+              className={classes.tutorialCard}
+              tutorialItem={tutorialHowToPlayItems[slideIndex]}
+            >
               <HideFragment hide={slideIndex !== 14}>
                 <div className={classes.playButtonContainer}>
                   <Button
@@ -158,7 +161,7 @@ const Tutorial: React.FC = () => {
         </TabPanel>
 
         <TabPanel value={tabIndex} index={1}>
-          Lesions info
+          <TutorialCard className={classes.tutorialCard} tutorialItem={tutorialLesionsItems[0]} />
         </TabPanel>
       </div>
     </>
