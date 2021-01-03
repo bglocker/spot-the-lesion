@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   AppBar,
   Card,
@@ -7,22 +7,16 @@ import {
   ListItemText,
   Tab,
   Tabs,
+  Theme,
   Typography,
+  useMediaQuery,
 } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { NavigationAppBar } from "../../components";
-import licenses from "../../licenses.json";
+import { getLibraries } from "../../utils/creditsUtils";
+import { NavigationAppBar, TabPanel } from "../../components";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
-    container: {
-      flex: 1,
-      height: 0,
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "center",
-    },
     appBar: {
       backgroundColor: "#004445",
     },
@@ -31,6 +25,14 @@ const useStyles = makeStyles((theme) =>
     },
     tab: {
       fontSize: "1rem",
+    },
+    container: {
+      flex: 1,
+      height: 0,
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
     },
     card: {
       height: "80%",
@@ -64,37 +66,35 @@ const useStyles = makeStyles((theme) =>
 );
 
 const Credits: React.FC = () => {
+  const [tabIndex, setTabIndex] = useState(0);
+
+  const smallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down("xs"));
+
   const classes = useStyles();
 
-  const [tabIndex, setTabIndex] = React.useState(0);
-  const numberRegex = /\d+(\.\d+)*/;
-  const atRegex = /(?:@)/gi;
+  const onTabChange = (_event, newValue: number) => setTabIndex(newValue);
 
-  const getLibraryLicenses = () => {
-    const processedLicenses: ProcessedLicense[] = [];
-    Object.keys(licenses).forEach((libraryName) => {
-      // Extract the version
-      const version = libraryName.match(numberRegex);
-      // Removes the part after the @
-      const nameWithoutVersion = libraryName
-        .replace(atRegex, "")
-        .replace(version ? version[0] : "", "");
+  return (
+    <>
+      <NavigationAppBar showBack />
 
-      processedLicenses.push({
-        name: nameWithoutVersion,
-        version: version ? version[0] : "",
-        licenseSpecs: licenses[libraryName],
-      });
-    });
+      <AppBar className={classes.appBar} position="sticky">
+        <Tabs
+          classes={{ indicator: classes.tabIndicator }}
+          variant={smallScreen ? "fullWidth" : "standard"}
+          centered
+          aria-label="Credits pages"
+          value={tabIndex}
+          onChange={onTabChange}
+        >
+          <Tab className={classes.tab} label="About The Game" />
 
-    return processedLicenses;
-  };
+          <Tab className={classes.tab} label="Libraries & Images" />
+        </Tabs>
+      </AppBar>
 
-  const getTabsContent = () => {
-    // Check if we just return the game information that we require
-    if (tabIndex === 0) {
-      return (
-        <div className={classes.container}>
+      <div className={classes.container}>
+        <TabPanel value={tabIndex} index={0}>
           <Card className={classes.card}>
             <Typography className={classes.text}>
               The AI for this game is based on the{" "}
@@ -123,64 +123,37 @@ const Credits: React.FC = () => {
               </a>
             </Typography>
           </Card>
-        </div>
-      );
-    }
+        </TabPanel>
 
-    // Here we should return licences so we just deal with that
-    const libraryLicenses = getLibraryLicenses();
+        <TabPanel value={tabIndex} index={1}>
+          <Card className={classes.card}>
+            <Typography className={classes.text}>
+              Here is a list of libraries and images used, kudos to the creators for enabling us to
+              work effectively.
+            </Typography>
 
-    return (
-      <div className={classes.container}>
-        <Card className={classes.card}>
-          <Typography className={classes.text}>
-            Here is a list of libraries and images used, kudos to the creators for enabling us to
-            work effectively.
-          </Typography>
+            <Typography className={classes.text}>
+              You can find a link to the authors and the licenses for the images by following{" "}
+              <a href="https://drive.google.com/file/d/1zAs8cqA91jkWzLExid3EvleiB8e1yIuu/view?usp=sharing">
+                this link
+              </a>
+              .
+            </Typography>
 
-          <Typography className={classes.text}>
-            You can find a link to the authors and the licenses for the images by following{" "}
-            <a href="https://drive.google.com/file/d/1zAs8cqA91jkWzLExid3EvleiB8e1yIuu/view?usp=sharing">
-              this link
-            </a>
-            .
-          </Typography>
+            <Typography className={classes.text}>
+              Here are the libraries that this game uses:
+            </Typography>
 
-          <Typography className={classes.text}>
-            Here are the libraries that this game uses:
-          </Typography>
-
-          <List className={classes.list}>
-            {libraryLicenses.map(({ name, version }) => (
-              <ListItem key={name}>
-                <ListItemText primary={name} secondary={version} />
-              </ListItem>
-            ))}
-          </List>
-        </Card>
+            <List className={classes.list}>
+              {getLibraries().map(({ name, version }) => (
+                <ListItem key={name}>
+                  <ListItemText primary={name} secondary={version} />
+                </ListItem>
+              ))}
+            </List>
+          </Card>
+        </TabPanel>
       </div>
-    );
-  };
-
-  return (
-    <>
-      <NavigationAppBar showBack />
-
-      <AppBar className={classes.appBar} position="sticky">
-        <Tabs
-          classes={{ indicator: classes.tabIndicator }}
-          centered
-          aria-label="Credits pages"
-          value={tabIndex}
-          onChange={(_, newIndex) => setTabIndex(newIndex)}
-        >
-          <Tab className={classes.tab} label="About The Game" />
-
-          <Tab className={classes.tab} label="Libraries & Images" />
-        </Tabs>
-      </AppBar>
-
-      {getTabsContent()}
     </>
   );
 };

@@ -32,16 +32,14 @@ const SubmitScoreDialog: React.FC<SubmitScoreDialogProps> = ({
   };
 
   const onSubmitClick = async () => {
-    if (username !== "") {
-      try {
-        setLoading(true);
-
-        await onSubmit(username);
-      } finally {
-        setLoading(false);
-      }
-    } else {
+    if (username === "") {
       setError(true);
+    } else {
+      setLoading(true);
+
+      await onSubmit(username);
+
+      setLoading(false);
     }
   };
 

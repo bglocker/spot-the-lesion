@@ -28,7 +28,7 @@ const useStyles = makeStyles((theme) =>
     incrementText: {
       color: (props: StylesProps) =>
         props.increment > 0 ? colors.positiveIncrement : colors.zeroIncrement,
-      display: (props: StylesProps) => (props.showIncrement ? "inline" : "none"),
+      display: (props: StylesProps) => (props.showIncrement ? "" : "none"),
     },
   })
 );

@@ -1,10 +1,8 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Button, Card, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import ScoreWithIncrement from "../../components/ScoreWithIncrement";
-import LoadingButton from "../../components/LoadingButton";
+import { ScoreWithIncrement, LoadingButton, HideFragment } from "../../components";
 import colors from "../../res/colors";
-import ShareMenu from "./ShareMenu";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -59,7 +57,7 @@ const useStyles = makeStyles((theme) =>
       justifyContent: "space-evenly",
       alignItems: "center",
     },
-    buttonClass: {
+    button: {
       margin: "5px",
     },
   })
@@ -74,83 +72,29 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
   showIncrement,
   onStartRound,
   onSubmitClick,
+  onShareClick,
   onChallenge,
   playerScore,
   aiScore,
 }: GameSideBarProps) => {
-  const classes = useStyles();
-
   const [challengeLoading, setChallengeLoading] = useState(false);
 
-  const gameEndText = () => {
-    if (!gameEnded) {
-      return null;
+  const classes = useStyles();
+
+  const [gameEndText, gameEndColor] = useMemo(() => {
+    const playerScoreFull = playerScore.total + playerScore.round;
+    const aiScoreFull = aiScore.total + aiScore.round;
+
+    if (playerScoreFull > aiScoreFull) {
+      return ["You won!", colors.playerWon];
     }
 
-    const playerScoreEnd = playerScore.total + playerScore.round;
-    const aiScoreEnd = aiScore.total + aiScore.round;
-
-    let endText: string;
-    let color: string;
-
-    if (playerScoreEnd > aiScoreEnd) {
-      endText = "You won!";
-      color = colors.playerWon;
-    } else if (playerScoreEnd < aiScoreEnd) {
-      endText = "AI won!";
-      color = colors.playerLost;
-    } else {
-      endText = "It was a draw!";
-      color = colors.draw;
+    if (playerScoreFull < aiScoreFull) {
+      return ["AI won!", colors.playerLost];
     }
 
-    return (
-      <Typography className={classes.cardText} style={{ color }}>
-        {endText}
-      </Typography>
-    );
-  };
-
-  const startRoundButton = () => {
-    if (gameEnded) {
-      return null;
-    }
-
-    return (
-      <LoadingButton
-        className={classes.buttonClass}
-        variant="contained"
-        color="primary"
-        size="large"
-        loading={roundLoading}
-        disabled={gameStarted && !roundEnded}
-        onClick={onStartRound}
-      >
-        {gameStarted ? "Next" : "Start"}
-      </LoadingButton>
-    );
-  };
-
-  const submitShareButtons = () => {
-    if ((gameMode === "competitive" && !gameEnded) || !roundEnded || roundLoading) {
-      return null;
-    }
-
-    return (
-      <div className={classes.submitShareContainer}>
-        <Button
-          className={classes.buttonClass}
-          variant="contained"
-          color="primary"
-          size="large"
-          onClick={onSubmitClick}
-        >
-          Submit
-        </Button>
-        <ShareMenu playerScore={playerScore} />
-      </div>
-    );
-  };
+    return ["It was a draw!", colors.draw];
+  }, [playerScore, aiScore]);
 
   const onChallengeClick = async () => {
     try {
@@ -160,25 +104,6 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
     } finally {
       setChallengeLoading(false);
     }
-  };
-
-  const challengeButton = () => {
-    if (!gameEnded) {
-      return null;
-    }
-
-    return (
-      <LoadingButton
-        className={classes.buttonClass}
-        variant="contained"
-        color="primary"
-        size="large"
-        loading={challengeLoading}
-        onClick={onChallengeClick}
-      >
-        Challenge friend
-      </LoadingButton>
-    );
   };
 
   return (
@@ -202,13 +127,64 @@ const GameSideBar: React.FC<GameSideBarProps> = ({
           />
         </div>
 
-        {gameEndText()}
+        <HideFragment hide={!gameEnded}>
+          <Typography className={classes.cardText} style={{ color: gameEndColor }}>
+            {gameEndText}
+          </Typography>
+        </HideFragment>
 
-        {startRoundButton()}
+        <HideFragment hide={gameEnded}>
+          <LoadingButton
+            className={classes.button}
+            variant="contained"
+            color="primary"
+            size="large"
+            loading={roundLoading}
+            disabled={gameStarted && !roundEnded}
+            onClick={onStartRound}
+          >
+            {gameStarted ? "Next" : "Start"}
+          </LoadingButton>
+        </HideFragment>
 
-        {submitShareButtons()}
+        <HideFragment
+          hide={(gameMode === "competitive" && !gameEnded) || !roundEnded || roundLoading}
+        >
+          <div className={classes.submitShareContainer}>
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={onSubmitClick}
+            >
+              Submit
+            </Button>
 
-        {challengeButton()}
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={onShareClick}
+            >
+              Share
+            </Button>
+          </div>
+        </HideFragment>
+
+        <HideFragment hide={!gameEnded}>
+          <LoadingButton
+            className={classes.button}
+            variant="contained"
+            color="primary"
+            size="large"
+            loading={challengeLoading}
+            onClick={onChallengeClick}
+          >
+            Challenge friend
+          </LoadingButton>
+        </HideFragment>
       </Card>
     </div>
   );
