@@ -110,7 +110,6 @@ const Tutorial: React.FC = () => {
           classes={{ indicator: classes.tabIndicator }}
           variant={smallScreen ? "fullWidth" : "standard"}
           centered
-          aria-label="Tutorial pages"
           value={tabIndex}
           onChange={onTabChange}
         >

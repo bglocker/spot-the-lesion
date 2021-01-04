@@ -1,3 +1,0 @@
-interface TableGridProps {
-  firstTimeOpened: boolean;
-}

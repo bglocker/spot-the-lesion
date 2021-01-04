@@ -201,7 +201,6 @@ const Statistics: React.FC = () => {
           classes={{ indicator: classes.tabIndicator }}
           variant={smallScreen ? "fullWidth" : "standard"}
           centered
-          aria-label="Statistics pages"
           value={tabIndex}
           onChange={onTabChange}
         >
