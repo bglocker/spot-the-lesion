@@ -15,14 +15,15 @@ import { useHistory } from "react-router-dom";
 import { HideFragment, NavigationAppBar, TabPanel } from "../../components";
 import TutorialCard from "./TutorialCard";
 import { tutorialHowToPlayItems, tutorialLesionsItems } from "./tutorialHowToPlayItems";
+import colors from "../../res/colors";
 
 const useStyles = makeStyles(() =>
   createStyles({
     appBar: {
-      backgroundColor: "#004445",
+      backgroundColor: colors.primaryTabBar,
     },
     tabIndicator: {
-      backgroundColor: "#C4DFE6",
+      backgroundColor: colors.tabIndicator,
     },
     tab: {
       fontSize: "1rem",

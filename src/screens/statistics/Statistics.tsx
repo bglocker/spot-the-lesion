@@ -18,15 +18,16 @@ import firebase from "firebase/app";
 import { ResponsivePie } from "@nivo/pie";
 import { HideFragment, NavigationAppBar } from "../../components";
 import { handleFirestoreError } from "../../utils/firebaseUtils";
+import colors from "../../res/colors";
 import constants from "../../res/constants";
 
 const useStyles = makeStyles(() =>
   createStyles({
     appBar: {
-      backgroundColor: "#004445",
+      backgroundColor: colors.primaryTabBar,
     },
     tabIndicator: {
-      backgroundColor: "#C4DFE6",
+      backgroundColor: colors.tabIndicator,
     },
     tab: {
       fontSize: "1rem",
@@ -139,19 +140,19 @@ const Statistics: React.FC = () => {
             id: "AI Wins",
             label: "AI Wins",
             value: aiWins,
-            color: "#D9267A",
+            color: colors.pieAllAiWins,
           },
           {
             id: "Human Wins",
             label: "Human Wins",
             value: humanWins,
-            color: "#26AFD9",
+            color: colors.pieAllHumanWins,
           },
           {
             id: "Draws",
             label: "Draws",
             value: draws,
-            color: "#BAE3BC",
+            color: colors.pieAllDraws,
           },
         ],
       ];
@@ -164,13 +165,13 @@ const Statistics: React.FC = () => {
           id: "Hints",
           label: "Hints",
           value: hints,
-          color: "#26AFD9",
+          color: colors.pieAllHints,
         },
         {
           id: "No hints",
           label: "No hints",
           value: noHints,
-          color: "#D9267A",
+          color: colors.pieAllNoHints,
         },
       ],
     ];
@@ -233,7 +234,7 @@ const Statistics: React.FC = () => {
                   padAngle={0.7}
                   cornerRadius={3}
                   margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
-                  colors={{ scheme: "red_blue" }}
+                  colors={{ datum: "data.color" }}
                   borderWidth={1}
                   borderColor={{ from: "color", modifiers: [["darker", 1]] }}
                   enableRadialLabels={false}
@@ -281,14 +282,14 @@ const Statistics: React.FC = () => {
                       itemWidth: 75,
                       itemHeight: 18,
                       itemsSpacing: smallScreen ? 5 : 75,
-                      itemTextColor: "#000",
+                      itemTextColor: colors.legendText,
                       symbolSize: 18,
                       symbolShape: "circle",
                       effects: [
                         {
                           on: "hover",
                           style: {
-                            itemTextColor: "#888",
+                            itemTextColor: colors.legendTextHover,
                           },
                         },
                       ],

@@ -12,6 +12,7 @@ import {
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { ResponsivePie } from "@nivo/pie";
 import { partition } from "../../utils/arrayUtils";
+import colors from "../../res/colors";
 
 const useStyles = makeStyles(
   createStyles({
@@ -41,19 +42,19 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
         id: "Correct Answers",
         label: "Correct Answers",
         value: imageData.correctClicks,
-        color: "#00B359",
+        color: colors.pieImageCorrectAnswers,
       },
       {
         id: "Wrong Answers",
         label: "Wrong Answers",
         value: imageData.wrongClicks,
-        color: "#FF0000",
+        color: colors.pieImageWrongAnswers,
       },
       {
         id: "Hints",
         label: "Total Hints",
         value: imageData.hintCount,
-        color: "#E6B800",
+        color: colors.pieImageHints,
       },
     ];
 
@@ -69,7 +70,6 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
           <ResponsivePie
             data={nonZeroData}
             startAngle={-180}
-            padAngle={0.7}
             cornerRadius={3}
             margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
             colors={{ datum: "data.color" }}
@@ -86,14 +86,14 @@ const ImageStatsDialog: React.FC<ImageStatsDialogProps> = ({
                 itemWidth: 75,
                 itemHeight: 18,
                 itemsSpacing: smallScreen ? 5 : 75,
-                itemTextColor: "#000",
+                itemTextColor: colors.legendText,
                 symbolSize: 18,
                 symbolShape: "circle",
                 effects: [
                   {
                     on: "hover",
                     style: {
-                      itemTextColor: "#888",
+                      itemTextColor: colors.legendTextHover,
                     },
                   },
                 ],

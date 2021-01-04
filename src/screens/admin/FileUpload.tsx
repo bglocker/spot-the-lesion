@@ -8,6 +8,7 @@ import { useSnackbar } from "notistack";
 import { NavigationAppBar } from "../../components";
 import { handleAxiosError, isAxiosError } from "../../utils/axiosUtils";
 import { compareFiles, getFileNames, removeExtension } from "../../utils/fileUitls";
+import colors from "../../res/colors";
 import constants from "../../res/constants";
 
 const useStyles = makeStyles((theme) =>
@@ -69,10 +70,10 @@ const useStyles = makeStyles((theme) =>
       margin: 16,
     },
     successText: {
-      color: "green",
+      color: colors.fileUploadSuccess,
     },
     errorText: {
-      color: "red",
+      color: colors.fileUploadError,
     },
     submitButton: {
       borderRadius: 20,

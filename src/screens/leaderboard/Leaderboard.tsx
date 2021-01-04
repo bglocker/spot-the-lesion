@@ -19,17 +19,18 @@ import clsx from "clsx";
 import { NavigationAppBar } from "../../components";
 import { handleFirestoreError } from "../../utils/firebaseUtils";
 import { getColorByRank, getQueryOnTimeAndGameMode } from "../../utils/leaderboardUtils";
+import colors from "../../res/colors";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     timeAppBar: {
-      backgroundColor: "#004445",
+      backgroundColor: colors.primaryTabBar,
     },
     gameModeAppBar: {
-      backgroundColor: "#003B46",
+      backgroundColor: colors.secondaryTabBar,
     },
     tabIndicator: {
-      backgroundColor: "#C4DFE6",
+      backgroundColor: colors.tabIndicator,
     },
     tab: {
       fontSize: "1rem",
@@ -46,7 +47,7 @@ const useStyles = makeStyles((theme) =>
       width: "81%",
     },
     tableCell: {
-      borderBottom: "thin solid #003B46",
+      borderBottom: `thin solid ${colors.rowBorder}`,
       [theme.breakpoints.down("xs")]: {
         fontSize: "1rem",
       },
@@ -55,8 +56,8 @@ const useStyles = makeStyles((theme) =>
       },
     },
     tableCellHead: {
-      color: "white",
-      backgroundColor: "#07575B",
+      color: colors.headerText,
+      backgroundColor: colors.header,
     },
   })
 );
