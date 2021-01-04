@@ -83,7 +83,7 @@ const tutorialHowToPlayItems: TutorialItem[] = [
 const tutorialLesionsItems: TutorialItem[] = [
   {
     text:
-      "Hi! A lesion is any damage or abnormal change in the tissue of an organism, usually caused by disease or trauma. It can generally be identified as coloured differently than the rest of the tissue in the area. After playing a few rounds, you're likely to have an easy time figuring out where the lesion is.",
+      "A lesion is any damage or abnormal change in the tissue, being of a different colour than surrounding tissue.",
     imageSrc: lesion,
   },
 ];

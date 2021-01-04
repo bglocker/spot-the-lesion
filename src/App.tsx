@@ -19,6 +19,7 @@ import Leaderboard from "./screens/leaderboard/Leaderboard";
 import Statistics from "./screens/statistics/Statistics";
 import Tutorial from "./screens/tutorial/Tutorial";
 import colors from "./res/colors";
+import PageNotFound from "./screens/pageNotFound/PageNotFound";
 
 const theme = createMuiTheme({
   palette: {
@@ -144,8 +145,7 @@ const App: React.FC = () => {
                 </Route>
 
                 <Route path="*">
-                  {/* TODO: 404 page */}
-                  <h1>Error 404</h1>
+                  <PageNotFound />
                 </Route>
               </Switch>
             </div>
