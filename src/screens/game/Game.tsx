@@ -719,9 +719,14 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       // eslint-disable-next-line no-underscore-dangle
       const { ctx } = instance._renderer;
 
+      let max = 0;
+      imageData.clicks.forEach((element) => {
+        max = Math.max(max, element.clickCount);
+      });
+
       const heatmapData = {
         min: 0,
-        max: 1,
+        max,
         data: imageData.clicks.map(({ x, y, clickCount }) => ({
           x: toCanvasScale(ctx, x),
           y: toCanvasScale(ctx, y),
