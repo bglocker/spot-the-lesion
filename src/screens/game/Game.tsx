@@ -287,7 +287,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
           .firestore()
           .collection(constants.images(difficulty))
           .doc(docName)
-          .update(newImageData);
+          .set(newImageData);
       } catch (error) {
         if (isFirestoreError(error)) {
           handleFirestoreError(error);
