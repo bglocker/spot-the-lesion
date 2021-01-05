@@ -16,10 +16,10 @@ import GameMenu from "./screens/game/GameMenu";
 import GameRoute from "./screens/game/GameRoute";
 import Home from "./screens/home/Home";
 import Leaderboard from "./screens/leaderboard/Leaderboard";
+import PageNotFound from "./screens/pageNotFound/PageNotFound";
 import Statistics from "./screens/statistics/Statistics";
 import Tutorial from "./screens/tutorial/Tutorial";
 import colors from "./res/colors";
-import PageNotFound from "./screens/pageNotFound/PageNotFound";
 
 const theme = createMuiTheme({
   palette: {
@@ -27,7 +27,7 @@ const theme = createMuiTheme({
       main: colors.primary,
     },
     secondary: {
-      main: colors.secondary /* TODO: secondary should contrast primary */,
+      main: colors.secondary,
     },
   },
 });

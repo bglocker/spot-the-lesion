@@ -14,7 +14,7 @@ import { ArrowBack, ArrowForward } from "@material-ui/icons";
 import { useHistory } from "react-router-dom";
 import { HideFragment, NavigationAppBar, TabPanel } from "../../components";
 import TutorialCard from "./TutorialCard";
-import { tutorialHowToPlayItems, tutorialLesionsItems } from "./tutorialHowToPlayItems";
+import { tutorialHowToPlayItems, tutorialLesionsItems } from "./tutorialItems";
 import colors from "../../res/colors";
 
 const useStyles = makeStyles(() =>
