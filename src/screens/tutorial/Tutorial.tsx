@@ -14,15 +14,16 @@ import { ArrowBack, ArrowForward } from "@material-ui/icons";
 import { useHistory } from "react-router-dom";
 import { HideFragment, NavigationAppBar, TabPanel } from "../../components";
 import TutorialCard from "./TutorialCard";
-import { tutorialHowToPlayItems, tutorialLesionsItems } from "./tutorialHowToPlayItems";
+import { tutorialHowToPlayItems, tutorialLesionsItems } from "./tutorialItems";
+import colors from "../../res/colors";
 
 const useStyles = makeStyles(() =>
   createStyles({
     appBar: {
-      backgroundColor: "#004445",
+      backgroundColor: colors.primaryTabBar,
     },
     tabIndicator: {
-      backgroundColor: "#C4DFE6",
+      backgroundColor: colors.tabIndicator,
     },
     tab: {
       fontSize: "1rem",
@@ -110,7 +111,6 @@ const Tutorial: React.FC = () => {
           classes={{ indicator: classes.tabIndicator }}
           variant={smallScreen ? "fullWidth" : "standard"}
           centered
-          aria-label="Tutorial pages"
           value={tabIndex}
           onChange={onTabChange}
         >

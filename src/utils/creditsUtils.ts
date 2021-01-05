@@ -1,4 +1,4 @@
-import libraries from "../libraries.json";
+import libraries from "../screens/credits/libraries.json";
 
 const pkgRegex = /(.+)@(.+)$/;
 

@@ -1,217 +1,201 @@
-import React, { useState } from "react";
-import { AppBar, Tab, Tabs } from "@material-ui/core";
+import React, { useEffect, useState } from "react";
+import {
+  AppBar,
+  Paper,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tabs,
+  Theme,
+  useMediaQuery,
+} from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import firebase from "firebase/app";
-import BasicTable from "./scoreTabel/BasicTable";
-import ScoreType from "../../utils/ScoreType";
-import BasicGrid from "./scoreTabel/tableGrid/TableGrid";
+import { FaMedal } from "react-icons/fa";
+import clsx from "clsx";
 import { NavigationAppBar } from "../../components";
-import { getMonthName } from "../../utils/firebaseUtils";
+import { handleFirestoreError } from "../../utils/firebaseUtils";
+import { getColorByRank, getQueryOnTimeAndGameMode } from "../../utils/leaderboardUtils";
 import colors from "../../res/colors";
-import constants from "../../res/constants";
 
-const useStyles = makeStyles(() =>
+const useStyles = makeStyles((theme) =>
   createStyles({
-    appBar: {
-      alignItems: "center",
-      backgroundColor: "#004445",
+    timeAppBar: {
+      backgroundColor: colors.primaryTabBar,
     },
-    gameTypeAppBar: {
-      alignItems: "center",
-      backgroundColor: "#003B46",
+    gameModeAppBar: {
+      backgroundColor: colors.secondaryTabBar,
     },
     tabIndicator: {
-      backgroundColor: "#C4DFE6",
+      backgroundColor: colors.tabIndicator,
     },
     tab: {
-      fontSize: "1.5rem",
+      fontSize: "1rem",
     },
     container: {
-      height: "100%",
+      flex: 1,
+      height: 0,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      padding: 24,
+    },
+    tableContainer: {
+      width: "81%",
+    },
+    tableCell: {
+      borderBottom: `thin solid ${colors.rowBorder}`,
+      [theme.breakpoints.down("xs")]: {
+        fontSize: "1rem",
+      },
+      [theme.breakpoints.up("md")]: {
+        fontSize: "1.5rem",
+      },
+    },
+    tableCellHead: {
+      color: colors.headerText,
+      backgroundColor: colors.header,
     },
   })
 );
 
-const tableNames = ["daily-scores", "monthly-scores", "alltime-scores"];
-
 const Leaderboard: React.FC = () => {
+  const [timeTabIndex, setTimeTabIndex] = useState(0);
+  const [gameModeTabIndex, setGameModeTabIndex] = useState(0);
+
+  const [rows, setRows] = useState<LeaderboardRow[]>([]);
+
+  const smallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down("xs"));
+
   const classes = useStyles();
 
-  const [currentTableIndex, setCurrentTableIndex] = React.useState(0);
-  const [currentLeaderboardIndex, setCurrentLeaderboardIndex] = React.useState(0);
-  const [firstTimeOpened, setFirstTimeOpened] = React.useState(true);
+  useEffect(() => {
+    const unsubscribe = getQueryOnTimeAndGameMode(timeTabIndex, gameModeTabIndex).onSnapshot(
+      (snapshot) => {
+        const seenUsers = new Set<string>();
+        const newRows: LeaderboardRow[] = [];
+        let prevRow: LeaderboardRow = { user: "", score: -1, rank: 0 };
 
-  const [scores, setScores] = useState<ScoreType[]>([]);
+        snapshot.forEach((doc) => {
+          const { user, score } = doc.data() as FirestoreScoreData;
 
-  /**
-   * Function for coloring the top 3 in Leaderboard with Gold, Silver and Bronze
-   * @param rowIndex - if rank is 1, 2 or 3 color accordingly, otherwise leave default
-   */
-  function selectRowColour(rowIndex: number) {
-    switch (rowIndex) {
-      case 1:
-        return colors.gold;
-      case 2:
-        return colors.silver;
-      case 3:
-        return colors.bronze;
-      default:
-        return colors.rowDefault;
-    }
-  }
+          if (seenUsers.has(user)) {
+            return;
+          }
 
-  /**
-   * Function for creating the Leaderboard
-   * and fetching the Leaderboard data from Firebase in real time
-   * @param tableIndex - index of the table in DB to display
-   * tableIndex = 0 for Daily, 1 for Monthly, 2 for All Time
-   * @param leaderboardIndex - index of the game table in DB to display
-   * gameIndex = 0 for casual, 1 for competitive
-   */
-  async function createLeaderboard(tableIndex: number, leaderboardIndex: number) {
-    const table: string = tableNames[tableIndex];
-    const date: Date = new Date();
-    const results: ScoreType[] = [];
-    let rankPosition = 0;
-    let rowColour = "black";
-    let medal = true;
-    let prevScore = -1;
-    let currentScore;
-    // Map for avoiding displaying duplicate entries in Leaderboard
-    const uniqueUsersMap: Map<string, boolean> = new Map<string, boolean>();
+          const { score: prevScore, rank: prevRank } = prevRow;
 
-    const leaderboard =
-      leaderboardIndex === 0 ? constants.scoresCasual : constants.scoresCompetitive;
-    const leaderboardRef = firebase.firestore().collection(leaderboard);
+          const rank = score === prevScore ? prevRank : prevRank + 1;
 
-    let snapshot;
-    snapshot = leaderboardRef;
+          const row = { user, score, rank };
 
-    switch (table) {
-      case "daily-scores":
-        snapshot = snapshot
-          .where("day", "==", date.getDate())
-          .where("year", "==", date.getFullYear())
-          .where("month", "==", getMonthName(date.getMonth()));
-        break;
-      case "monthly-scores":
-        snapshot = snapshot
-          .where("year", "==", date.getFullYear())
-          .where("month", "==", getMonthName(date.getMonth()));
-        break;
-      default:
-        break;
-    }
+          seenUsers.add(user);
+          newRows.push(row);
+          prevRow = row;
+        });
 
-    snapshot = await snapshot.orderBy("score", "desc").get();
-    snapshot.forEach((doc) => {
-      if (!uniqueUsersMap.has(doc.data().user)) {
-        // Current user's highest score - add to result set
-        currentScore = doc.data().score;
-        if (currentScore !== prevScore) {
-          rankPosition += 1;
-        }
-        if (rankPosition > 3) {
-          medal = false;
-        }
-        rowColour = selectRowColour(rankPosition);
-        const score: ScoreType = new ScoreType(
-          rankPosition,
-          doc.data().user,
-          currentScore,
-          rowColour,
-          medal
-        );
-        results.push(score);
-        prevScore = currentScore;
-        uniqueUsersMap.set(doc.data().user, true);
-      }
-    });
-    setScores(results);
-  }
+        setRows(newRows);
+      },
+      (error) => handleFirestoreError(error)
+    );
 
-  /**
-   * Function for triggering the creation of the next Table for the current leaderboard,
-   * when user changes tabs from Daily to Monthly or All Time
-   * (or any other combination between the three)
-   * @param newTableIndex - index of the new table to display (0 - Daily, 1 - Monthly, 2 - All Time)
-   */
-  const onTabChange = async (newTableIndex: number) => {
-    setCurrentTableIndex(newTableIndex);
-    setFirstTimeOpened(false);
-    await createLeaderboard(newTableIndex, currentLeaderboardIndex);
-  };
+    return () => unsubscribe();
+  }, [gameModeTabIndex, timeTabIndex]);
 
-  /**
-   * Function for triggering the creation of the next Leaderboard, when user changes game modes tabs
-   * @param newLeaderboardIndex - index of the new leaderboard to display (0 - Casual or 1 - Competitive)
-   */
-  const onGameTabChange = async (newLeaderboardIndex: number) => {
-    setCurrentLeaderboardIndex(newLeaderboardIndex);
-    setFirstTimeOpened(false);
-    await createLeaderboard(currentTableIndex, newLeaderboardIndex);
-  };
+  const onTimeTabChange = (_event, newValue: number) => setTimeTabIndex(newValue);
+
+  const onGameModeTabChange = (_event, newValue: number) => setGameModeTabIndex(newValue);
 
   return (
     <>
       <NavigationAppBar showBack />
 
-      <AppBar className={classes.appBar} position="sticky">
+      <AppBar className={classes.timeAppBar} position="sticky">
         <Tabs
-          value={firstTimeOpened ? false : currentTableIndex}
-          onChange={(_, newTableIndex) => onTabChange(newTableIndex)}
-          aria-label="Leaderboards"
           classes={{ indicator: classes.tabIndicator }}
+          variant={smallScreen ? "fullWidth" : "standard"}
+          centered
+          value={timeTabIndex}
+          onChange={onTimeTabChange}
         >
-          <Tab
-            className={classes.tab}
-            label="Daily"
-            id="leaderboard-0"
-            aria-controls="leaderboard-view-0"
-          />
+          <Tab className={classes.tab} label="Daily" />
 
-          <Tab
-            className={classes.tab}
-            label="Monthly"
-            id="leaderboard-1"
-            aria-controls="leaderboard-view-1"
-          />
+          <Tab className={classes.tab} label="Monthly" />
 
-          <Tab
-            className={classes.tab}
-            label="All Time"
-            id="leaderboard-2"
-            aria-controls="leaderboard-view-2"
-          />
+          <Tab className={classes.tab} label="All Time" />
         </Tabs>
       </AppBar>
 
-      <AppBar className={classes.gameTypeAppBar} position="sticky">
+      <AppBar className={classes.gameModeAppBar} position="sticky">
         <Tabs
-          value={firstTimeOpened ? false : currentLeaderboardIndex}
-          onChange={(_, newLeaderboardIndex) => onGameTabChange(newLeaderboardIndex)}
-          aria-label="Gametypes"
           classes={{ indicator: classes.tabIndicator }}
+          variant={smallScreen ? "fullWidth" : "standard"}
+          centered
+          value={gameModeTabIndex}
+          onChange={onGameModeTabChange}
         >
-          <Tab
-            className={classes.tab}
-            label="Casual"
-            id="gametype-0"
-            aria-controls="gametype-view-0"
-          />
+          <Tab className={classes.tab} label="Casual" />
 
-          <Tab
-            className={classes.tab}
-            label="Competitive"
-            id="gametype-1"
-            aria-controls="gametype-view-1"
-          />
+          <Tab className={classes.tab} label="Competitive" />
         </Tabs>
       </AppBar>
 
-      <BasicGrid firstTimeOpened={firstTimeOpened} />
+      <div className={classes.container}>
+        <TableContainer className={classes.tableContainer} component={Paper}>
+          <Table stickyHeader>
+            <TableHead>
+              <TableRow>
+                <TableCell
+                  className={clsx(classes.tableCell, classes.tableCellHead)}
+                  align="center"
+                >
+                  Rank
+                </TableCell>
 
-      <BasicTable firstTimeOpened={firstTimeOpened} scores={scores} />
+                <TableCell
+                  className={clsx(classes.tableCell, classes.tableCellHead)}
+                  align="center"
+                >
+                  Player
+                </TableCell>
+
+                <TableCell
+                  className={clsx(classes.tableCell, classes.tableCellHead)}
+                  align="center"
+                >
+                  Score
+                </TableCell>
+              </TableRow>
+            </TableHead>
+
+            <TableBody>
+              {rows.map(({ user, score, rank }) => (
+                <TableRow key={user} style={{ backgroundColor: getColorByRank(rank) }}>
+                  <TableCell className={classes.tableCell} align="center">
+                    {rank <= 3 ? <FaMedal /> : null} {rank}
+                  </TableCell>
+
+                  <TableCell
+                    className={classes.tableCell}
+                    component="th"
+                    scope="row"
+                    align="center"
+                  >
+                    {user}
+                  </TableCell>
+
+                  <TableCell className={classes.tableCell} align="center">
+                    {score}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </div>
     </>
   );
 };

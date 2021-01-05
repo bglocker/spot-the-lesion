@@ -1,4 +1,4 @@
-import React, { forwardRef, ReactNode } from "react";
+import React, { ReactNode } from "react";
 import { Card, Typography } from "@material-ui/core";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -51,7 +51,7 @@ const useStyles = makeStyles((theme) =>
   })
 );
 
-const TutorialCard: React.FC<TutorialCardProps> = forwardRef(
+const TutorialCard = React.forwardRef<JSX.Element, TutorialCardProps>(
   ({ children, className, tutorialItem: { text, imageSrc } }, ref) => {
     const classes = useStyles();
 

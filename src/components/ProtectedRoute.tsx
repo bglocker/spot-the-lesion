@@ -1,10 +1,10 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { Route, Redirect, RouteProps } from "react-router-dom";
 
 interface ProtectedRouteProps extends RouteProps {
-  children?: React.ReactNode;
   show: boolean;
   redirectTo: string;
+  children: ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({

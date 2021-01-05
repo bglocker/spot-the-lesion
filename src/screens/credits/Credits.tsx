@@ -14,14 +14,15 @@ import {
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { getLibraries } from "../../utils/creditsUtils";
 import { NavigationAppBar, TabPanel } from "../../components";
+import colors from "../../res/colors";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     appBar: {
-      backgroundColor: "#004445",
+      backgroundColor: colors.primaryTabBar,
     },
     tabIndicator: {
-      backgroundColor: "#C4DFE6",
+      backgroundColor: colors.tabIndicator,
     },
     tab: {
       fontSize: "1rem",

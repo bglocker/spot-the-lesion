@@ -1,12 +1,12 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { AppBar, IconButton, Toolbar, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { KeyboardBackspace } from "@material-ui/icons";
 import { useHistory } from "react-router-dom";
 
 interface NavigationAppBarProps {
-  children?: React.ReactNode;
   showBack?: boolean;
+  children?: ReactNode;
 }
 
 const useStyles = makeStyles(() =>
