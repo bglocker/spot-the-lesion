@@ -15,6 +15,8 @@ import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { getLibraries } from "../../utils/creditsUtils";
 import { NavigationAppBar, TabPanel } from "../../components";
 import colors from "../../res/colors";
+import imperial from "../../res/images/credits/imperial.png";
+import mira from "../../res/images/credits/mira.png";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -34,6 +36,15 @@ const useStyles = makeStyles((theme) =>
       flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
+    },
+    imageContainer: {
+      height: 0,
+      display: "flex",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      justifyItems: "center",
+      alignItems: "center",
+      marginLeft: "10%",
     },
     card: {
       height: "80%",
@@ -62,6 +73,17 @@ const useStyles = makeStyles((theme) =>
       flex: 1,
       height: 0,
       overflow: "auto",
+    },
+    image: {
+      [theme.breakpoints.down("xs")]: {
+        width: "90%",
+      },
+      [theme.breakpoints.only("sm")]: {
+        width: "70%",
+      },
+      [theme.breakpoints.up("md")]: {
+        width: "70%",
+      },
     },
   })
 );
@@ -123,6 +145,15 @@ const Credits: React.FC = () => {
                 NIH Clinical Center
               </a>
             </Typography>
+            <div className={classes.imageContainer}>
+              <a href="http://www.imperial.ac.uk/" target="blank">
+                <img className={classes.image} src={imperial} alt={imperial} />
+              </a>
+
+              <a href="https://sites.google.com/view/project-mira/" target="blank">
+                <img className={classes.image} src={mira} alt={mira} />
+              </a>
+            </div>
           </Card>
         </TabPanel>
 
