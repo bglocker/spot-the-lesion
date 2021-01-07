@@ -509,7 +509,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
         unlockAchievementHandler("fastAnswer", "Achievement! The flash!");
       }
 
-      if (playerCorrectCurrent && roundTime < variables.roundDuration - 9500) {
+      if (playerCorrectCurrent && roundTime < 500) {
         unlockAchievementHandler("slowAnswer", "Achievement! Nerves of steel!");
       }
 
