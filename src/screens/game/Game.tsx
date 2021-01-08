@@ -317,7 +317,10 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       if (click) {
         const { x, y } = click;
 
-        drawCross(context, x, y, constants.clickSize, constants.clickLineWidth, colors.click);
+        const clickSize = toCanvasScale(context, constants.clickSize);
+        const clickLineWidth = toCanvasScale(context, constants.clickLineWidth);
+
+        drawCross(context, x, y, clickSize, clickLineWidth, colors.click);
       }
 
       enqueueSnackbar("The system is thinking...", constants.informationSnackbarOptions);
@@ -328,12 +331,16 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       /*
        * draw predicted rectangle
        */
-      drawRectangle(context, predicted, constants.predictedLineWidth, colors.predicted);
+      const predictedLineWidth = toCanvasScale(context, constants.predictedLineWidth);
+
+      drawRectangle(context, predicted, predictedLineWidth, colors.predicted);
     } else if (endTime === constants.drawTruthTime) {
       /*
        * draw truth rectangle
        */
-      drawRectangle(context, truth, constants.truthLineWidth, colors.truth);
+      const truthLineWidth = toCanvasScale(context, constants.truthLineWidth);
+
+      drawRectangle(context, truth, truthLineWidth, colors.truth);
     } else if (endTime === constants.evaluationTime) {
       /*
        * evaluate player
@@ -371,9 +378,15 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
         const text = playerCorrect ? "Well spotted!" : "Missed!";
         const textColor = playerCorrect ? colors.playerCorrect : colors.playerIncorrect;
 
-        drawRoundEndText(context, text, textColor);
+        const textSize = toCanvasScale(context, constants.roundEndTextSize);
+        const textLineWidth = toCanvasScale(context, constants.roundEndTextLineWidth);
+
+        drawRoundEndText(context, text, textSize, textLineWidth, textColor);
       } else {
-        drawRoundEndText(context, "Too slow!", colors.playerIncorrect);
+        const textSize = toCanvasScale(context, constants.roundEndTextSize);
+        const textLineWidth = toCanvasScale(context, constants.roundEndTextLineWidth);
+
+        drawRoundEndText(context, "Too slow!", textSize, textLineWidth, colors.playerIncorrect);
       }
 
       const intersectionOverUnion = getIntersectionOverUnion(truth, predicted);
@@ -457,7 +470,9 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       Math.round(baseY + cubeSide),
     ];
 
-    drawRectangle(animationContext, cube, constants.animationLineWidth, colors.animation);
+    const animationLineWidth = toCanvasScale(animationContext, constants.animationLineWidth);
+
+    drawRectangle(animationContext, cube, animationLineWidth, colors.animation);
   }, [animationContext, animationPosition, animationRunning]);
 
   /**
@@ -509,7 +524,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
         unlockAchievementHandler("fastAnswer", "Achievement! The flash!");
       }
 
-      if (playerCorrectCurrent && roundTime < variables.roundDuration - 9500) {
+      if (playerCorrectCurrent && roundTime < 500) {
         unlockAchievementHandler("slowAnswer", "Achievement! Nerves of steel!");
       }
 
@@ -712,27 +727,22 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
    */
   const loadHeatmapData = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async (instance: any): Promise<void> => {
+    async (instance: any) => {
       setHeatmapLoading(true);
 
-      /* TODO: check bug with set width and height for heatmap canvas */
       // eslint-disable-next-line no-underscore-dangle
-      const { ctx } = instance._renderer;
+      const { ctx }: { ctx: CanvasRenderingContext2D } = instance._renderer;
 
+      const min = 0;
       let max = 0;
-      imageData.clicks.forEach((element) => {
-        max = Math.max(max, element.clickCount);
+
+      const data = imageData.clicks.map(({ x, y, clickCount }) => {
+        max = Math.max(max, clickCount);
+
+        return { x: toCanvasScale(ctx, x), y: toCanvasScale(ctx, y), clickCount };
       });
 
-      const heatmapData = {
-        min: 0,
-        max,
-        data: imageData.clicks.map(({ x, y, clickCount }) => ({
-          x: toCanvasScale(ctx, x),
-          y: toCanvasScale(ctx, y),
-          clickCount,
-        })),
-      };
+      const heatmapData = { min, max, data };
 
       instance.setData(heatmapData);
 

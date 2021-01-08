@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   AppBar,
+  CircularProgress,
   Paper,
   Tab,
   Table,
@@ -16,7 +17,7 @@ import {
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { FaMedal } from "react-icons/fa";
 import clsx from "clsx";
-import { NavigationAppBar } from "../../components";
+import { HideFragment, NavigationAppBar } from "../../components";
 import { handleFirestoreError } from "../../utils/firebaseUtils";
 import { getColorByRank, getQueryOnTimeAndGameMode } from "../../utils/leaderboardUtils";
 import colors from "../../res/colors";
@@ -67,6 +68,7 @@ const Leaderboard: React.FC = () => {
   const [gameModeTabIndex, setGameModeTabIndex] = useState(0);
 
   const [rows, setRows] = useState<LeaderboardRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const smallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down("xs"));
 
@@ -98,6 +100,8 @@ const Leaderboard: React.FC = () => {
         });
 
         setRows(newRows);
+
+        setLoading(false);
       },
       (error) => handleFirestoreError(error)
     );
@@ -144,57 +148,63 @@ const Leaderboard: React.FC = () => {
       </AppBar>
 
       <div className={classes.container}>
-        <TableContainer className={classes.tableContainer} component={Paper}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell
-                  className={clsx(classes.tableCell, classes.tableCellHead)}
-                  align="center"
-                >
-                  Rank
-                </TableCell>
+        <HideFragment hide={!loading}>
+          <CircularProgress color="primary" size={64} />
+        </HideFragment>
 
-                <TableCell
-                  className={clsx(classes.tableCell, classes.tableCellHead)}
-                  align="center"
-                >
-                  Player
-                </TableCell>
-
-                <TableCell
-                  className={clsx(classes.tableCell, classes.tableCellHead)}
-                  align="center"
-                >
-                  Score
-                </TableCell>
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {rows.map(({ user, score, rank }) => (
-                <TableRow key={user} style={{ backgroundColor: getColorByRank(rank) }}>
-                  <TableCell className={classes.tableCell} align="center">
-                    {rank <= 3 ? <FaMedal /> : null} {rank}
+        <HideFragment hide={loading}>
+          <TableContainer className={classes.tableContainer} component={Paper}>
+            <Table stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell
+                    className={clsx(classes.tableCell, classes.tableCellHead)}
+                    align="center"
+                  >
+                    Rank
                   </TableCell>
 
                   <TableCell
-                    className={classes.tableCell}
-                    component="th"
-                    scope="row"
+                    className={clsx(classes.tableCell, classes.tableCellHead)}
                     align="center"
                   >
-                    {user}
+                    Player
                   </TableCell>
 
-                  <TableCell className={classes.tableCell} align="center">
-                    {score}
+                  <TableCell
+                    className={clsx(classes.tableCell, classes.tableCellHead)}
+                    align="center"
+                  >
+                    Score
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+
+              <TableBody>
+                {rows.map(({ user, score, rank }) => (
+                  <TableRow key={user} style={{ backgroundColor: getColorByRank(rank) }}>
+                    <TableCell className={classes.tableCell} align="center">
+                      {rank <= 3 ? <FaMedal /> : null} {rank}
+                    </TableCell>
+
+                    <TableCell
+                      className={classes.tableCell}
+                      component="th"
+                      scope="row"
+                      align="center"
+                    >
+                      {user}
+                    </TableCell>
+
+                    <TableCell className={classes.tableCell} align="center">
+                      {score}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </HideFragment>
       </div>
     </>
   );

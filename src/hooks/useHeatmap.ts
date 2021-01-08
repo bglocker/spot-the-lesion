@@ -1,5 +1,6 @@
 import { RefObject, useEffect, useState } from "react";
 import h337 from "heatmap.js";
+import constants from "../res/constants";
 
 /**
  * Custom hook for drawing a Heatmap over a canvas
@@ -27,13 +28,15 @@ const useHeatmap = (
     const instance = h337.create({
       container: container.current,
       valueField: "clickCount",
+      width: constants.canvasSize,
+      height: constants.canvasSize,
     });
 
     // eslint-disable-next-line no-underscore-dangle
-    const { canvas } = instance._renderer;
+    const { canvas }: { canvas: HTMLCanvasElement } = instance._renderer;
 
     /* Replace default style with Game canvas style */
-    canvas.setAttribute("style", "display: block;");
+    canvas.removeAttribute("style");
     canvas.className = className;
 
     setHeatmapInstance(instance);
@@ -46,11 +49,11 @@ const useHeatmap = (
     }
 
     // eslint-disable-next-line no-underscore-dangle
-    const { canvas } = heatmapInstance._renderer;
+    const { canvas }: { canvas: HTMLCanvasElement } = heatmapInstance._renderer;
 
     if (show) {
       /* Show heatmap and load data */
-      canvas.style.display = "block";
+      canvas.style.display = "";
 
       loadData(heatmapInstance);
     } else {

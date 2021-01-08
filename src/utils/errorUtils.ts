@@ -3,6 +3,15 @@ import { OptionsObject } from "notistack";
 import constants from "../res/constants";
 
 /**
+ * Asserts a part of the code that should not be reached (e.g. default case of exhaustive switch)
+ *
+ * @param val Unreachable value
+ */
+const assertUnreachable = (val: never): never => {
+  throw new Error(`Unreachable value ${val} reached.`);
+};
+
+/**
  * Logs the given image loading error
  *
  * @param error Image load error to log
@@ -60,4 +69,4 @@ const handleUncaughtError = (
   }
 };
 
-export { handleImageLoadError, handleUncaughtError };
+export { assertUnreachable, handleImageLoadError, handleUncaughtError };
