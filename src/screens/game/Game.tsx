@@ -712,27 +712,22 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
    */
   const loadHeatmapData = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async (instance: any): Promise<void> => {
+    async (instance: any) => {
       setHeatmapLoading(true);
 
-      /* TODO: check bug with set width and height for heatmap canvas */
       // eslint-disable-next-line no-underscore-dangle
-      const { ctx } = instance._renderer;
+      const { ctx }: { ctx: CanvasRenderingContext2D } = instance._renderer;
 
+      const min = 0;
       let max = 0;
-      imageData.clicks.forEach((element) => {
-        max = Math.max(max, element.clickCount);
+
+      const data = imageData.clicks.map(({ x, y, clickCount }) => {
+        max = Math.max(max, clickCount);
+
+        return { x: toCanvasScale(ctx, x), y: toCanvasScale(ctx, y), clickCount };
       });
 
-      const heatmapData = {
-        min: 0,
-        max,
-        data: imageData.clicks.map(({ x, y, clickCount }) => ({
-          x: toCanvasScale(ctx, x),
-          y: toCanvasScale(ctx, y),
-          clickCount,
-        })),
-      };
+      const heatmapData = { min, max, data };
 
       instance.setData(heatmapData);
 
