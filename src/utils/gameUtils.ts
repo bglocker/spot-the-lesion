@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { OptionsObject } from "notistack";
 import { drawStrokedText } from "./canvasUtils";
+import { assertUnreachable } from "./errorUtils";
 import constants from "../res/constants";
 import variables from "../res/variables";
 
@@ -92,8 +93,7 @@ const getFilesNumber = (difficulty: Difficulty): number => {
     case "hard":
       return variables.hardFilesNumber;
     default:
-      /* TODO: handle unreachable code */
-      return 1;
+      return assertUnreachable(difficulty);
   }
 };
 
