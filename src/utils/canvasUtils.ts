@@ -90,7 +90,8 @@ const drawRectangle = (
  * @param text        Text to draw
  * @param x           Width coordinate
  * @param y           Height coordinate
- * @param textAlign   Text alignment
+ * @param align       Text alignment
+ * @param size        Text font size (in px)
  * @param strokeWidth Text stroke width
  * @param strokeStyle Text stroke style
  * @param fillStyle   Text fill style
@@ -100,16 +101,17 @@ const drawStrokedText = (
   text: string,
   x: number,
   y: number,
-  textAlign: CanvasTextAlign,
+  align: CanvasTextAlign,
+  size: number,
   strokeWidth: number,
   strokeStyle: string,
   fillStyle: string
 ): void => {
-  ctx.font = "4rem Roboto";
+  ctx.font = `${size}px Roboto`;
   ctx.lineJoin = "miter";
   ctx.miterLimit = 2;
 
-  ctx.textAlign = textAlign;
+  ctx.textAlign = align;
   ctx.lineWidth = strokeWidth;
   ctx.strokeStyle = strokeStyle;
   ctx.fillStyle = fillStyle;

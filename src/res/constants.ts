@@ -21,18 +21,19 @@ const constants = {
   /* Firebase Storage */
   maxOperationRetryTime: 3000,
 
-  /* TODO: set canvasSize to multiple of 512 */
   /* Game */
   animationCubesNumber: 10,
-  canvasSize: 750,
+  canvasSize: 1024,
 
   /* Game drawings */
-  animationLineWidth: 5,
-  clickLineWidth: 5,
-  clickSize: 10,
+  animationLineWidth: 3.5,
+  clickLineWidth: 3.5,
+  clickSize: 7,
   hintRange: 50,
-  predictedLineWidth: 5,
-  truthLineWidth: 5,
+  predictedLineWidth: 3.5,
+  roundEndTextSize: 48,
+  roundEndTextLineWidth: 2,
+  truthLineWidth: 3.5,
 
   /* Game timings */
   drawPredictedTime: 100,

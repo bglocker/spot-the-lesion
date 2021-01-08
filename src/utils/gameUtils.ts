@@ -7,15 +7,23 @@ import variables from "../res/variables";
 /**
  * Draw the round end text
  *
- * @param ctx   Context to draw the text on
- * @param text  Text to draw
- * @param color Text color
+ * @param ctx       Context to draw the text on
+ * @param text      Text to draw
+ * @param size      Text font size (in px)
+ * @param lineWidth Width of the text line
+ * @param color     Text color
  */
-const drawRoundEndText = (ctx: CanvasRenderingContext2D, text: string, color: string): void => {
+const drawRoundEndText = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  size: number,
+  lineWidth: number,
+  color: string
+): void => {
   const x = Math.round(ctx.canvas.width / 2);
   const y = Math.round(ctx.canvas.height / 10);
 
-  drawStrokedText(ctx, text, x, y, "center", 3, "white", color);
+  drawStrokedText(ctx, text, x, y, "center", size, lineWidth, "white", color);
 };
 
 /**
