@@ -27,7 +27,7 @@ const colors = {
   playerLost: "red",
   playerWon: "green",
 
-  /* Leaderboard */
+  /* Leaderboards */
   bronze: "#CD7F32",
   gold: "#FFCC00",
   rowBorder: "#003B46",
