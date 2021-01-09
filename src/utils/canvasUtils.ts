@@ -1,4 +1,3 @@
-import React from "react";
 import constants from "../res/constants";
 
 /**
@@ -49,6 +48,7 @@ const drawCircle = (
 ): void => {
   ctx.lineWidth = lineWidth;
   ctx.strokeStyle = strokeStyle;
+
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, 2 * Math.PI);
   ctx.stroke();
@@ -68,6 +68,10 @@ const drawRectangle = (
   lineWidth: number,
   strokeStyle: string
 ): void => {
+  if (rect.length !== 4) {
+    throw new Error("rect must be an array of length 4.");
+  }
+
   const xBase = rect[0];
   const xEnd = rect[2];
   const yBase = rect[1];
@@ -78,6 +82,7 @@ const drawRectangle = (
 
   ctx.lineWidth = lineWidth;
   ctx.strokeStyle = strokeStyle;
+
   ctx.beginPath();
   ctx.rect(xBase, yBase, width, height);
   ctx.stroke();
@@ -125,7 +130,7 @@ const drawStrokedText = (
  * Equivalent to the inverse of toCanvasScale
  *
  * @param ctx Canvas context, used to determine canvas scale
- * @param x
+ * @param x   Value to map
  *
  * @return Given value, mapped to the default scale, and rounded
  */
@@ -152,28 +157,30 @@ const toCanvasScale = (ctx: CanvasRenderingContext2D, x: number): number =>
  *
  * @return Given rectangle coordinates, mapped to the canvas scale
  */
-const mapCoordinatesToCanvasScale = (ctx: CanvasRenderingContext2D, rect: number[]): number[] =>
+const mapRectangleToCanvasScale = (ctx: CanvasRenderingContext2D, rect: number[]): number[] =>
   rect.map((x) => toCanvasScale(ctx, x));
 
 /**
  * Maps the click position relative to the canvas
  *
- * @param ctx   Canvas context to map relative to
- * @param event Mouse event, used to get click position
+ * @param ctx Canvas context to map relative to
+ * @param x   Width coordinate
+ * @param y   Height coordinate
  *
  * @return Click coordinates relative to the canvas, and rounded
  */
 const mapClickToCanvas = (
   ctx: CanvasRenderingContext2D,
-  event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
+  x: number,
+  y: number
 ): { x: number; y: number } => {
   const rect = ctx.canvas.getBoundingClientRect();
   const widthScale = ctx.canvas.width / rect.width;
   const heightScale = ctx.canvas.height / rect.height;
 
   return {
-    x: Math.round((event.clientX - rect.left) * widthScale),
-    y: Math.round((event.clientY - rect.top) * heightScale),
+    x: Math.round((x - rect.left) * widthScale),
+    y: Math.round((y - rect.top) * heightScale),
   };
 };
 
@@ -183,7 +190,7 @@ export {
   drawRectangle,
   drawStrokedText,
   mapClickToCanvas,
-  mapCoordinatesToCanvasScale,
+  mapRectangleToCanvasScale,
   toCanvasScale,
   toDefaultScale,
 };

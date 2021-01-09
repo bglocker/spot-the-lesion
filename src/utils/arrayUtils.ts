@@ -27,9 +27,14 @@ const partition = <T>(xs: T[], predicate: (value: T) => boolean): [T[], T[]] =>
  * @return Array range
  */
 const range = (start = 1, stop: number, step = 1): number[] => {
-  if (step <= 0) {
-    throw new Error("Step size must be strictly positive (>= 0)");
+  if (stop <= start) {
+    throw new Error("Stop must be greater than start.");
   }
+
+  if (step <= 0) {
+    throw new Error("Step must be positive.");
+  }
+
   const nums: number[] = [];
 
   for (let i = start; i < stop; i += step) {
@@ -49,6 +54,14 @@ const range = (start = 1, stop: number, step = 1): number[] => {
  * @return Shuffled array range
  */
 const shuffledRange = (start = 1, stop: number, step = 1): number[] => {
+  if (stop <= start) {
+    throw new Error("Stop must be greater than start.");
+  }
+
+  if (step <= 0) {
+    throw new Error("Step must be positive.");
+  }
+
   const nums: number[] = [];
 
   for (let i = 0; i < (stop - start) / step; i++) {

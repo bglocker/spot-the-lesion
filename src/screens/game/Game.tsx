@@ -14,7 +14,7 @@ import {
   drawCross,
   drawRectangle,
   mapClickToCanvas,
-  mapCoordinatesToCanvasScale,
+  mapRectangleToCanvasScale,
   toCanvasScale,
   toDefaultScale,
 } from "../../utils/canvasUtils";
@@ -604,7 +604,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       return;
     }
 
-    setClick(mapClickToCanvas(context, event));
+    setClick(mapClickToCanvas(context, event.clientX, event.clientY));
     setEndRunning(true);
     setRoundRunning(false);
   };
@@ -626,8 +626,8 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
     const annotation = response.data;
 
-    setTruth(mapCoordinatesToCanvasScale(context, annotation.truth));
-    setPredicted(mapCoordinatesToCanvasScale(context, annotation.predicted));
+    setTruth(mapRectangleToCanvasScale(context, annotation.truth));
+    setPredicted(mapRectangleToCanvasScale(context, annotation.predicted));
   };
 
   /**
