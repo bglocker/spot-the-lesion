@@ -4,6 +4,7 @@ import {
   drawCross,
   drawRectangle,
   drawStrokedText,
+  mapClickToCanvas,
   mapRectangleToCanvasScale,
   toCanvasScale,
   toDefaultScale,
@@ -84,7 +85,7 @@ describe("drawRectangle", () => {
     expect(ctx.stroke).toBeCalled();
   });
 
-  it("throws error for invalid rect", () => {
+  it("throws error for invalid input rectangle", () => {
     expect(() => drawRectangle(ctx, [], 3, "#ffa500")).toThrow();
     expect(() => drawRectangle(ctx, [1, 3], 3, "#ffa500")).toThrow();
     expect(() => drawRectangle(ctx, [1, 3, 5, 6, 7], 3, "#ffa500")).toThrow();
@@ -161,7 +162,28 @@ describe("mapRectangleToCanvasScale", () => {
 });
 
 describe("mapClickToCanvas", () => {
+  let spyGetBoundingClientRect;
+
+  beforeAll(() => {
+    spyGetBoundingClientRect = jest.spyOn(Element.prototype, "getBoundingClientRect");
+  });
+
+  afterAll(() => spyGetBoundingClientRect.mockRestore());
+
+  afterEach(() => spyGetBoundingClientRect.mockClear());
+
   it("correctly maps to canvas", () => {
-    /* TODO: getBoundingClientRect returns all zeros */
+    spyGetBoundingClientRect.mockReturnValue({
+      height: ctx.canvas.height * 2,
+      width: ctx.canvas.width * 2,
+      left: 50,
+      top: 50,
+    });
+
+    const mappedClick = mapClickToCanvas(ctx, 100, 200);
+
+    expect(spyGetBoundingClientRect).toBeCalled();
+
+    expect(mappedClick).toStrictEqual({ x: 25, y: 75 });
   });
 });

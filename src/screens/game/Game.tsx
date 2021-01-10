@@ -8,7 +8,7 @@ import clsx from "clsx";
 import firebase from "firebase/app";
 import { LoadingButton, NavigationAppBar } from "../../components";
 import { useCanvasContext, useHeatmap, useInterval } from "../../hooks";
-import { handleAxiosError, isAxiosError } from "../../utils/axiosUtils";
+import { handleAxiosError } from "../../utils/axiosUtils";
 import {
   drawCircle,
   drawCross,
@@ -710,7 +710,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
       if (isFirebaseStorageError(error)) {
         handleFirebaseStorageError(error, enqueueSnackbar);
-      } else if (isAxiosError(error)) {
+      } else if (axios.isAxiosError(error)) {
         handleAxiosError(error, enqueueSnackbar);
       } else {
         handleImageLoadError(error, enqueueSnackbar);
@@ -840,7 +840,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
       setChallengeDialogOpen(true);
     } catch (error) {
-      if (isAxiosError(error)) {
+      if (axios.isAxiosError(error)) {
         handleAxiosError(error, enqueueSnackbar);
       } else {
         handleUncaughtError(error, "createInvite", enqueueSnackbar);

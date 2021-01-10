@@ -31,7 +31,13 @@ const months: Month[] = [
  *
  * @return Three letter month name
  */
-const getMonthName = (month: number): Month => months[month];
+const getMonthName = (month: number): Month => {
+  if (month < 0 || month > 11) {
+    throw new Error("Month number must be between 0 and 11 inclusively.");
+  }
+
+  return months[month];
+};
 
 /**
  * Checks if an error is an Auth error
@@ -40,7 +46,8 @@ const getMonthName = (month: number): Month => months[month];
  *
  * @return AuthError type predicate
  */
-const isAuthError = (error: unknown): error is AuthError => (error as AuthError).code !== undefined;
+const isAuthError = (error: unknown): error is AuthError =>
+  (error as AuthError).code !== undefined && (error as AuthError).code.startsWith("auth/");
 
 /**
  * Logs an Auth error
@@ -64,7 +71,7 @@ const handleAuthError = (
 
   /* Snackbar should be displayed */
   if (enqueueSnackbar) {
-    const message = "Please try again";
+    const message = "Please try again.";
 
     enqueueSnackbar(message, constants.errorSnackbarOptions);
   }
@@ -78,7 +85,8 @@ const handleAuthError = (
  * @return FirebaseStorageError type predicate
  */
 const isFirebaseStorageError = (error: Error): error is FirebaseStorageError =>
-  (error as FirebaseStorageError).serverResponse !== undefined;
+  (error as FirebaseStorageError).code !== undefined &&
+  (error as FirebaseStorageError).code.startsWith("storage/");
 
 /**
  * Logs a Firebase storage error
@@ -102,7 +110,7 @@ const handleFirebaseStorageError = (
 
   /* Snackbar should be displayed */
   if (enqueueSnackbar) {
-    let message = "Please try again";
+    let message = "Please try again.";
 
     /* Internet connection error */
     if (error.code === "storage/retry-limit-exceeded") {
@@ -145,7 +153,7 @@ const handleFirestoreError = (
 
   /* Snackbar should be displayed */
   if (enqueueSnackbar) {
-    let message = "Please try again";
+    let message = "Please try again.";
 
     if (error.code === "unavailable") {
       message = "Please check your internet connection and try again.";
@@ -163,4 +171,7 @@ export {
   isAuthError,
   isFirebaseStorageError,
   isFirestoreError,
+  logAuthError,
+  logFirebaseStorageError,
+  logFirestoreError,
 };

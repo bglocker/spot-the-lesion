@@ -1,5 +1,3 @@
-import libraries from "../screens/credits/libraries.json";
-
 const pkgRegex = /(.+)@(.+)$/;
 
 /**
@@ -17,11 +15,13 @@ const getPackageNameAndVersion = (pkg: string): [string, string] => {
 };
 
 /**
- * Processes the imported libraries json, returning an array of Libraries
+ * Processes a libraries json, returning an array of Library objects
  *
- * @return Array of Library
+ * @param libraries Libraries json to process
+ *
+ * @return Array of Library objects
  */
-const getLibraries = (): Library[] => {
+const getLibrariesArray = (libraries: Record<string, LicenseInfo>): Library[] => {
   return Object.keys(libraries).map((key) => {
     const [name, version] = getPackageNameAndVersion(key);
 
@@ -33,4 +33,4 @@ const getLibraries = (): Library[] => {
   });
 };
 
-export { getPackageNameAndVersion, getLibraries };
+export { getPackageNameAndVersion, getLibrariesArray };

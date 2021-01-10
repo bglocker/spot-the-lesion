@@ -69,7 +69,7 @@ const drawRectangle = (
   strokeStyle: string
 ): void => {
   if (rect.length !== 4) {
-    throw new Error("rect must be an array of length 4.");
+    throw new Error("Rectangle must be an array of length 4.");
   }
 
   const xBase = rect[0];

@@ -4,16 +4,6 @@ import { OptionsObject } from "notistack";
 import constants from "../res/constants";
 
 /**
- * Checks if an error is an Axios error
- *
- * @param error Error to check
- *
- * @return AxiosError type predicate
- */
-const isAxiosError = (error: Error): error is AxiosError =>
-  (error as AxiosError).isAxiosError !== undefined;
-
-/**
  * Logs an axios error
  *
  * @param error Axios error to log
@@ -47,7 +37,7 @@ const handleAxiosError = (
 
   /* Snackbar should be displayed */
   if (enqueueSnackbar) {
-    let message = "Please try again";
+    let message = "Please try again.";
 
     /* Internet connection error */
     if (error.message.includes("timeout")) {
@@ -58,4 +48,4 @@ const handleAxiosError = (
   }
 };
 
-export { handleAxiosError, isAxiosError };
+export { logAxiosError, handleAxiosError };
