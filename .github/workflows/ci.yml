@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v2
         with:
-          node-verison: $NODE_VERSION
+          node-version: $NODE_VERSION
 
       - name: Cache node modules
         id: node-cache
@@ -30,6 +30,12 @@ jobs:
       - name: Install node modules
         if: steps.node-cache.outputs.cache-hit != 'true'
         run: npm install
+      
+      - name: Lint
+        run: npm lint
+      
+      - name: Type check
+        run: npm type-check
 
       - name: Test
         run: npm test
