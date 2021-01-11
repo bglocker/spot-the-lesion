@@ -1,0 +1,35 @@
+name: CI
+
+on: [push, pull_request, workflow_dispatch]
+
+env:
+  NODE_VERSION: 14.x
+
+jobs:
+  validate:
+    name: Validate commit
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-verison: $NODE_VERSION
+
+      - name: Cache node modules
+        id: node-cache
+        uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: node-cache-${{ hashFiles('package-lock.json') }}
+
+      - name: Install node modules
+        if: steps.node-cache.outputs.cache-hit != 'true'
+        uses: npm install
+
+      - name: Test
+        run: npm test
