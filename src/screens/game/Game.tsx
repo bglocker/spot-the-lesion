@@ -576,6 +576,8 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       return () => {};
     }
 
+    setImageData({ ...defaultImageData, clicks: [] });
+
     const docName = fileId.toString();
 
     const unsubscribe = firebase
@@ -696,8 +698,6 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       setTimerColor(colors.timerInitial);
 
       setClick(null);
-
-      setImageData({ ...defaultImageData, clicks: [] });
 
       setPlayerCorrectCurrent(false);
 
