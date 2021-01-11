@@ -13,7 +13,7 @@ import Credits from "./screens/credits/Credits";
 import GameMenu from "./screens/game/GameMenu";
 import GameRoute from "./screens/game/GameRoute";
 import Home from "./screens/home/Home";
-import Leaderboard from "./screens/leaderboard/Leaderboard";
+import Leaderboards from "./screens/leaderboards/Leaderboards";
 import PageNotFound from "./screens/404/PageNotFound";
 import Statistics from "./screens/statistics/Statistics";
 import Tutorial from "./screens/tutorial/Tutorial";
@@ -102,8 +102,8 @@ const Router: React.FC = () => {
               <GameMenu />
             </Route>
 
-            <Route exact path="/leaderboard">
-              <Leaderboard />
+            <Route exact path="/leaderboards">
+              <Leaderboards />
             </Route>
 
             <Route exact path="/statistics">

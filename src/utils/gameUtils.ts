@@ -39,6 +39,10 @@ const drawRoundEndText = (
  * @return Ratio of intersection area over union area
  */
 const getIntersectionOverUnion = (rectA: number[], rectB: number[]): number => {
+  if (rectA.length !== 4 || rectB.length !== 4) {
+    throw new Error("Both input rectangles must be arrays of length 4.");
+  }
+
   const xA = Math.max(rectA[0], rectB[0]);
   const xB = Math.min(rectA[2], rectB[2]);
   const yA = Math.max(rectA[1], rectB[1]);

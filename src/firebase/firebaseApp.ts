@@ -3,7 +3,7 @@ import "firebase/firestore";
 import "firebase/storage";
 import "firebase/auth";
 import axios from "axios";
-import { handleAxiosError, isAxiosError } from "../utils/axiosUtils";
+import { handleAxiosError } from "../utils/axiosUtils";
 import { handleUncaughtError } from "../utils/errorUtils";
 import {
   handleAuthError,
@@ -106,7 +106,7 @@ const getGlobalVariables = async (): Promise<boolean> => {
       handleFirestoreError(error);
     } else if (isFirebaseStorageError(error)) {
       handleFirebaseStorageError(error);
-    } else if (isAxiosError(error)) {
+    } else if (axios.isAxiosError(error)) {
       handleAxiosError(error);
     } else {
       handleUncaughtError(error, "getGlobalVariables");

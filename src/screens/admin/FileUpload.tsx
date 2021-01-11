@@ -6,8 +6,8 @@ import axios from "axios";
 import clsx from "clsx";
 import { useSnackbar } from "notistack";
 import { NavigationAppBar } from "../../components";
-import { handleAxiosError, isAxiosError } from "../../utils/axiosUtils";
-import { compareFiles, getFileNames, removeExtension } from "../../utils/fileUitls";
+import { handleAxiosError } from "../../utils/axiosUtils";
+import { compareFiles, getFileNames, removeExtension } from "../../utils/fileUtils";
 import colors from "../../res/colors";
 import constants from "../../res/constants";
 
@@ -229,7 +229,7 @@ const FileUpload: React.FC = () => {
           enqueueSnackbar(response.data, responseSnackbarOptions);
         })
         .catch((error) => {
-          if (isAxiosError(error)) {
+          if (axios.isAxiosError(error)) {
             handleAxiosError(error);
 
             if (error.response) {

@@ -8,13 +8,13 @@ import clsx from "clsx";
 import firebase from "firebase/app";
 import { LoadingButton, NavigationAppBar } from "../../components";
 import { useCanvasContext, useHeatmap, useInterval } from "../../hooks";
-import { handleAxiosError, isAxiosError } from "../../utils/axiosUtils";
+import { handleAxiosError } from "../../utils/axiosUtils";
 import {
   drawCircle,
   drawCross,
   drawRectangle,
   mapClickToCanvas,
-  mapCoordinatesToCanvasScale,
+  mapRectangleToCanvasScale,
   toCanvasScale,
   toDefaultScale,
 } from "../../utils/canvasUtils";
@@ -604,7 +604,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
       return;
     }
 
-    setClick(mapClickToCanvas(context, event));
+    setClick(mapClickToCanvas(context, event.clientX, event.clientY));
     setEndRunning(true);
     setRoundRunning(false);
   };
@@ -626,8 +626,8 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
     const annotation = response.data;
 
-    setTruth(mapCoordinatesToCanvasScale(context, annotation.truth));
-    setPredicted(mapCoordinatesToCanvasScale(context, annotation.predicted));
+    setTruth(mapRectangleToCanvasScale(context, annotation.truth));
+    setPredicted(mapRectangleToCanvasScale(context, annotation.predicted));
   };
 
   /**
@@ -710,7 +710,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
       if (isFirebaseStorageError(error)) {
         handleFirebaseStorageError(error, enqueueSnackbar);
-      } else if (isAxiosError(error)) {
+      } else if (axios.isAxiosError(error)) {
         handleAxiosError(error, enqueueSnackbar);
       } else {
         handleImageLoadError(error, enqueueSnackbar);
@@ -840,7 +840,7 @@ const Game: React.FC<GameProps> = ({ gameMode, difficulty, challengeFileIds }: G
 
       setChallengeDialogOpen(true);
     } catch (error) {
-      if (isAxiosError(error)) {
+      if (axios.isAxiosError(error)) {
         handleAxiosError(error, enqueueSnackbar);
       } else {
         handleUncaughtError(error, "createInvite", enqueueSnackbar);

@@ -19,7 +19,7 @@ import { FaMedal } from "react-icons/fa";
 import clsx from "clsx";
 import { HideFragment, NavigationAppBar } from "../../components";
 import { handleFirestoreError } from "../../utils/firebaseUtils";
-import { getColorByRank, getQueryOnTimeAndGameMode } from "../../utils/leaderboardUtils";
+import { getColorByRank, getQueryOnTimeAndGameMode } from "../../utils/leaderboardsUtils";
 import colors from "../../res/colors";
 
 const useStyles = makeStyles((theme) =>
@@ -63,7 +63,7 @@ const useStyles = makeStyles((theme) =>
   })
 );
 
-const Leaderboard: React.FC = () => {
+const Leaderboards: React.FC = () => {
   const [timeTabIndex, setTimeTabIndex] = useState(0);
   const [gameModeTabIndex, setGameModeTabIndex] = useState(0);
 
@@ -210,4 +210,4 @@ const Leaderboard: React.FC = () => {
   );
 };
 
-export default Leaderboard;
+export default Leaderboards;

@@ -1,0 +1,203 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`drawCircle renders correctly 1`] = `
+Array [
+  Object {
+    "props": Object {
+      "value": 3,
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "lineWidth",
+  },
+  Object {
+    "props": Object {
+      "value": "#ffa500",
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "strokeStyle",
+  },
+]
+`;
+
+exports[`drawCross renders correctly 1`] = `
+Array [
+  Object {
+    "props": Object {
+      "value": 3,
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "lineWidth",
+  },
+  Object {
+    "props": Object {
+      "value": "#ffa500",
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "strokeStyle",
+  },
+]
+`;
+
+exports[`drawRectangle renders correctly 1`] = `
+Array [
+  Object {
+    "props": Object {
+      "value": 3,
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "lineWidth",
+  },
+  Object {
+    "props": Object {
+      "value": "#ffa500",
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "strokeStyle",
+  },
+]
+`;
+
+exports[`drawStrokedText renders correctly 1`] = `
+Array [
+  Object {
+    "props": Object {
+      "value": "10px Roboto",
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "font",
+  },
+  Object {
+    "props": Object {
+      "value": "miter",
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "lineJoin",
+  },
+  Object {
+    "props": Object {
+      "value": 2,
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "lineWidth",
+  },
+  Object {
+    "props": Object {
+      "value": "center",
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "textAlign",
+  },
+  Object {
+    "props": Object {
+      "value": 5,
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "lineWidth",
+  },
+  Object {
+    "props": Object {
+      "value": "#000000",
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "strokeStyle",
+  },
+  Object {
+    "props": Object {
+      "value": "#ffffff",
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillStyle",
+  },
+]
+`;

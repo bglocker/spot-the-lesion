@@ -69,4 +69,10 @@ const handleUncaughtError = (
   }
 };
 
-export { assertUnreachable, handleImageLoadError, handleUncaughtError };
+export {
+  assertUnreachable,
+  handleImageLoadError,
+  handleUncaughtError,
+  logImageLoadError,
+  logUncaughtError,
+};

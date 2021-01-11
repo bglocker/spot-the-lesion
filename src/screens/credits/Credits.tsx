@@ -12,11 +12,12 @@ import {
   useMediaQuery,
 } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { getLibraries } from "../../utils/creditsUtils";
+import { getLibrariesArray } from "../../utils/creditsUtils";
 import { NavigationAppBar, TabPanel } from "../../components";
-import colors from "../../res/colors";
+import libraries from "./libraries.json";
 import imperial from "../../res/images/credits/imperial.png";
 import mira from "../../res/images/credits/mira.png";
+import colors from "../../res/colors";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -177,7 +178,7 @@ const Credits: React.FC = () => {
             </Typography>
 
             <List className={classes.list}>
-              {getLibraries().map(({ name, version }) => (
+              {getLibrariesArray(libraries).map(({ name, version }) => (
                 <ListItem key={name}>
                   <ListItemText primary={name} secondary={version} />
                 </ListItem>

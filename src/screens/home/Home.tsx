@@ -84,7 +84,7 @@ const Home: React.FC = () => {
 
   const onTutorialClick = () => history.push("/tutorial");
 
-  const onLeaderboardClick = () => history.push("/leaderboard");
+  const onLeaderboardsClick = () => history.push("/leaderboards");
 
   const onAchievementsClick = () => history.push("/achievements");
 
@@ -128,9 +128,9 @@ const Home: React.FC = () => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={onLeaderboardClick}
+              onClick={onLeaderboardsClick}
             >
-              Leaderboard
+              Leaderboards
             </Button>
 
             <Button
