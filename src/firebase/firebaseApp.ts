@@ -35,6 +35,9 @@ const firebaseConfig = {
  * @return True if successful, false otherwise
  */
 const initializeFirebase = async (): Promise<boolean> => {
+  console.warn(process.env.REACT_APP_FIREBASE_API_KEY);
+  console.warn(process.env.REACT_APP_SERVER_KEY);
+
   if (process.env.REACT_APP_FIREBASE_API_KEY === undefined) {
     console.error("Firebase API key not set.");
 

@@ -155,6 +155,12 @@
     "licenseUrl": "https://github.com/firebase/firebase-js-sdk",
     "parents": "spot-the-lesion"
   },
+  "gh-pages@3.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tschaub/gh-pages",
+    "licenseUrl": "https://github.com/tschaub/gh-pages/blob/main/LICENSE",
+    "parents": "spot-the-lesion"
+  },
   "heatmap.js@2.0.5": {
     "licenses": "MIT",
     "repository": "https://github.com/pa7/heatmap.js/",
