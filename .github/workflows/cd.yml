@@ -1,48 +1,13 @@
-name: CI/CD
+name: CD
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [start-cd]
 
 jobs:
-  validate:
-    name: Validate commit
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Setup Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: '14'
-
-      - name: Cache node modules
-        id: node-cache
-        uses: actions/cache@v2
-        with:
-          path: node_modules
-          key: node-cache-${{ hashFiles('package-lock.json') }}
-
-      - name: Install node modules
-        if: steps.node-cache.outputs.cache-hit != 'true'
-        run: npm install
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Type check
-        run: npm run type-check
-
-      - name: Test
-        run: npm test
-
   deploy:
     name: Deploy commit
-
-    needs: validate
-
-    if: github.ref == 'refs/heads/master'
 
     runs-on: ubuntu-latest
 
