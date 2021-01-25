@@ -74,6 +74,3 @@ jobs:
           BRANCH: gh-pages
           FOLDER: build
           CLEAN: true
-        env:
-          REACT_APP_FIREBASE_API_KEY: ${{ secrets.REACT_APP_FIREBASE_API_KEY }}
-          REACT_APP_SERVER_KEY: ${{ secrets.REACT_APP_SERVER_KEY }}
