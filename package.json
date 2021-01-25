@@ -2,7 +2,7 @@
   "name": "spot-the-lesion",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://cb3618.pages.doc.ic.ac.uk/spot-the-lesion",
+  "homepage": "https://minut1bc.github.io/spot-the-lesion",
   "dependencies": {
     "@fontsource/roboto": "^4.0.1",
     "@material-ui/core": "^4.11.2",
@@ -30,6 +30,7 @@
     "eslint-plugin-react": "^7.21.5",
     "eslint-plugin-react-hooks": "^4.2.0",
     "firebase": "^8.2.1",
+    "gh-pages": "^3.1.0",
     "heatmap.js": "^2.0.5",
     "jest-canvas-mock": "^2.3.0",
     "notistack": "^1.0.3",
@@ -48,6 +49,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
     "lint": "eslint src",
     "type-check": "tsc --noEmit"
   },
