@@ -17,20 +17,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@v2
         with:
           node-version: '14'
 
-      - name: Restore cached node modules
-        uses: actions/cache@v2
-        with:
-          path: node_modules
-          key: node-cache-${{ hashFiles('package-lock.json') }}
-
-      - name: Build
-        run: npm run build
+      - name: Install and build
+        run: |
+          npm install
+          npm run build
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@3.7.1
