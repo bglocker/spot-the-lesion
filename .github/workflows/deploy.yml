@@ -1,8 +1,7 @@
 name: Deploy
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches:
       - master
 
@@ -29,13 +28,12 @@ jobs:
         run: |
           npm install
           npm run build
-        env:
-          REACT_APP_FIREBASE_API_KEY: ${{ secrets.REACT_APP_FIREBASE_API_KEY }}
-          REACT_APP_SERVER_KEY: ${{ secrets.REACT_APP_SERVER_KEY }}
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@3.7.1
         with:
+          REACT_APP_FIREBASE_API_KEY: ${{ secrets.REACT_APP_FIREBASE_API_KEY }}
+          REACT_APP_SERVER_KEY: ${{ secrets.REACT_APP_SERVER_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
           FOLDER: build
