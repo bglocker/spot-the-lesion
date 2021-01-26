@@ -2,8 +2,9 @@ name: CD
 
 on:
   workflow_dispatch:
-  repository_dispatch:
-    types: [start-cd]
+  push:
+    branches:
+      - master
 
 jobs:
   deploy:
