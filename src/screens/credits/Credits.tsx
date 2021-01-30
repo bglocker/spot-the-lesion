@@ -167,7 +167,7 @@ const Credits: React.FC = () => {
 
             <Typography className={classes.text}>
               You can find a link to the authors and the licenses for the images by clicking here:{" "}
-              <a href={`${process.env.PUBLIC_URL}/image_licenses.png`} download>
+              <a href="image_licenses.pdf" download>
                 image_licenses.pdf
               </a>
             </Typography>
