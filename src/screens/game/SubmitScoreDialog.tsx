@@ -9,6 +9,7 @@ import {
   TextField,
 } from "@material-ui/core";
 import { LoadingButton } from "../../components";
+import { removeWhitespaces } from "../../utils/gameUtils";
 
 const SubmitScoreDialog: React.FC<SubmitScoreDialogProps> = ({
   open,
@@ -37,7 +38,7 @@ const SubmitScoreDialog: React.FC<SubmitScoreDialogProps> = ({
     } else {
       setLoading(true);
 
-      await onSubmit(username);
+      await onSubmit(removeWhitespaces(username));
 
       setLoading(false);
     }
