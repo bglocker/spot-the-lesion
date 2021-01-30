@@ -166,17 +166,14 @@ const Credits: React.FC = () => {
             </Typography>
 
             <Typography className={classes.text}>
-              You can find a link to the authors and the licenses for the images by following{" "}
-              <a href="https://drive.google.com/file/d/1zAs8cqA91jkWzLExid3EvleiB8e1yIuu/view?usp=sharing">
-                this link
+              You can find a link to the authors and the licenses for the images by clicking here:{" "}
+              <a href={`${process.env.PUBLIC_URL}/image_licenses.png`} download>
+                image_licenses.pdf
               </a>
-              .
             </Typography>
-
             <Typography className={classes.text}>
               Here are the libraries that this game uses:
             </Typography>
-
             <List className={classes.list}>
               {getLibrariesArray(libraries).map(({ name, version }) => (
                 <ListItem key={name}>
