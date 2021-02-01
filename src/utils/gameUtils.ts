@@ -181,14 +181,6 @@ const unlockAchievement = (
   }
 };
 
-/**
- * Utility function for removing all the whitespaces in a player's username
- * @param inputString
- */
-const removeWhitespaces = (inputString: string): string => {
-  return inputString.replace(/\s/g, "");
-};
-
 export {
   drawRoundEndText,
   getAnnotationPath,
@@ -199,5 +191,4 @@ export {
   getImagePath,
   getIntersectionOverUnion,
   unlockAchievement,
-  removeWhitespaces,
 };
