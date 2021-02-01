@@ -37,7 +37,9 @@ const SubmitScoreDialog: React.FC<SubmitScoreDialogProps> = ({
     } else {
       setLoading(true);
 
-      await onSubmit(username);
+      const trimmedUsername = username.trim();
+      setUsername(trimmedUsername);
+      await onSubmit(trimmedUsername);
 
       setLoading(false);
     }
