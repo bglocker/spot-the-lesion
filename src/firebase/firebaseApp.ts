@@ -18,13 +18,12 @@ import variables from "../res/variables";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  appId: "1:131387805123:web:9bdbabe358ffcf04ad4176",
-  authDomain: "spot-the-lesion.firebaseapp.com",
-  databaseURL: "https://spot-the-lesion.firebaseio.com",
-  storageBucket: "spot-the-lesion.appspot.com",
-  messagingSenderId: "131387805123",
-  measurementId: "G-13PZY5QQPK",
-  projectId: "spot-the-lesion",
+  authDomain: "spot-the-lesion-ea4c7.firebaseapp.com",
+  projectId: "spot-the-lesion-ea4c7",
+  storageBucket: "spot-the-lesion-ea4c7.appspot.com",
+  messagingSenderId: "1054304613207",
+  appId: "1:1054304613207:web:b2373a04e149f81b190412",
+  measurementId: "G-VWTNGJ8CLF"
 };
 
 /**
