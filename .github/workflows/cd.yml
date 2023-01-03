@@ -27,6 +27,12 @@ jobs:
           path: node_modules
           key: node-cache-${{ hashFiles('package-lock.json') }}
 
+      - name: Install
+        run: npm install
+        env:
+          REACT_APP_FIREBASE_API_KEY: ${{ secrets.REACT_APP_FIREBASE_API_KEY }}
+          REACT_APP_SERVER_KEY: ${{ secrets.REACT_APP_SERVER_KEY }}
+
       - name: Build
         run: npm run build
         env:
