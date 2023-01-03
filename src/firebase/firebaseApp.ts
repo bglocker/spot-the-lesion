@@ -16,10 +16,6 @@ import {
 import constants from "../res/constants";
 import variables from "../res/variables";
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: "spot-the-lesion-ea4c7.firebaseapp.com",
