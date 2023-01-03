@@ -23,7 +23,7 @@ const firebaseConfig = {
   storageBucket: "spot-the-lesion-ea4c7.appspot.com",
   messagingSenderId: "1054304613207",
   appId: "1:1054304613207:web:b2373a04e149f81b190412",
-  measurementId: "G-VWTNGJ8CLF"
+  measurementId: "G-VWTNGJ8CLF",
 };
 
 /**
