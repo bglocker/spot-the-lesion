@@ -68,7 +68,7 @@ const getIntersectionOverUnion = (rectA: number[], rectB: number[]): number => {
  */
 
 const getAnnotationPath = (annotationId: number, difficulty: Difficulty): string =>
-  `annotation/${difficulty}/${annotationId}.json`;
+  `annotations/${difficulty}/${annotationId}.json`;
 
 /**
  * Returns the path to the image file corresponding to the given imageId
