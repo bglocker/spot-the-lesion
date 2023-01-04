@@ -70,7 +70,7 @@ describe("getAnnotationPath", () => {
   it("correctly creates the path to the annotation", () => {
     const res = getAnnotationPath(5, "easy");
 
-    expect(res).toBe("annotation/easy/5.json");
+    expect(res).toBe("annotations/easy/5.json");
   });
 });
 
